@@ -36,7 +36,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
 # Install pinned versions of npm packages
 RUN npm install -g \
     @anthropic-ai/claude-code@1.0.44 \
-    @google/gemini-cli@0.1.9
+    @google/gemini-cli@0.1.9 && \
+    npm cache clean --force
 
 # Install Goose with SHA verification (skip version check during build)
 RUN GOOSE_VERSION="v1.0.35" && \
