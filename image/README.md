@@ -16,7 +16,6 @@ Published images are available at `ghcr.io/[org]/xpai/ai-assistant-home`.
 
 ## Prerequisites
 - Podman (latest version recommended)
-- DevContainer CLI (`npm install -g @devcontainers/cli`)
 
 ## Build Instructions
 
@@ -25,18 +24,31 @@ Published images are available at `ghcr.io/[org]/xpai/ai-assistant-home`.
 ./clean.sh
 ```
 
-2. Build the base container
+2. Build the base container using Podman
 ```shell
-devcontainer build --workspace-folder . --image-name localhost/xpai-base:latest
+podman build -t localhost/xpai-base:latest .
 ```
 
-3. Use the base container in the root `devcontainer.json`
-```
-"image": "localhost/xpai-base:latest",
+3. Use the base container in your project's `devcontainer.json`
+```json
+"image": "localhost/xpai-base:latest"
 ```
 
-4. Run the project devcontainer with the base container
+4. Run the container
 ```shell
-devcontainer up --workspace-folder .
+podman run -it localhost/xpai-base:latest
 ```
-or run in VSCode.
+
+5. Find running containers
+```shell
+podman ps
+```
+
+6. Open a bash terminal in the running container
+```shell
+podman exec -it <container_id> /bin/bash
+```
+Or to run a new container with bash:
+```shell
+podman run -it localhost/xpai-base:latest /bin/bash
+```
