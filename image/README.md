@@ -52,3 +52,25 @@ Or to run a new container with bash:
 ```shell
 podman run -it localhost/xpai-base:latest /bin/bash
 ```
+
+## Security Scanning with Trivy
+
+To scan the container for vulnerabilities using Trivy:
+
+### Install Trivy
+```shell
+# macOS with Homebrew
+brew install trivy
+```
+
+### Scan Container Image
+```shell
+# Basic vulnerability scan (CRITICAL and HIGH severity)
+trivy image --cache-backend memory --severity CRITICAL,HIGH --format table localhost/xpai-base:latest
+
+# Full vulnerability scan
+trivy image --cache-backend memory --format table localhost/xpai-base:latest
+
+# Clear Trivy cache if needed
+trivy clean --all
+```
