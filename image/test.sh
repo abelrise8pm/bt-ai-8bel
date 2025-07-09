@@ -37,13 +37,6 @@ GEMINI_VERSION=$(podman run --rm test-migration /bin/bash -c "gemini --version" 
 }
 echo "✅ Gemini CLI: $GEMINI_VERSION"
 
-echo "Testing Goose..."
-GOOSE_VERSION=$(podman run --rm test-migration /bin/bash -c "timeout 10 goose --help 2>&1 | head -1 || echo 'timeout or error'")
-if [[ "$GOOSE_VERSION" == *"timeout or error"* ]]; then
-    echo "❌ ERROR: Goose not working (timeout or error): $GOOSE_VERSION"
-    exit 1
-fi
-echo "✅ Goose: $GOOSE_VERSION"
 
 echo "Testing Git..."
 GIT_VERSION=$(podman run --rm test-migration /bin/bash -c "git --version" 2>&1)

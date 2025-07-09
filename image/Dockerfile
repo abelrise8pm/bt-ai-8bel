@@ -39,20 +39,10 @@ RUN npm install -g \
     @google/gemini-cli@0.1.9 && \
     npm cache clean --force
 
-# Install Goose with SHA verification (skip version check during build)
-RUN GOOSE_VERSION="v1.0.35" && \
-    GOOSE_SHA256="57c7ee011e7fa51a680defae5b7bdd1f8315647e0593dea2a93440fb75a365e3" && \
-    curl -fsSL "https://github.com/block/goose/releases/download/${GOOSE_VERSION}/goose-aarch64-unknown-linux-gnu.tar.bz2" -o /tmp/goose.tar.bz2 && \
-    cd /tmp && tar -xjf goose.tar.bz2 && \
-    echo "${GOOSE_SHA256} goose" | sha256sum -c - && \
-    chmod +x goose && \
-    mv goose /usr/local/bin/goose && \
-    rm -f goose.tar.bz2
 
 # Create aiAssistant user
 RUN useradd -m -s /bin/bash aiAssistant && \
-    mkdir -p /home/aiAssistant/.claude && \
-    mkdir -p /home/aiAssistant/.config/goose
+    mkdir -p /home/aiAssistant/.claude
 
 # Setup Claude Code initialization
 COPY claude_code_init.sh /home/aiAssistant/.claude/claude_code_init.sh
@@ -60,9 +50,6 @@ RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
     chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude && \
     echo '[ -f ~/.claude/anthropic_key_helper.sh ] || /home/aiAssistant/.claude/claude_code_init.sh' >> /home/aiAssistant/.bashrc
 
-# Setup Goose configuration
-COPY goose-config.yaml /home/aiAssistant/.config/goose/config.yaml
-RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.config
 
 # Set default user
 USER aiAssistant
