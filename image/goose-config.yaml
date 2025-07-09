@@ -1,0 +1,28 @@
+# Goose configuration to be copied into the devcontainer
+#API key set with GOOGLE_API_KEY in .env
+GOOSE_PROVIDER: anthropic
+GOOSE_MODEL: claude-sonnet-4-20250514
+GOOSE_PLANNER_PROVIDER: anthropic
+GOOSE_PLANNER_MODEL: claude-opus-4-20250514
+extensions:
+  developer:
+    bundled: true
+    display_name: Developer
+    enabled: true
+    name: developer
+    timeout: 300
+    type: builtin
+  # This MCP server can not be used with Gemini.
+  # See https://github.com/block/goose/issues/1029#issuecomment-2629204340
+  # mcp-fetch:
+  #   args:
+  #   - mcp-server-fetch
+  #   bundled: null
+  #   cmd: uvx
+  #   description: Basic MCP server to fetch web content
+  #   enabled: true
+  #   env_keys: []
+  #   envs: {}
+  #   name: mcp-fetch
+  #   timeout: 300
+  #   type: stdio
