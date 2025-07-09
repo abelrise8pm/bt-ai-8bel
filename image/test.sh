@@ -24,19 +24,17 @@ fi
 echo "✅ Node.js: $NODE_VERSION"
 
 echo "Testing Claude Code..."
-CLAUDE_VERSION=$(podman run --rm test-migration /bin/bash -c "claude --version" 2>&1)
-if [[ $? -ne 0 ]]; then
+CLAUDE_VERSION=$(podman run --rm test-migration /bin/bash -c "claude --version" 2>&1) || {
     echo "❌ ERROR: Claude Code not installed or not working: $CLAUDE_VERSION"
     exit 1
-fi
+}
 echo "✅ Claude Code: $CLAUDE_VERSION"
 
 echo "Testing Gemini CLI..."
-GEMINI_VERSION=$(podman run --rm test-migration /bin/bash -c "gemini --version" 2>&1)
-if [[ $? -ne 0 ]]; then
+GEMINI_VERSION=$(podman run --rm test-migration /bin/bash -c "gemini --version" 2>&1) || {
     echo "❌ ERROR: Gemini CLI not installed or not working: $GEMINI_VERSION"
     exit 1
-fi
+}
 echo "✅ Gemini CLI: $GEMINI_VERSION"
 
 echo "Testing Goose..."
