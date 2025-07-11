@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="1000" height="750" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .box { fill: #ffffff; stroke: #4a4a4a; stroke-width: 1.5; }
+    .host-box { fill: #e6f7ff; stroke: #00609e; stroke-width: 2; }
+    .container-box { fill: #f0f8ff; stroke: #007bff; stroke-width: 1.5; }
+    .secure-box { fill: #e6fff1; stroke: #008a3e; stroke-width: 1.5; }
+    .text-title { font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: bold; text-anchor: middle; }
+    .text-body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; }
+    .text-body-bold { font-family: Arial, Helvetica, sans-serif; font-size: 13px; font-weight: bold; }
+    .text-flow { font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-style: italic; }
+    .flow-line-non-cui { stroke: #007bff; stroke-width: 2; marker-end: url(#arrow-non-cui); }
+    .flow-line-cui { stroke: #dc3545; stroke-width: 2.5; marker-end: url(#arrow-cui); }
+    .log-line { stroke: #6c757d; stroke-width: 1.5; stroke-dasharray: 4, 4; marker-end: url(#arrow-log); }
+    .supply-line { stroke: #28a745; stroke-width: 1.5; marker-end: url(#arrow-supply); }
+  </style>
+
+  <defs>
+    <marker id="arrow-non-cui" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#007bff" />
+    </marker>
+    <marker id="arrow-cui" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc3545" />
+    </marker>
+    <marker id="arrow-log" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6c757d" />
+    </marker>
+    <marker id="arrow-supply" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#28a745" />
+    </marker>
+  </defs>
+
+  <text x="500" y="30" class="text-title" font-size="20">Architectural Diagram: Secure AI Assistant with CUI Isolation</text>
+
+  <rect x="250" y="70" width="500" height="450" rx="10" class="host-box"/>
+  <text x="500" y="95" class="text-title">Developer Workstation (Host)</text>
+
+  <text x="270" y="125" class="text-body-bold">Host OS (e.g., macOS)</text>
+  <rect x="270" y="140" width="200" height="60" rx="5" class="box"/>
+  <text x="370" y="160" class="text-body-bold" text-anchor="middle">SentinelOne</text>
+  <text x="370" y="180" class="text-body" text-anchor="middle">(EDR)</text>
+  <rect x="530" y="140" width="200" height="60" rx="5" class="box"/>
+  <text x="630" y="160" class="text-body-bold" text-anchor="middle">Zscaler</text>
+  <text x="630" y="180" class="text-body" text-anchor="middle">(Network Control)</text>
+
+  <rect x="270" y="220" width="460" height="280" rx="5" class="container-box" style="fill: #d4edff;"/>
+  <text x="500" y="240" class="text-title" font-size="14">Podman Container Runtime</text>
+
+  <rect x="290" y="260" width="420" height="220" rx="5" class="container-box"/>
+  <text x="500" y="280" class="text-title" font-size="14">Isolated Devcontainer</text>
+
+  <rect x="390" y="300" width="220" height="50" rx="5" class="box" style="fill:#fffbe6"/>
+  <text x="500" y="330" class="text-body-bold" text-anchor="middle">AI Assistant</text>
+  <text x="310" y="410" class="text-body-bold">Bind Mount:</text>
+  <text x="310" y="425" class="text-body">[/Project Directory Only]</text>
+  <path d="M 400 405 C 450 385, 450 365, 500 355" stroke="#4a4a4a" stroke-width="1.5" fill="none" stroke-dasharray="2,2"/>
+  <text x="310" y="465" class="text-body" style="font-style: italic;">Image from Secure Supply Chain</text>
+
+  <rect x="20" y="140" width="200" height="60" rx="5" class="secure-box"/>
+  <text x="120" y="170" class="text-body-bold" text-anchor="middle">Centralized SIEM</text>
+  
+  <rect x="780" y="300" width="200" height="60" rx="5" class="box"/>
+  <text x="880" y="325" class="text-body-bold" text-anchor="middle">Standard AI Service</text>
+  <text x="880" y="345" class="text-body" text-anchor="middle">(Approved API)</text>
+  <rect x="780" y="420" width="200" height="60" rx="5" class="secure-box"/>
+  <text x="880" y="445" class="text-body-bold" text-anchor="middle">FedRAMP High</text>
+  <text x="880" y="465" class="text-body" text-anchor="middle">AI Service</text>
+
+  <rect x="20" y="420" width="200" height="60" rx="5" class="box" style="stroke: #28a745; fill: #f2fff6"/>
+  <text x="120" y="445" class="text-body-bold" text-anchor="middle">Secure Image</text>
+  <text x="120" y="465" class="text-body" text-anchor="middle">Supply Chain</text>
+
+  <line x1="270" y1="170" x2="220" y2="170" class="log-line"/>
+  <line x1="530" y1="170" x2="510" y2="170" class="log-line"/>
+  <path d="M 510 170 Q 500 170, 500 140 L 500 100 Q 250 100, 220 170" stroke="#6c757d" fill="none" class="log-line" style="stroke-dasharray: 4, 4;"/>
+  <text x="210" y="130" class="text-flow" text-anchor="end">Logs</text>
+
+  <path d="M 220 450 C 240 450, 250 450, 270 450" class="supply-line" />
+  <text x="245" y="445" class="text-flow" fill="#28a745" text-anchor="middle">Signed Image</text>
+
+  <path d="M 600 325 L 780 325" class="flow-line-non-cui"/>
+  <text x="690" y="315" class="text-flow" fill="#007bff" text-anchor="middle">Flow A: Non-CUI Code Snippets</text>
+
+  <path d="M 600 325 C 650 325, 700 450, 780 450" class="flow-line-cui"/>
+  <text x="700" y="415" class="text-flow" fill="#dc3545" text-anchor="middle">Flow B: CUI Code Snippets</text>
+  
+  <g transform="translate(300, 550)">
+    <rect width="400" height="150" rx="5" class="box" style="fill: #f8f9fa;"/>
+    <text x="200" y="25" class="text-title" font-size="14">Legend</text>
+    <rect x="20" y="45" width="20" height="10" class="host-box"/>
+    <text x="50" y="54" class="text-body">Host Environment</text>
+    <rect x="20" y="70" width="20" height="10" class="container-box"/>
+    <text x="50" y="79" class="text-body">Container Environment</text>
+    <rect x="20" y="95" width="20" height="10" class="secure-box"/>
+    <text x="50" y="104" class="text-body">Secure/Compliant Service</text>
+    <line x1="200" y1="50" x2="240" y2="50" class="flow-line-non-cui"/>
+    <text x="250" y="54" class="text-body">Non-CUI Data Flow</text>
+    <line x1="200" y1="75" x2="240" y2="75" class="flow-line-cui"/>
+    <text x="250" y="79" class="text-body">CUI Data Flow</text>
+    <line x1="200" y1="100" x2="240" y2="100" class="log-line"/>
+    <text x="250" y="104" class="text-body">Log/Monitoring Data</text>
+    <line x1="200" y1="125" x2="240" y2="125" class="supply-line"/>
+    <text x="250" y="129" class="text-body">Image Supply Flow</text>
+  </g>
+</svg>
