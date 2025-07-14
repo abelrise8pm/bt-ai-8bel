@@ -94,10 +94,9 @@ Insert new step between "Build Docker image" and "Run Trivy vulnerability scanne
 ## Phase 4: Validation and Rollout
 
 ### 4.1 Testing Strategy
-- Test locally with both Podman and Docker
+- Test locally with both Podman
 - Test in CI with pull request
 - Verify all existing functionality remains intact
-- Validate failure scenarios (intentionally break container)
 
 ### 4.2 Rollout Plan
 - Create feature branch for changes
