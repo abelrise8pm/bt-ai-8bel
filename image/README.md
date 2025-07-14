@@ -32,28 +32,9 @@ your knowledge because tags can move to newer versions of a container.
 podman build -t localhost/xpai-base:latest .
 ```
 
-3. Use the base container in your project's `devcontainer.json`
-```json
-"image": "localhost/xpai-base:latest"
-```
-
-4. Run the container
+3. Run the container
 ```shell
-podman run -it localhost/xpai-base:latest
-```
-
-5. Find running containers
-```shell
-podman ps
-```
-
-6. Open a bash terminal in the running container
-```shell
-podman exec -it <container_id> /bin/bash
-```
-Or to run a new container with bash:
-```shell
-podman run -it localhost/xpai-base:latest /bin/bash
+podman run --env-file ../.env -it localhost/xpai-base:latest /bin/bash
 ```
 
 ## Security Scanning with Trivy

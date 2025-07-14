@@ -20,15 +20,9 @@
 # Setting up the API access :
 # - claude code has two modes : either via Claude Max or using an API
 # - claude max opens an oauth flow, which we can't use
-# - we can just use the ANTHROPIC_API_KEY , but it will stil ask for approval
-# - we found another way of providing the API by using a shell script that provides that key
-# - this is useful for example if you want to fetch from somewhere else like 1password or so
-# idea via https://www.reddit.com/r/ClaudeAI/comments/1jwvssa/claude_code_with_api_key/
+# - we use the ANTHROPIC_API_KEY environment variable directly
+# - this is the standard approach and avoids auth conflicts
 ##################################
-# Setup API helper
-##################################
-echo 'echo ${ANTHROPIC_API_KEY}' > ~/.claude/anthropic_key_helper.sh
-chmod +x ~/.claude/anthropic_key_helper.sh
 
 ##################################
 # Configuring claude code
@@ -44,14 +38,10 @@ chmod +x ~/.claude/anthropic_key_helper.sh
 # - on the other hand the docs mentions it'd deprecating that command
 # - we resort to creating a skeleton json file
 #
-# - shiftEnterKeyBindingInstalled configures the ask for terminal install
-# - hasCompletedOnboarding indicates configuration is done
-# - set the theme to dark here
-#
-# for the API key it's not enough to setup the apiKeyHelper
-# - you have to mark it as approved
-# - for refer to that key is uses the last 20 chars of the key it seems
-# - here we assume you have ANTHROPIC_API_KEY configured as env var
+
+# for the API key to work without prompts, we need to mark it as approved
+# - the approval is based on the last 20 chars of the key
+# - we use the ANTHROPIC_API_KEY environment variable directly
 ##################################
 ANTHROPIC_API_KEY_LAST_20_CHARS=${ANTHROPIC_API_KEY: -20}
 
@@ -66,15 +56,18 @@ cat <<EOM > ~/.claude.json
 }
 EOM
 
-# to configure the API helper goes into the .claude/settings.json file
-claude config set --global apiKeyHelper ~/.claude/anthropic_key_helper.sh
-
 ##################################
 # Trust the current dir/project
 # - when you enter a new directoy, claude asks it you trust it
 # - we use the claude config to trust it
 ##################################
-# claude config set hasTrustDialogAccepted true
+claude config set hasTrustDialogAccepted true
+
+# We turn off autoupdates because we want to control the
+# versions people are using for security.
+claude config set --global autoUpdates false
+
+# - hasCompletedOnboarding indicates configuration is done
 # claude config set hasCompletedProjectOnboarding true
 
 #################################

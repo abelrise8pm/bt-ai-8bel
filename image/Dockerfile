@@ -35,8 +35,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
 
 # Install pinned versions of npm packages
 RUN npm install -g \
-    @anthropic-ai/claude-code@1.0.44 \
-    @google/gemini-cli@0.1.9 && \
+    @anthropic-ai/claude-code@1.0.51 \
+    @google/gemini-cli@0.1.12 && \
     npm cache clean --force
 
 
@@ -48,7 +48,7 @@ RUN useradd -m -s /bin/bash aiAssistant && \
 COPY claude_code_init.sh /home/aiAssistant/.claude/claude_code_init.sh
 RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
     chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude && \
-    echo '[ -f ~/.claude/anthropic_key_helper.sh ] || /home/aiAssistant/.claude/claude_code_init.sh' >> /home/aiAssistant/.bashrc
+    echo '[ -f ~/.claude.json ] || /home/aiAssistant/.claude/claude_code_init.sh' >> /home/aiAssistant/.bashrc
 
 
 # Set default user
