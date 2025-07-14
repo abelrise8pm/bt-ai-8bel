@@ -37,6 +37,28 @@ podman build -t localhost/xpai-base:latest .
 podman run --env-file ../.env -it localhost/xpai-base:latest /bin/bash
 ```
 
+## Updating Package Versions
+
+The Dockerfile uses pinned version numbers for npm packages to ensure reproducible builds. npm version numbers are immutable - once published, they cannot be changed or moved.
+
+To update package versions:
+
+1. Check for new versions:
+```shell
+npm view @anthropic-ai/claude-code versions --json
+npm view @google/gemini-cli versions --json
+```
+
+2. Update the Dockerfile with new version numbers:
+```dockerfile
+RUN npm install -g \
+    @anthropic-ai/claude-code@NEW_VERSION \
+    @google/gemini-cli@NEW_VERSION && \
+    npm cache clean --force
+```
+
+3. Test the build locally with `./test.sh` before committing changes.
+
 ## Security Scanning with Trivy
 
 This is useful when fixing security issues.
