@@ -4,8 +4,12 @@
 
 set -e  # Exit on any error
 
-echo "🔨 Building container with Podman..."
-if ! podman build -t test-migration . 2>&1; then
+# Auto-detect container runtime or use environment variable
+CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-$(command -v podman > /dev/null && echo "podman" || echo "docker")}
+IMAGE_TAG=${IMAGE_TAG:-"test-migration"}
+
+echo "🔨 Building container with $CONTAINER_RUNTIME..."
+if ! $CONTAINER_RUNTIME build -t $IMAGE_TAG . 2>&1; then
     echo "❌ ERROR: Container build failed"
     exit 1
 fi
@@ -16,7 +20,7 @@ echo "🧪 Testing installed tools..."
 
 # Test each tool and capture output
 echo "Testing Node.js..."
-NODE_VERSION=$(podman run --rm test-migration /bin/bash -c "node --version" 2>&1)
+NODE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "node --version" 2>&1)
 if [[ ! "$NODE_VERSION" =~ ^v22\.17\. ]]; then
     echo "❌ ERROR: Node.js version incorrect. Expected v22.17.x, got: $NODE_VERSION"
     exit 1
@@ -24,14 +28,14 @@ fi
 echo "✅ Node.js: $NODE_VERSION"
 
 echo "Testing Claude Code..."
-CLAUDE_VERSION=$(podman run --rm test-migration /bin/bash -c "claude --version" 2>&1) || {
+CLAUDE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "claude --version" 2>&1) || {
     echo "❌ ERROR: Claude Code not installed or not working: $CLAUDE_VERSION"
     exit 1
 }
 echo "✅ Claude Code: $CLAUDE_VERSION"
 
 echo "Testing Gemini CLI..."
-GEMINI_VERSION=$(podman run --rm test-migration /bin/bash -c "gemini --version" 2>&1) || {
+GEMINI_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "gemini --version" 2>&1) || {
     echo "❌ ERROR: Gemini CLI not installed or not working: $GEMINI_VERSION"
     exit 1
 }
@@ -39,7 +43,7 @@ echo "✅ Gemini CLI: $GEMINI_VERSION"
 
 
 echo "Testing Git..."
-GIT_VERSION=$(podman run --rm test-migration /bin/bash -c "git --version" 2>&1)
+GIT_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "git --version" 2>&1)
 if [[ $? -ne 0 ]]; then
     echo "❌ ERROR: Git not installed: $GIT_VERSION"
     exit 1
@@ -47,7 +51,7 @@ fi
 echo "✅ Git: $GIT_VERSION"
 
 echo "Testing curl..."
-CURL_VERSION=$(podman run --rm test-migration /bin/bash -c "curl --version | head -1" 2>&1)
+CURL_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "curl --version | head -1" 2>&1)
 if [[ $? -ne 0 ]]; then
     echo "❌ ERROR: curl not installed: $CURL_VERSION"
     exit 1
@@ -55,7 +59,7 @@ fi
 echo "✅ curl: $CURL_VERSION"
 
 echo "Testing jq..."
-JQ_VERSION=$(podman run --rm test-migration /bin/bash -c "jq --version" 2>&1)
+JQ_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "jq --version" 2>&1)
 if [[ $? -ne 0 ]]; then
     echo "❌ ERROR: jq not installed: $JQ_VERSION"
     exit 1
@@ -63,7 +67,7 @@ fi
 echo "✅ jq: $JQ_VERSION"
 
 echo "Testing user setup..."
-USER_CHECK=$(podman run --rm test-migration /bin/bash -c "whoami" 2>&1)
+USER_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "whoami" 2>&1)
 if [[ "$USER_CHECK" != "aiAssistant" ]]; then
     echo "❌ ERROR: Wrong user. Expected 'aiAssistant', got: $USER_CHECK"
     exit 1
@@ -71,7 +75,7 @@ fi
 echo "✅ User: $USER_CHECK"
 
 echo "Testing Claude Code init script..."
-CLAUDE_INIT_CHECK=$(podman run --rm test-migration /bin/bash -c "ls -la ~/.claude/claude_code_init.sh" 2>&1)
+CLAUDE_INIT_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.claude/claude_code_init.sh" 2>&1)
 if [[ $? -ne 0 ]]; then
     echo "❌ ERROR: Claude init script not found: $CLAUDE_INIT_CHECK"
     exit 1

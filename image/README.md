@@ -59,6 +59,41 @@ RUN npm install -g \
 
 3. Test the build locally with `./test.sh` before committing changes.
 
+## Testing
+
+The container includes a test script (`test.sh`) that validates the build and functionality. The script supports both Docker and Podman runtimes and can be configured via environment variables.
+
+### Environment Variables
+
+- `CONTAINER_RUNTIME`: Specify the container runtime to use (`docker` or `podman`). If not set, the script will auto-detect the available runtime, preferring Podman if available.
+- `IMAGE_TAG`: Specify the image tag to use for testing (defaults to `test-migration`).
+
+### Running Tests Locally
+
+```shell
+# Run with default settings (auto-detect runtime, use test-migration tag)
+./test.sh
+
+# Run with specific runtime
+CONTAINER_RUNTIME=docker ./test.sh
+
+# Run with specific image tag
+IMAGE_TAG=my-custom-tag ./test.sh
+
+# Run with both custom runtime and tag
+CONTAINER_RUNTIME=docker IMAGE_TAG=my-custom-tag ./test.sh
+```
+
+### CI/CD Integration
+
+The testing step is automatically integrated into the CI/CD pipeline:
+
+```
+Build → Test → Scan → Push
+```
+
+Tests must pass before the security scan runs, ensuring only functional containers are scanned and published.
+
 ## Security Scanning with Trivy
 
 This is useful when fixing security issues.
