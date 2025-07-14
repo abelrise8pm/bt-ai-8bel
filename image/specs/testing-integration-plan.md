@@ -54,23 +54,47 @@ build-and-scan:
 **New job structure:**
 ```yaml
 build-test-and-scan:
-  - Build Docker image
-  - Run functionality tests
+  - Set up QEMU (for multi-architecture builds)
+  - Build Docker image (ARM64 + AMD64)
+  - Run functionality tests (AMD64 on GitHub runners)
   - Run Trivy scan
   - Push on success
 ```
 
-### 2.2 Add Test Step to Workflow
+### 2.2 Add Multi-Architecture Build Support
+Add QEMU emulation to enable building ARM64 images on AMD64 GitHub runners:
+
+```yaml
+- name: Set up QEMU
+  uses: docker/setup-qemu-action@v3
+
+- name: Set up Docker Buildx
+  uses: docker/setup-buildx-action@v3
+```
+
+Update build step to support both architectures:
+```yaml
+- name: Build Docker image
+  uses: docker/build-push-action@v5
+  with:
+    platforms: linux/arm64,linux/amd64  # Build both architectures
+    # ... rest of config
+```
+
+### 2.3 Add Test Step to Workflow
 Insert new step between "Build Docker image" and "Run Trivy vulnerability scanner":
 
 ```yaml
 - name: Test container functionality
+  id: test
   run: |
     cd ai-assistant-container
+    # Test AMD64 variant on GitHub runners (which are AMD64)
+    export DOCKER_DEFAULT_PLATFORM=linux/amd64
     CONTAINER_RUNTIME=docker IMAGE_TAG="${{ fromJSON(steps.meta.outputs.json).tags[0] }}" ./test.sh
 ```
 
-### 2.3 Update Job Outputs and Conditions
+### 2.4 Update Job Outputs and Conditions
 - Add `test-passed` output to job
 - Make scan step conditional on test success
 - Make push step conditional on both test and scan success
@@ -112,17 +136,29 @@ Insert new step between "Build Docker image" and "Run Trivy vulnerability scanne
 ```yaml
 build-test-and-scan:
   steps:
-    - name: Build Docker image
-      # ... existing build step
-    
+    - name: Set up QEMU  # NEW STEP
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build Docker image  # UPDATED
+      uses: docker/build-push-action@v5
+      with:
+        platforms: linux/arm64,linux/amd64  # Multi-architecture build
+        # ... rest of existing config
+
     - name: Test container functionality  # NEW STEP
+      id: test
       run: |
         cd ai-assistant-container
+        # Test AMD64 variant on GitHub runners (which are AMD64)
+        export DOCKER_DEFAULT_PLATFORM=linux/amd64
         CONTAINER_RUNTIME=docker IMAGE_TAG="${{ fromJSON(steps.meta.outputs.json).tags[0] }}" ./test.sh
-    
+
     - name: Run Trivy vulnerability scanner
       # ... existing scan step
-    
+
     - name: Push Docker image
       if: github.event_name == 'push' && steps.test.conclusion == 'success' && steps.scan.conclusion == 'success'
       # ... existing push step
@@ -151,9 +187,12 @@ fi
 1. **Early Failure Detection**: Catch functional issues before security scanning
 2. **Consistent Testing**: Same test suite runs locally and in CI
 3. **Multi-Runtime Support**: Works with both Docker and Podman
-4. **Backward Compatible**: Existing local workflows unchanged
-5. **Security-First**: Only scan containers that pass functional tests
-6. **Clear Feedback**: Developers get immediate feedback on container functionality
+4. **Multi-Architecture Support**: Builds for both ARM64 (M-series Macs) and AMD64 (other systems)
+5. **Native Performance**: ARM64 images provide native performance on M-series MacBooks
+6. **Backward Compatible**: Existing local workflows unchanged
+7. **Security-First**: Only scan containers that pass functional tests
+8. **Clear Feedback**: Developers get immediate feedback on container functionality
+9. **Architecture Flexibility**: Automatic architecture selection when pulling images
 
 ---
 
@@ -162,11 +201,17 @@ fi
 1. **Risk**: Docker/Podman behavioral differences
    - **Mitigation**: Comprehensive testing in both environments
 
-2. **Risk**: CI runtime increase
-   - **Mitigation**: Tests are designed to run quickly (< 2 minutes)
+2. **Risk**: Architecture mismatch errors (ARM64 vs AMD64)
+   - **Mitigation**: Added QEMU emulation and explicit platform selection for testing
 
-3. **Risk**: False positives blocking deployments
+3. **Risk**: CI runtime increase (multi-architecture builds take longer)
+   - **Mitigation**: Tests are designed to run quickly (< 2 minutes), only test one architecture in CI
+
+4. **Risk**: False positives blocking deployments
    - **Mitigation**: Thorough testing and clear error messages
+
+5. **Risk**: QEMU emulation performance overhead during builds
+   - **Mitigation**: Only affects CI build time, not runtime performance for end users
 
 ---
 
@@ -178,7 +223,9 @@ fi
 - Test locally with both Docker and Podman
 
 ### Step 2: Update CI/CD Pipeline
-- Add test step to workflow
+- Add QEMU setup for multi-architecture builds
+- Update build step to support ARM64 and AMD64
+- Add test step to workflow with explicit AMD64 platform selection
 - Update job conditions
 - Test with pull request
 
