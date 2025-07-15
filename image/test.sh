@@ -8,13 +8,24 @@ set -e  # Exit on any error
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-$(command -v podman > /dev/null && echo "podman" || echo "docker")}
 IMAGE_TAG=${IMAGE_TAG:-"test-migration"}
 
-echo "🔨 Building container with $CONTAINER_RUNTIME..."
-if ! $CONTAINER_RUNTIME build -t $IMAGE_TAG . 2>&1; then
-    echo "❌ ERROR: Container build failed"
-    exit 1
+# Smart image resolution: use existing local image, pull remote image, or build locally
+if $CONTAINER_RUNTIME image inspect $IMAGE_TAG >/dev/null 2>&1; then
+    echo "✅ Using existing local image: $IMAGE_TAG"
+elif [[ "$IMAGE_TAG" =~ ^[^/]+\.[^/]+/.* ]]; then
+    echo "🔄 Pulling remote image: $IMAGE_TAG"
+    if ! $CONTAINER_RUNTIME pull $IMAGE_TAG; then
+        echo "❌ ERROR: Failed to pull image $IMAGE_TAG"
+        exit 1
+    fi
+    echo "✅ Remote image pulled successfully"
+else
+    echo "🔨 Building container locally with $CONTAINER_RUNTIME..."
+    if ! $CONTAINER_RUNTIME build -t $IMAGE_TAG . 2>&1; then
+        echo "❌ ERROR: Container build failed"
+        exit 1
+    fi
+    echo "✅ Container build successful"
 fi
-
-echo "✅ Container build successful"
 
 echo "🧪 Testing installed tools..."
 
