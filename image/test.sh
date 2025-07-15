@@ -6,6 +6,10 @@ set -e  # Exit on any error
 
 # Auto-detect container runtime or use environment variable
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-$(command -v podman > /dev/null && echo "podman" || echo "docker")}
+if ! command -v "$CONTAINER_RUNTIME" > /dev/null; then
+    echo "❌ ERROR: Container runtime '$CONTAINER_RUNTIME' not found. Please install 'podman' or 'docker'."
+    exit 1
+fi
 IMAGE_TAG=${IMAGE_TAG:-"test-migration"}
 
 # Smart image resolution: use existing local image, pull remote image, or build locally
