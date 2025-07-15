@@ -59,6 +59,57 @@ RUN npm install -g \
 
 3. Test the build locally with `./test.sh` before committing changes.
 
+## Testing
+
+The container includes a test script (`test.sh`) that validates container functionality. The script uses smart detection to automatically handle different image sources and supports both Docker and Podman runtimes.
+
+### Smart Image Detection
+
+The test script automatically determines how to obtain the image:
+
+1. **Existing Local Image**: If the image exists locally, it uses it directly (no rebuild)
+2. **Remote Registry Image**: If the image tag contains a registry domain (e.g., `ghcr.io/...`), it pulls from the registry
+3. **Local Build**: For simple tags, it builds the container locally from the current directory
+
+### Environment Variables
+
+- `CONTAINER_RUNTIME`: Specify the container runtime to use (`docker` or `podman`). If not set, the script will auto-detect the available runtime, preferring Podman if available.
+- `IMAGE_TAG`: Specify the image tag to use for testing (defaults to `test-migration`).
+
+### Running Tests Locally
+
+```shell
+# Run with default settings (auto-detect runtime, build locally with test-migration tag)
+./test.sh
+
+# Run with specific runtime
+CONTAINER_RUNTIME=docker ./test.sh
+
+# Test a locally built image
+IMAGE_TAG=my-custom-tag ./test.sh
+
+# Test a remote registry image (automatically pulls if not found locally)
+IMAGE_TAG=ghcr.io/rise8-us/xpai/ai-assistant-home:staging-abc123 ./test.sh
+
+# Run with both custom runtime and tag
+CONTAINER_RUNTIME=docker IMAGE_TAG=my-custom-tag ./test.sh
+```
+
+### CI/CD Integration
+
+The testing step is automatically integrated into the CI/CD pipeline with a staging + promotion approach:
+
+```
+Build Staging → Test → Scan → Promote to Production
+```
+
+1. **Build Staging**: Multi-architecture image built and pushed with `staging-{sha}` tag
+2. **Test**: Uses the staging image from registry (no rebuild), testing AMD64 variant on GitHub runners
+3. **Scan**: Trivy scans the staging image for vulnerabilities
+4. **Promote**: Only after successful tests and scans, staging image is promoted to production tags
+
+This prevents registry pollution by ensuring only tested and scanned images reach production tags. The smart detection in `test.sh` automatically handles pulling the staging image from the registry during CI/CD runs.
+
 ## Security Scanning with Trivy
 
 This is useful when fixing security issues.

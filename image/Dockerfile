@@ -1,5 +1,5 @@
-# Pinned Ubuntu 24.04 LTS ARM64 for M-series MacBook Pros
-FROM --platform=linux/arm64 ubuntu:24.04@sha256:6633ff3b87e40bf09281277f1072458819e915da008095ebdcc76c921a3628a1
+# Pinned Ubuntu 24.04 LTS for multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
+FROM ubuntu:24.04@sha256:6633ff3b87e40bf09281277f1072458819e915da008095ebdcc76c921a3628a1
 
 # Copy certificate and install in single layer
 COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
