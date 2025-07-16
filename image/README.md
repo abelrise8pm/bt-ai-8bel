@@ -16,7 +16,7 @@ Use the published image as your base in `.devcontainer/devcontainer.json`:
 
 ```json
 {
-  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home:@sha256:abc123...",
+  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home:<sha>",
   "features": {
     // Add any additional features your project needs
   },
