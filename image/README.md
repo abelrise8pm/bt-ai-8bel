@@ -60,6 +60,11 @@ If your project team encounters authentication issues with `ghcr.io`, follow the
    gh auth token | podman login ghcr.io -u $(gh api user --jq .login) --password-stdin
    ```
 
+3. Test pulling the image:
+  ```bash
+  podman pull ghcr.io/rise8-us/xpai/ai-assistant-home:<sha>
+  ```
+
 ### 5. Available AI Assistants
 
 The container comes pre-installed with:
