@@ -21,7 +21,9 @@ Use the published image as your base in `.devcontainer/devcontainer.json`:
     // Add any additional features your project needs
   },
   "postCreateCommand": "echo 'Container ready with AI assistants pre-installed'",
-  "runArgs": ["--env-file",".env"]
+  "runArgs": ["--env-file",".env"],
+  // change any other mentions to this...
+  "remoteUser": "aiAssistant"
 }
 ```
 
