@@ -39,7 +39,7 @@ the necessary env vars there.
 **Important**: Always pin to a specific SHA digest rather than using tags like `latest` or `main`. This ensures your development environment remains consistent and prevents unexpected changes.
 
 To find the SHA for the latest version:
-1. Go to [GitHub Container Registry](https://github.com/rise8-us/XPai/pkgs/container/ai-assistant-home)
+1. Go to [GitHub Container Registry](https://github.com/rise8-us/XPai/pkgs/container/xpai%2Fai-assistant-home)
 2. Find the image you want to use
 3. Copy the SHA256 digest
 4. Use it in your devcontainer configuration as shown above
