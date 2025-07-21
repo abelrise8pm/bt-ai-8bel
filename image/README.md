@@ -105,12 +105,12 @@ your knowledge because tags can move to newer versions of a container.
 
 2. Build the base container using Podman
 ```shell
-podman build -t localhost/xpai-base:latest .
+podman build -t localhost/ai-assistant-home:latest .
 ```
 
 3. Run the container
 ```shell
-podman run --env-file ../.env -it localhost/xpai-base:latest /bin/bash
+podman run --env-file ../.env -it localhost/ai-assistant-home:latest /bin/bash
 ```
 
 ## Updating Package Versions
@@ -203,10 +203,10 @@ brew install trivy
 ### Scan Container Image
 ```shell
 # Basic vulnerability scan (CRITICAL and HIGH severity)
-trivy image --cache-backend memory --severity CRITICAL,HIGH --format table localhost/xpai-base:latest
+trivy image --cache-backend memory --severity CRITICAL,HIGH --format table localhost/ai-assistant-home:latest
 
 # Full vulnerability scan
-trivy image --cache-backend memory --format table localhost/xpai-base:latest
+trivy image --cache-backend memory --format table localhost/ai-assistant-home:latest
 
 # Clear Trivy cache if needed
 trivy clean --all
