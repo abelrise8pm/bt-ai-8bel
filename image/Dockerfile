@@ -33,24 +33,23 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Create aiAssistant user and setup npm user-global directory
+# Install pinned versions of npm packages (npm version numbers are immutable)
+RUN npm install -g \
+    @anthropic-ai/claude-code@1.0.51 \
+    @google/gemini-cli@0.1.12 && \
+    npm cache clean --force
+
+
+# Create aiAssistant user
 RUN useradd -m -s /bin/bash aiAssistant && \
-    mkdir -p /home/aiAssistant/.claude /home/aiAssistant/.npm-global
+    mkdir -p /home/aiAssistant/.claude
 
 # Setup Claude Code initialization
 COPY claude_code_init.sh /home/aiAssistant/.claude/claude_code_init.sh
 RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
-    chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude /home/aiAssistant/.npm-global && \
-    echo '[ -f ~/.claude.json ] || /home/aiAssistant/.claude/claude_code_init.sh' >> /home/aiAssistant/.bashrc && \
-    echo 'export PATH=~/.npm-global/bin:$PATH' >> /home/aiAssistant/.bashrc
+    chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude && \
+    echo '[ -f ~/.claude.json ] || /home/aiAssistant/.claude/claude_code_init.sh' >> /home/aiAssistant/.bashrc
 
 
-
+# Set default user
 USER aiAssistant
-
-# Configure npm to use user directory for global packages and install there
-RUN npm config set prefix '~/.npm-global' && \
-    npm install -g \
-    @anthropic-ai/claude-code@1.0.51 \
-    @google/gemini-cli@0.1.12 && \
-    npm cache clean --force
