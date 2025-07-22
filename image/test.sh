@@ -12,10 +12,14 @@ if ! command -v "$CONTAINER_RUNTIME" > /dev/null; then
 fi
 IMAGE_TAG=${IMAGE_TAG:-"test-migration"}
 
-# Smart image resolution: use existing local image, pull remote image, or build locally
+# Always delete existing test-migration image to ensure fresh build
 if $CONTAINER_RUNTIME image inspect $IMAGE_TAG >/dev/null 2>&1; then
-    echo "✅ Using existing local image: $IMAGE_TAG"
-elif [[ "$IMAGE_TAG" =~ ^[^/]+\.[^/]+/.* ]]; then
+    echo "🗑️ Deleting existing image: $IMAGE_TAG"
+    $CONTAINER_RUNTIME rmi $IMAGE_TAG >/dev/null 2>&1 || true
+fi
+
+# Smart image resolution: pull remote image or build locally
+if [[ "$IMAGE_TAG" =~ ^[^/]+\.[^/]+/.* ]]; then
     echo "🔄 Pulling remote image: $IMAGE_TAG"
     if ! $CONTAINER_RUNTIME pull $IMAGE_TAG; then
         echo "❌ ERROR: Failed to pull image $IMAGE_TAG"
