@@ -5,12 +5,12 @@ on:
     branches: [main]
     paths:
       - 'ai-assistant-container/**'
-      - 'ai-assistant-container/workflows/build-devcontainer.yml'
+      - '.github/workflows/build-devcontainer.yml'
   pull_request:
     branches: [main]
     paths:
       - 'ai-assistant-container/**'
-      - 'ai-assistant-container/workflows/build-devcontainer.yml'
+      - '.github/workflows/build-devcontainer.yml'
   workflow_dispatch:
 
 env:
