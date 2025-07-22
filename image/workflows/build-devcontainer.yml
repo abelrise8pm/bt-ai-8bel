@@ -1,0 +1,115 @@
+name: Build and Publish Devcontainer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ai-assistant-container/**'
+      - '.github/workflows/build-devcontainer.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ai-assistant-container/**'
+      - '.github/workflows/build-devcontainer.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/xpai/ai-assistant-home
+
+jobs:
+  build-test-and-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    outputs:
+      image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+      scan-passed: ${{ steps.scan.conclusion == 'success' }}
+      test-passed: ${{ steps.test.conclusion == 'success' }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push staging image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ai-assistant-container
+          file: ./ai-assistant-container/Dockerfile
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/arm64,linux/amd64
+          push: true
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+      - name: Test container functionality
+        id: test
+        run: |
+          cd ai-assistant-container
+          # Test using the staging image (AMD64 variant on GitHub runners)
+          export DOCKER_DEFAULT_PLATFORM=linux/amd64
+          CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}" ./test.sh
+
+      - name: Run Trivy vulnerability scanner
+        id: scan
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+        env:
+          TRIVY_CACHE_BACKEND: memory
+
+      - name: Promote staging image to production tags
+        if: steps.test.conclusion == 'success' && steps.scan.conclusion == 'success'
+        run: |
+          # Promote the tested staging image to production tags
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            # Main branch push: add both sha and latest tags
+            docker buildx imagetools create \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }} \
+              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
+              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          else
+            # PR or other branch: only add sha tag
+            docker buildx imagetools create \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }} \
+              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          fi
+
+      - name: Clean up staging image
+        if: always()
+        run: |
+          # Clean up staging image after promotion or failure
+          # Note: This requires appropriate GitHub token permissions
+          echo "Staging image cleanup would happen here"
+          # gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/staging-${{ github.sha }} || true
