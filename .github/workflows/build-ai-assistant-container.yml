@@ -6,11 +6,13 @@ on:
     paths:
       - 'ai-assistant-container/**'
       - '.github/workflows/build-ai-assistant-container.yml'
+      - '!ai-assistant-container/README.md'
   pull_request:
     branches: [main]
     paths:
       - 'ai-assistant-container/**'
       - '.github/workflows/build-ai-assistant-container.yml'
+      - '!ai-assistant-container/README.md'
   workflow_dispatch:
 
 env:
