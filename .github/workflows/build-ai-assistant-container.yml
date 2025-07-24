@@ -1,16 +1,16 @@
-name: Build and Publish Devcontainer
+name: Build and Publish AI Assistant Base Container
 
 on:
   push:
     branches: [main]
     paths:
       - 'ai-assistant-container/**'
-      - '.github/workflows/build-devcontainer.yml'
+      - '.github/workflows/build-ai-assistant-container.yml'
   pull_request:
     branches: [main]
     paths:
       - 'ai-assistant-container/**'
-      - '.github/workflows/build-devcontainer.yml'
+      - '.github/workflows/build-ai-assistant-container.yml'
   workflow_dispatch:
 
 env:
