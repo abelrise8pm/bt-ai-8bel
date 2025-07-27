@@ -23,9 +23,12 @@ RUN apt-get update && \
         ca-certificates \
         openssh-client \
         gnupg2 \
-        bzip2 && \
+        bzip2 \
+        libxcb1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# libxcb1: X11 client library required by Goose v1.1.4+ (GUI framework dependency)
 
 # Install Node.js v22.17.0 (pinned version)
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
@@ -47,7 +50,19 @@ RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
 # Set PATH environment variable for the container
 ENV PATH="/home/aiAssistant/.npm-global/bin:$PATH"
 
-
+# Install Goose v1.1.4 (AI-powered developer toolkit)
+# Goose provides AI-assisted development workflows and integrates with Claude
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ]; then \
+        GOOSE_ARCH="aarch64"; \
+    else \
+        GOOSE_ARCH="x86_64"; \
+    fi && \
+    curl -fsSL https://github.com/block/goose/releases/download/v1.1.4/goose-${GOOSE_ARCH}-unknown-linux-gnu.tar.bz2 -o /tmp/goose.tar.bz2 && \
+    tar -xjf /tmp/goose.tar.bz2 -C /tmp && \
+    mv /tmp/goose /usr/local/bin/goose && \
+    chmod +x /usr/local/bin/goose && \
+    rm -f /tmp/goose.tar.bz2
 
 USER aiAssistant
 

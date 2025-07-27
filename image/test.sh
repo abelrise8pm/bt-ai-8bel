@@ -60,6 +60,20 @@ GEMINI_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "gemini --v
 }
 echo "✅ Gemini CLI: $GEMINI_VERSION"
 
+echo "Testing Goose..."
+GOOSE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "goose --version" 2>&1) || {
+    echo "❌ ERROR: Goose not installed or not working: $GOOSE_VERSION"
+    exit 1
+}
+echo "✅ Goose: $GOOSE_VERSION"
+
+echo "Testing Goose help command..."
+GOOSE_HELP=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "goose --help" 2>&1) || {
+    echo "❌ ERROR: Goose help command failed: $GOOSE_HELP"
+    exit 1
+}
+echo "✅ Goose help command working"
+
 
 echo "Testing Git..."
 GIT_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "git --version" 2>&1)

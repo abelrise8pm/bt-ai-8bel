@@ -158,6 +158,9 @@ The test script automatically determines how to obtain the image:
 # Run with default settings (auto-detect runtime, build locally with test-migration tag)
 ./test.sh
 
+# If you are iterating with an AI assistant, copying to the paste buffer makes iteration faster:
+./test.sh | pbcopy
+
 # Run with specific runtime
 CONTAINER_RUNTIME=docker ./test.sh
 
