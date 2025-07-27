@@ -67,12 +67,12 @@ GOOSE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "goose --ver
 }
 echo "✅ Goose: $GOOSE_VERSION"
 
-echo "Testing Goose help command..."
-GOOSE_HELP=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "goose --help" 2>&1) || {
-    echo "❌ ERROR: Goose help command failed: $GOOSE_HELP"
+echo "Testing Goose configuration..."
+GOOSE_INFO=$($CONTAINER_RUNTIME run --rm --env-file ../.env $IMAGE_TAG /bin/bash -c "goose run -t 'Say hello'" 2>&1) || {
+    echo "❌ ERROR: Goose run command failed: $GOOSE_INFO"
     exit 1
 }
-echo "✅ Goose help command working"
+echo "✅ Goose run command working. Configuration file tested."
 
 
 echo "Testing Git..."

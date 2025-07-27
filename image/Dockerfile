@@ -64,6 +64,11 @@ RUN ARCH=$(dpkg --print-architecture) && \
     chmod +x /usr/local/bin/goose && \
     rm -f /tmp/goose.tar.bz2
 
+# Copy Goose configuration file and set up directories
+RUN mkdir -p /home/aiAssistant/.config/goose
+COPY goose-config.yaml /home/aiAssistant/.config/goose/config.yaml
+RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.config
+
 USER aiAssistant
 
 # Configure npm to use user directory for global packages and install there
