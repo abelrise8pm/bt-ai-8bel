@@ -84,6 +84,6 @@ USER aiAssistant
 # @google/gemini-cli@0.1.12: Google's CLI for Gemini AI models
 RUN npm config set prefix '~/.npm-global' && \
     npm install -g \
-    @anthropic-ai/claude-code@1.0.51 \
-    @google/gemini-cli@0.1.12 && \
+    @anthropic-ai/claude-code@1.0.61 \
+    @google/gemini-cli@0.1.14 && \
     npm cache clean --force
