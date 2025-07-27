@@ -18,7 +18,7 @@ The approach will be to incrementally add Goose back to the AI Assistant contain
 **Duration Estimate**: 1-2 hours
 **Dependencies**: None
 **Steps**:
-1. Add latest Goose installation to Dockerfile using the official curl installation script
+1. Add latest Goose installation to Dockerfile using the latest github release. Pin the version number.
 2. Document the Goose installation section with comments explaining its purpose
 3. Build container and test if Goose runs without additional dependencies
 4. If libxcb1 or other dependencies are needed, add them with clear documentation of why each is required
@@ -112,7 +112,7 @@ The approach will be to incrementally add Goose back to the AI Assistant contain
 
 **Comprehensive Testing Approach**:
 - **Unit Tests**: Individual tool version and functionality checks
-- **Integration Tests**: Tool interaction and configuration validation  
+- **Integration Tests**: Tool interaction and configuration validation
 - **Container Tests**: Full build-to-run workflow validation
 - **Regression Tests**: Ensure existing tools (Claude Code, Gemini CLI) remain functional
 - **Multi-Architecture Tests**: Validate on both ARM64 and AMD64 platforms
