@@ -51,26 +51,7 @@ The approach will be to incrementally add Goose back to the AI Assistant contain
 - Configuration follows latest Goose standards
 - File permissions allow aiAssistant user to read config
 
-### Milestone 3: Extend Test Suite for Goose
-**Goal**: Add comprehensive Goose testing to the existing test.sh framework
-**Duration Estimate**: 45-60 minutes
-**Dependencies**: Milestone 2 completed
-**Steps**:
-1. Add Goose version test following existing test patterns
-2. Add Goose configuration validation test
-3. Add Goose provider connectivity test (non-functional, just validates setup)
-4. Add test for Goose help command to ensure basic functionality
-5. Update test output formatting to match existing style
-6. Ensure all tests follow the existing error handling patterns
-
-**Exit Criteria**:
-- All Goose tests pass consistently
-- Test output follows existing formatting conventions
-- Error handling matches existing test patterns
-- Tests validate both installation and configuration
-- Test script maintains backward compatibility
-
-### Milestone 4: Documentation and Cleanup
+### Milestone 3: Documentation and Cleanup
 **Goal**: Update documentation and ensure clean implementation
 **Duration Estimate**: 30 minutes
 **Dependencies**: Milestone 3 completed
@@ -80,7 +61,7 @@ The approach will be to incrementally add Goose back to the AI Assistant contain
 3. Review Dockerfile for any cleanup opportunities
 4. Ensure consistent formatting and style
 5. Validate final container size impact
-6. Test complete build-to-run workflow
+6. Test complete build-to-run workflowCan we install goose after we switch to aiAssistant user in Dockerfile? Does this improve our security stance?
 
 **Exit Criteria**:
 - Dockerfile has clear documentation for all dependencies
@@ -111,11 +92,8 @@ The approach will be to incrementally add Goose back to the AI Assistant contain
 ## Testing Strategy
 
 **Comprehensive Testing Approach**:
-- **Unit Tests**: Individual tool version and functionality checks
-- **Integration Tests**: Tool interaction and configuration validation
-- **Container Tests**: Full build-to-run workflow validation
+- **Container Tests**: Full build-to-run workflow validation. Already present in test.sh.
 - **Regression Tests**: Ensure existing tools (Claude Code, Gemini CLI) remain functional
-- **Multi-Architecture Tests**: Validate on both ARM64 and AMD64 platforms
 - **Dependency Isolation Tests**: Verify each dependency's necessity through selective testing
 
 The testing strategy leverages the existing robust test.sh framework, extending it with Goose-specific validations while maintaining the same error handling patterns and output formatting conventions.
