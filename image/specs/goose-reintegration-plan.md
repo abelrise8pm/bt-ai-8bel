@@ -54,14 +54,22 @@ The approach will be to incrementally add Goose back to the AI Assistant contain
 ### Milestone 3: Documentation and Cleanup
 **Goal**: Update documentation and ensure clean implementation
 **Duration Estimate**: 30 minutes
-**Dependencies**: Milestone 3 completed
+**Dependencies**: Milestone 2 completed
 **Steps**:
 1. Add clear comments in Dockerfile explaining each dependency's purpose
 2. Verify all dependency comments specify which tool they support
 3. Review Dockerfile for any cleanup opportunities
 4. Ensure consistent formatting and style
-5. Validate final container size impact
-6. Test complete build-to-run workflowCan we install goose after we switch to aiAssistant user in Dockerfile? Does this improve our security stance?
+6. Test complete build-to-run workflow
+7. Add in functional tests for `claude` and `gemini` based on:
+```
+echo "Testing Goose configuration..."
+GOOSE_INFO=$($CONTAINER_RUNTIME run --rm --env-file ../.env $IMAGE_TAG /bin/bash -c "goose run -t 'Say hello'" 2>&1) || {
+    echo "❌ ERROR: Goose run command failed: $GOOSE_INFO"
+    exit 1
+}
+echo "✅ Goose run command working. Configuration file tested."
+```
 
 **Exit Criteria**:
 - Dockerfile has clear documentation for all dependencies

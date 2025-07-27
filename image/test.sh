@@ -74,6 +74,20 @@ GOOSE_INFO=$($CONTAINER_RUNTIME run --rm --env-file ../.env $IMAGE_TAG /bin/bash
 }
 echo "✅ Goose run command working. Configuration file tested."
 
+echo "Testing Claude Code functional integration..."
+CLAUDE_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm --env-file ../.env $IMAGE_TAG /bin/bash -c "claude -p 'Say hello'" 2>&1) || {
+    echo "❌ ERROR: Claude Code functional test failed: $CLAUDE_FUNCTIONAL"
+    exit 1
+}
+echo "✅ Claude Code functional integration working."
+
+echo "Testing Gemini CLI functional integration..."
+GEMINI_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm --env-file ../.env $IMAGE_TAG /bin/bash -c "gemini -p 'Say hello'" 2>&1) || {
+    echo "❌ ERROR: Gemini CLI functional test failed: $GEMINI_FUNCTIONAL"
+    exit 1
+}
+echo "✅ Gemini CLI functional integration working."
+
 
 echo "Testing Git..."
 GIT_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "git --version" 2>&1)

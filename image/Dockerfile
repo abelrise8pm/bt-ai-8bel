@@ -9,12 +9,12 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Set environment variables for SSL
+# Set SSL certificate environment variables for all tools
 ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
     NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
 
-# Install security-focused minimal utilities
+# Install security-focused minimal utilities and tool dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         git \
@@ -28,9 +28,17 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# libxcb1: X11 client library required by Goose v1.1.4+ (GUI framework dependency)
+# Dependencies explanation:
+# git: Version control system (Claude Code, Goose)
+# curl: HTTP client for downloads and API calls (Claude Code, Goose, system)
+# jq: JSON processor for CLI operations (Claude Code, Goose)
+# ca-certificates: SSL/TLS certificate bundle (all tools)
+# openssh-client: SSH client for git operations (Claude Code, Goose)
+# gnupg2: GPG cryptographic tools for verification (system security)
+# bzip2: Compression utility for Goose installation archive (Goose)
+# libxcb1: X11 client library required by Goose v1.1.4+ (Goose GUI framework dependency)
 
-# Install Node.js v22.17.0 (pinned version)
+# Install Node.js v22.17.0 (pinned version for Claude Code and Gemini CLI)
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs=22.17.0* && \
     apt-get clean && \
@@ -64,14 +72,16 @@ RUN ARCH=$(dpkg --print-architecture) && \
     chmod +x /usr/local/bin/goose && \
     rm -f /tmp/goose.tar.bz2
 
-# Copy Goose configuration file and set up directories
+# Set up Goose configuration
 RUN mkdir -p /home/aiAssistant/.config/goose
 COPY goose-config.yaml /home/aiAssistant/.config/goose/config.yaml
 RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.config
 
 USER aiAssistant
 
-# Configure npm to use user directory for global packages and install there
+# Install AI development tools via npm
+# @anthropic-ai/claude-code@1.0.51: Official Anthropic CLI for Claude AI assistant
+# @google/gemini-cli@0.1.12: Google's CLI for Gemini AI models
 RUN npm config set prefix '~/.npm-global' && \
     npm install -g \
     @anthropic-ai/claude-code@1.0.51 \
