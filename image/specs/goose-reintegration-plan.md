@@ -60,8 +60,8 @@ The approach will be to incrementally add Goose back to the AI Assistant contain
 2. Verify all dependency comments specify which tool they support
 3. Review Dockerfile for any cleanup opportunities
 4. Ensure consistent formatting and style
-6. Test complete build-to-run workflow
-7. Add in functional tests for `claude` and `gemini` based on:
+5. Test complete build-to-run workflow
+6. Add in functional tests for `claude` and `gemini` based on:
 ```
 echo "Testing Goose configuration..."
 GOOSE_INFO=$($CONTAINER_RUNTIME run --rm --env-file ../.env $IMAGE_TAG /bin/bash -c "goose run -t 'Say hello'" 2>&1) || {
