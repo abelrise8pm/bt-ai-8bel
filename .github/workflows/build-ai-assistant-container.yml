@@ -74,6 +74,9 @@ jobs:
 
       - name: Test container functionality
         id: test
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           cd ai-assistant-container
           # Test using the staging image (AMD64 variant on GitHub runners)
