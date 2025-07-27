@@ -100,7 +100,7 @@ your knowledge because tags can move to newer versions of a container.
 
 1. Remove existing base container builds from this directory.
 ```shell
-./clean.sh
+./scripts/clean.sh
 ```
 
 2. Build the base container using Podman
@@ -133,11 +133,11 @@ RUN npm install -g \
     npm cache clean --force
 ```
 
-3. Test the build locally with `./test.sh` before committing changes.
+3. Test the build locally with `./scripts/test.sh` before committing changes.
 
 ## Testing
 
-The container includes a test script (`test.sh`) that validates container functionality. The script uses smart detection to automatically handle different image sources and supports both Docker and Podman runtimes.
+The container includes a test script (`scripts/test.sh`) that validates container functionality. The script uses smart detection to automatically handle different image sources and supports both Docker and Podman runtimes.
 
 ### Smart Image Detection
 
@@ -167,22 +167,22 @@ The test script requires the following API keys to test AI assistant functionali
 
 ```shell
 # Run with default settings (auto-detect runtime, build locally with test-migration tag)
-./test.sh
+./scripts/test.sh
 
 # If you are iterating with an AI assistant, copying to the paste buffer makes iteration faster:
-./test.sh | pbcopy
+./scripts/test.sh | pbcopy
 
 # Run with specific runtime
-CONTAINER_RUNTIME=docker ./test.sh
+CONTAINER_RUNTIME=docker ./scripts/test.sh
 
 # Test a locally built image
-IMAGE_TAG=my-custom-tag ./test.sh
+IMAGE_TAG=my-custom-tag ./scripts/test.sh
 
 # Test a remote registry image (automatically pulls if not found locally)
-IMAGE_TAG=ghcr.io/rise8-us/xpai/ai-assistant-home:staging-abc123 ./test.sh
+IMAGE_TAG=ghcr.io/rise8-us/xpai/ai-assistant-home:staging-abc123 ./scripts/test.sh
 
 # Run with both custom runtime and tag
-CONTAINER_RUNTIME=docker IMAGE_TAG=my-custom-tag ./test.sh
+CONTAINER_RUNTIME=docker IMAGE_TAG=my-custom-tag ./scripts/test.sh
 ```
 
 ### CI/CD Integration
@@ -230,17 +230,17 @@ The easiest way to build and scan the container locally is using the provided sc
 
 ```shell
 # Build container and scan with default settings (CRITICAL,HIGH severity)
-./scan-locally.sh
+./scripts/scan-locally.sh
 
 # Scan with all severity levels
-SEVERITY=LOW,MEDIUM,HIGH,CRITICAL ./scan-locally.sh
+SEVERITY=LOW,MEDIUM,HIGH,CRITICAL ./scripts/scan-locally.sh
 
 # Output scan results in JSON format
-SCAN_FORMAT=json ./scan-locally.sh
+SCAN_FORMAT=json ./scripts/scan-locally.sh
 
 # Use specific container runtime
-CONTAINER_RUNTIME=docker ./scan-locally.sh
+CONTAINER_RUNTIME=docker ./scripts/scan-locally.sh
 
 # Combine multiple options
-SEVERITY=MEDIUM,HIGH,CRITICAL SCAN_FORMAT=json CONTAINER_RUNTIME=docker ./scan-locally.sh
+SEVERITY=MEDIUM,HIGH,CRITICAL SCAN_FORMAT=json CONTAINER_RUNTIME=docker ./scripts/scan-locally.sh
 ```
