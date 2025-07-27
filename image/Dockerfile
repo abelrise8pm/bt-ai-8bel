@@ -2,7 +2,7 @@
 FROM ubuntu:24.04@sha256:6633ff3b87e40bf09281277f1072458819e915da008095ebdcc76c921a3628a1
 
 # Copy certificate and install in single layer
-COPY zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
+COPY src/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
     update-ca-certificates && \
@@ -49,7 +49,7 @@ RUN useradd -m -s /bin/bash aiAssistant && \
     mkdir -p /home/aiAssistant/.claude /home/aiAssistant/.npm-global
 
 # Setup Claude Code initialization
-COPY claude_code_init.sh /home/aiAssistant/.claude/claude_code_init.sh
+COPY src/claude_code_init.sh /home/aiAssistant/.claude/claude_code_init.sh
 RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
     chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude /home/aiAssistant/.npm-global && \
     echo '[ -f ~/.claude.json ] || /home/aiAssistant/.claude/claude_code_init.sh' >> /home/aiAssistant/.bashrc && \
@@ -74,7 +74,7 @@ RUN ARCH=$(dpkg --print-architecture) && \
 
 # Set up Goose configuration
 RUN mkdir -p /home/aiAssistant/.config/goose
-COPY goose-config.yaml /home/aiAssistant/.config/goose/config.yaml
+COPY src/goose-config.yaml /home/aiAssistant/.config/goose/config.yaml
 RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.config
 
 USER aiAssistant
