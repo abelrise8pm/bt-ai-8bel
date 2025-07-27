@@ -212,25 +212,35 @@ These variables are automatically passed to the test container during the CI/CD 
 ## Security Scanning with Trivy
 
 This is useful when fixing security issues.
-See `.github/workflows/build-devcontainer.yml` for the
+See `.github/workflows/build-ai-assistant-container.yml` for the
 latest Trivy settings.
-
-To scan the container for vulnerabilities using Trivy:
 
 ### Install Trivy
 ```shell
 # macOS with Homebrew
 brew install trivy
+
+# Linux (Ubuntu/Debian example)
+sudo apt-get update && sudo apt-get install trivy
 ```
 
-### Scan Container Image
+### Automated Build and Scan Script
+
+The easiest way to build and scan the container locally is using the provided script:
+
 ```shell
-# Basic vulnerability scan (CRITICAL and HIGH severity)
-trivy image --cache-backend memory --severity CRITICAL,HIGH --format table localhost/ai-assistant-home:latest
+# Build container and scan with default settings (CRITICAL,HIGH severity)
+./scan-locally.sh
 
-# Full vulnerability scan
-trivy image --cache-backend memory --format table localhost/ai-assistant-home:latest
+# Scan with all severity levels
+SEVERITY=LOW,MEDIUM,HIGH,CRITICAL ./scan-locally.sh
 
-# Clear Trivy cache if needed
-trivy clean --all
+# Output scan results in JSON format
+SCAN_FORMAT=json ./scan-locally.sh
+
+# Use specific container runtime
+CONTAINER_RUNTIME=docker ./scan-locally.sh
+
+# Combine multiple options
+SEVERITY=MEDIUM,HIGH,CRITICAL SCAN_FORMAT=json CONTAINER_RUNTIME=docker ./scan-locally.sh
 ```
