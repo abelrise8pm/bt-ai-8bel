@@ -4,6 +4,67 @@
 
 set -e  # Exit on any error
 
+# Check for required environment variables
+check_env_vars() {
+    local missing_vars=()
+
+    echo "🔍 Checking required environment variables..."
+
+    # Check if variables are already set
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+        missing_vars+=("ANTHROPIC_API_KEY")
+    fi
+
+    if [[ -z "${GEMINI_API_KEY:-}" ]]; then
+        missing_vars+=("GEMINI_API_KEY")
+    fi
+
+    # If variables are missing, try to load from .env file
+    if [[ ${#missing_vars[@]} -gt 0 ]]; then
+        echo "⚠️  Some environment variables not found. Attempting to load from ../.env file..."
+
+        if [[ -f "../.env" ]]; then
+            echo "📁 Found ../.env file. Loading environment variables..."
+            # Source the .env file to load variables
+            set -a  # automatically export all variables
+            source ../.env
+            set +a  # turn off automatic export
+
+            # Re-check if variables are now set
+            missing_vars=()
+            if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+                missing_vars+=("ANTHROPIC_API_KEY")
+            fi
+
+            if [[ -z "${GEMINI_API_KEY:-}" ]]; then
+                missing_vars+=("GEMINI_API_KEY")
+            fi
+        fi
+
+        # If still missing after trying .env file, fail
+        if [[ ${#missing_vars[@]} -gt 0 ]]; then
+            echo "❌ ERROR: Missing required environment variables:"
+            for var in "${missing_vars[@]}"; do
+                echo "  - $var"
+            done
+            echo ""
+            echo "Please either:"
+            echo "  1. Set environment variables directly:"
+            echo "     export ANTHROPIC_API_KEY=your_anthropic_key_here"
+            echo "     export GEMINI_API_KEY=your_gemini_key_here"
+            echo "  2. Or create a ../.env file with these variables"
+            echo ""
+            echo "These are required for testing Claude Code, Goose, and Gemini CLI functionality."
+            exit 1
+        fi
+    fi
+
+    echo "✅ All required environment variables are set"
+}
+
+# Check environment variables before proceeding
+check_env_vars
+
 # Auto-detect container runtime or use environment variable
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-$(command -v podman > /dev/null && echo "podman" || echo "docker")}
 if ! command -v "$CONTAINER_RUNTIME" > /dev/null; then
@@ -68,21 +129,21 @@ GOOSE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "goose --ver
 echo "✅ Goose: $GOOSE_VERSION"
 
 echo "Testing Goose configuration..."
-GOOSE_INFO=$($CONTAINER_RUNTIME run --rm --env-file ../.env $IMAGE_TAG /bin/bash -c "goose run -t 'Say hello'" 2>&1) || {
+GOOSE_INFO=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "goose run -t 'Say hello'" 2>&1) || {
     echo "❌ ERROR: Goose run command failed: $GOOSE_INFO"
     exit 1
 }
 echo "✅ Goose run command working. Configuration file tested."
 
 echo "Testing Claude Code functional integration..."
-CLAUDE_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm --env-file ../.env $IMAGE_TAG /bin/bash -c "claude -p 'Say hello'" 2>&1) || {
+CLAUDE_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "claude -p 'Say hello'" 2>&1) || {
     echo "❌ ERROR: Claude Code functional test failed: $CLAUDE_FUNCTIONAL"
     exit 1
 }
 echo "✅ Claude Code functional integration working."
 
 echo "Testing Gemini CLI functional integration..."
-GEMINI_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm --env-file ../.env $IMAGE_TAG /bin/bash -c "gemini -p 'Say hello'" 2>&1) || {
+GEMINI_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm -e GEMINI_API_KEY="$GEMINI_API_KEY" $IMAGE_TAG /bin/bash -c "gemini -p 'Say hello'" 2>&1) || {
     echo "❌ ERROR: Gemini CLI functional test failed: $GEMINI_FUNCTIONAL"
     exit 1
 }

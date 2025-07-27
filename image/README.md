@@ -149,8 +149,19 @@ The test script automatically determines how to obtain the image:
 
 ### Environment Variables
 
+#### Test Script Configuration
 - `CONTAINER_RUNTIME`: Specify the container runtime to use (`docker` or `podman`). If not set, the script will auto-detect the available runtime, preferring Podman if available.
 - `IMAGE_TAG`: Specify the image tag to use for testing (defaults to `test-migration`).
+
+#### Required API Keys for Functional Testing
+The test script requires the following API keys to test AI assistant functionality:
+
+- `ANTHROPIC_API_KEY`: Required for testing Claude Code and Goose functionality
+- `GEMINI_API_KEY`: Required for testing Gemini CLI functionality
+
+**For Local Development**: The test script will automatically attempt to load these from `../.env` if not found in the environment.
+
+**For CI/CD**: These must be set as GitHub repository secrets and will be passed as environment variables to the test container.
 
 ### Running Tests Locally
 
@@ -188,6 +199,15 @@ Build Staging → Test → Scan → Promote to Production
 4. **Promote**: Only after successful tests and scans, staging image is promoted to production tags
 
 This prevents registry pollution by ensuring only tested and scanned images reach production tags. The smart detection in `test.sh` automatically handles pulling the staging image from the registry during CI/CD runs.
+
+#### Required Environment Variables for CI
+
+For the functional tests to pass in CI/CD pipelines, the following environment variables must be set as GitHub repository secrets:
+
+- `ANTHROPIC_API_KEY`: Required for testing Claude Code and Goose functionality
+- `GEMINI_API_KEY`: Required for testing Gemini CLI functionality
+
+These variables are automatically passed to the test container during the CI/CD pipeline. The test script will first check for these environment variables, and if not found, attempt to load them from a local `.env` file (for local development).
 
 ## Security Scanning with Trivy
 
