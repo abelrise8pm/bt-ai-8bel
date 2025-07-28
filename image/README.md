@@ -100,7 +100,7 @@ your knowledge because tags can move to newer versions of a container.
 
 1. Remove existing base container builds from this directory.
 ```shell
-./clean.sh
+./scripts/clean.sh
 ```
 
 2. Build the base container using Podman
@@ -133,11 +133,11 @@ RUN npm install -g \
     npm cache clean --force
 ```
 
-3. Test the build locally with `./test.sh` before committing changes.
+3. Test the build locally with `./scripts/test.sh` before committing changes.
 
 ## Testing
 
-The container includes a test script (`test.sh`) that validates container functionality. The script uses smart detection to automatically handle different image sources and supports both Docker and Podman runtimes.
+The container includes a test script (`scripts/test.sh`) that validates container functionality. The script uses smart detection to automatically handle different image sources and supports both Docker and Podman runtimes.
 
 ### Smart Image Detection
 
@@ -149,26 +149,40 @@ The test script automatically determines how to obtain the image:
 
 ### Environment Variables
 
+#### Test Script Configuration
 - `CONTAINER_RUNTIME`: Specify the container runtime to use (`docker` or `podman`). If not set, the script will auto-detect the available runtime, preferring Podman if available.
 - `IMAGE_TAG`: Specify the image tag to use for testing (defaults to `test-migration`).
+
+#### Required API Keys for Functional Testing
+The test script requires the following API keys to test AI assistant functionality:
+
+- `ANTHROPIC_API_KEY`: Required for testing Claude Code and Goose functionality
+- `GEMINI_API_KEY`: Required for testing Gemini CLI functionality
+
+**For Local Development**: The test script will automatically attempt to load these from `../.env` if not found in the environment.
+
+**For CI/CD**: These must be set as GitHub repository secrets and will be passed as environment variables to the test container.
 
 ### Running Tests Locally
 
 ```shell
 # Run with default settings (auto-detect runtime, build locally with test-migration tag)
-./test.sh
+./scripts/test.sh
+
+# If you are iterating with an AI assistant, copying to the paste buffer makes iteration faster:
+./scripts/test.sh | pbcopy
 
 # Run with specific runtime
-CONTAINER_RUNTIME=docker ./test.sh
+CONTAINER_RUNTIME=docker ./scripts/test.sh
 
 # Test a locally built image
-IMAGE_TAG=my-custom-tag ./test.sh
+IMAGE_TAG=my-custom-tag ./scripts/test.sh
 
 # Test a remote registry image (automatically pulls if not found locally)
-IMAGE_TAG=ghcr.io/rise8-us/xpai/ai-assistant-home:staging-abc123 ./test.sh
+IMAGE_TAG=ghcr.io/rise8-us/xpai/ai-assistant-home:staging-abc123 ./scripts/test.sh
 
 # Run with both custom runtime and tag
-CONTAINER_RUNTIME=docker IMAGE_TAG=my-custom-tag ./test.sh
+CONTAINER_RUNTIME=docker IMAGE_TAG=my-custom-tag ./scripts/test.sh
 ```
 
 ### CI/CD Integration
@@ -186,28 +200,47 @@ Build Staging → Test → Scan → Promote to Production
 
 This prevents registry pollution by ensuring only tested and scanned images reach production tags. The smart detection in `test.sh` automatically handles pulling the staging image from the registry during CI/CD runs.
 
+#### Required Environment Variables for CI
+
+For the functional tests to pass in CI/CD pipelines, the following environment variables must be set as GitHub repository secrets:
+
+- `ANTHROPIC_API_KEY`: Required for testing Claude Code and Goose functionality
+- `GEMINI_API_KEY`: Required for testing Gemini CLI functionality
+
+These variables are automatically passed to the test container during the CI/CD pipeline. The test script will first check for these environment variables, and if not found, attempt to load them from a local `.env` file (for local development).
+
 ## Security Scanning with Trivy
 
 This is useful when fixing security issues.
-See `.github/workflows/build-devcontainer.yml` for the
+See `.github/workflows/build-ai-assistant-container.yml` for the
 latest Trivy settings.
-
-To scan the container for vulnerabilities using Trivy:
 
 ### Install Trivy
 ```shell
 # macOS with Homebrew
 brew install trivy
+
+# Linux (Ubuntu/Debian example)
+sudo apt-get update && sudo apt-get install trivy
 ```
 
-### Scan Container Image
+### Automated Build and Scan Script
+
+The easiest way to build and scan the container locally is using the provided script:
+
 ```shell
-# Basic vulnerability scan (CRITICAL and HIGH severity)
-trivy image --cache-backend memory --severity CRITICAL,HIGH --format table localhost/ai-assistant-home:latest
+# Build container and scan with default settings (CRITICAL,HIGH severity)
+./scripts/scan-locally.sh
 
-# Full vulnerability scan
-trivy image --cache-backend memory --format table localhost/ai-assistant-home:latest
+# Scan with all severity levels
+SEVERITY=LOW,MEDIUM,HIGH,CRITICAL ./scripts/scan-locally.sh
 
-# Clear Trivy cache if needed
-trivy clean --all
+# Output scan results in JSON format
+SCAN_FORMAT=json ./scripts/scan-locally.sh
+
+# Use specific container runtime
+CONTAINER_RUNTIME=docker ./scripts/scan-locally.sh
+
+# Combine multiple options
+SEVERITY=MEDIUM,HIGH,CRITICAL SCAN_FORMAT=json CONTAINER_RUNTIME=docker ./scripts/scan-locally.sh
 ```

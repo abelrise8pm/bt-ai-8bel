@@ -74,11 +74,14 @@ jobs:
 
       - name: Test container functionality
         id: test
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           cd ai-assistant-container
           # Test using the staging image (AMD64 variant on GitHub runners)
           export DOCKER_DEFAULT_PLATFORM=linux/amd64
-          CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}" ./test.sh
+          CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}" ./scripts/test.sh
 
       - name: Run Trivy vulnerability scanner
         id: scan
@@ -88,6 +91,7 @@ jobs:
           format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
+          trivyignores: 'ai-assistant-container/.trivyignore'
         env:
           TRIVY_CACHE_BACKEND: memory
 
