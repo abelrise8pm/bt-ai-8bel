@@ -71,9 +71,9 @@ if ! command -v "$CONTAINER_RUNTIME" > /dev/null; then
     echo "❌ ERROR: Container runtime '$CONTAINER_RUNTIME' not found. Please install 'podman' or 'docker'."
     exit 1
 fi
-IMAGE_TAG=${IMAGE_TAG:-"test-migration"}
+IMAGE_TAG=${IMAGE_TAG:-"test-ai-assistant-container"}
 
-# Always delete existing test-migration image to ensure fresh build
+# Always delete existing test-ai-assistant-container image to ensure fresh build
 if $CONTAINER_RUNTIME image inspect $IMAGE_TAG >/dev/null 2>&1; then
     echo "🗑️ Deleting existing image: $IMAGE_TAG"
     $CONTAINER_RUNTIME rmi $IMAGE_TAG >/dev/null 2>&1 || true
@@ -88,8 +88,8 @@ if [[ "$IMAGE_TAG" =~ ^[^/]+\.[^/]+/.* ]]; then
     fi
     echo "✅ Remote image pulled successfully"
 else
-    echo "🔨 Building container locally with $CONTAINER_RUNTIME..."
-    if ! $CONTAINER_RUNTIME build -t $IMAGE_TAG . 2>&1; then
+    echo "🔨 Building $IMAGE_TAG container locally with $CONTAINER_RUNTIME..."
+    if ! $CONTAINER_RUNTIME build --no-cache -t $IMAGE_TAG . 2>&1; then
         echo "❌ ERROR: Container build failed"
         exit 1
     fi

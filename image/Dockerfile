@@ -41,6 +41,7 @@ RUN apt-get update && \
 # Install Node.js v22.17.0 (pinned version for Claude Code and Gemini CLI)
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs=22.17.0* && \
+    rm -f /etc/apt/sources.list.d/nodesource.list && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
