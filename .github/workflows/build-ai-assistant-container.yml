@@ -112,10 +112,32 @@ jobs:
               --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           fi
 
-      - name: Clean up staging image
+      - name: Clean up old images
         if: always()
         run: |
-          # Clean up staging image after promotion or failure
-          # Note: This requires appropriate GitHub token permissions
-          echo "Staging image cleanup would happen here"
-          # gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/staging-${{ github.sha }} || true
+          # Clean up staging image and old package versions
+          echo "Cleaning up staging image..."
+          gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/staging-${{ github.sha }} || echo "Staging image cleanup failed or already removed"
+          
+          # Clean up old SHA-tagged versions (keep only latest and current SHA)
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "Cleaning up old SHA-tagged versions..."
+            KEEP_LATEST_SHA_COUNT=5
+            # Get all package versions and remove old ones (keep latest N SHA versions)
+            gh api /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions \
+              --jq '
+                .[]
+                | select(
+                    # Select versions with SHA prefix tags like "sha-abc123"
+                    (.metadata.container.tags[] | test("^sha-"))
+                    or
+                    # Select versions with 40-character hash tags
+                    (.metadata.container.tags[] | test("^[a-f0-9]{40}$"))
+                  )
+                # Exclude versions tagged as "latest"
+                | select(.metadata.container.tags[] != "latest")
+                | .id
+              ' \
+              | tail -n +$((KEEP_LATEST_SHA_COUNT + 1)) \
+              | xargs -I {} gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/{} || echo "Old version cleanup finished (some deletions may have failed)"
+          fi
