@@ -19,15 +19,19 @@ check_env_vars() {
         missing_vars+=("GEMINI_API_KEY")
     fi
 
+    if [[ -z "${GITHUB_PACKAGE_READ_TOKEN:-}" ]]; then
+        missing_vars+=("GITHUB_PACKAGE_READ_TOKEN")
+    fi
+
     # If variables are missing, try to load from .env file
     if [[ ${#missing_vars[@]} -gt 0 ]]; then
-        echo "⚠️  Some environment variables not found. Attempting to load from ../.env file..."
+        echo "⚠️  Some environment variables not found. Attempting to load from .env file..."
 
-        if [[ -f "../.env" ]]; then
-            echo "📁 Found ../.env file. Loading environment variables..."
+        if [[ -f ".env" ]]; then
+            echo "📁 Found .env file. Loading environment variables..."
             # Source the .env file to load variables
             set -a  # automatically export all variables
-            source ../.env
+            source .env
             set +a  # turn off automatic export
 
             # Re-check if variables are now set
@@ -38,6 +42,10 @@ check_env_vars() {
 
             if [[ -z "${GEMINI_API_KEY:-}" ]]; then
                 missing_vars+=("GEMINI_API_KEY")
+            fi
+
+            if [[ -z "${GITHUB_PACKAGE_READ_TOKEN:-}" ]]; then
+                missing_vars+=("GITHUB_PACKAGE_READ_TOKEN")
             fi
         fi
 
@@ -52,9 +60,14 @@ check_env_vars() {
             echo "  1. Set environment variables directly:"
             echo "     export ANTHROPIC_API_KEY=your_anthropic_key_here"
             echo "     export GEMINI_API_KEY=your_gemini_key_here"
-            echo "  2. Or create a ../.env file with these variables"
+            echo "     export GITHUB_PACKAGE_READ_TOKEN=your_github_token_here"
+            echo "  2. Or create a .env file with these variables"
             echo ""
             echo "These are required for testing Claude Code, Goose, and Gemini CLI functionality."
+            echo ""
+            echo "For GITHUB_PACKAGE_READ_TOKEN: This token needs 'read:packages' permission"
+            echo "to access @rise8-us/dev-commands-mcp-server from GitHub Packages."
+            echo "See: /workspaces/XPai/mcp/dev-commands/README.md#authentication-for-github-packages"
             exit 1
         fi
     fi
@@ -89,10 +102,20 @@ if [[ "$IMAGE_TAG" =~ ^[^/]+\.[^/]+/.* ]]; then
     echo "✅ Remote image pulled successfully"
 else
     echo "🔨 Building $IMAGE_TAG container locally with $CONTAINER_RUNTIME..."
-    if ! $CONTAINER_RUNTIME build --no-cache -t $IMAGE_TAG . 2>&1; then
+
+    # Create a temporary file for the GitHub token (more compatible with both Docker and Podman)
+    TOKEN_FILE=$(mktemp)
+    echo "$GITHUB_PACKAGE_READ_TOKEN" > "$TOKEN_FILE"
+
+    # Use BuildKit secrets to pass the GitHub token securely
+    if ! $CONTAINER_RUNTIME build --no-cache --secret id=github_token,src="$TOKEN_FILE" -t $IMAGE_TAG . 2>&1; then
+        rm -f "$TOKEN_FILE"
         echo "❌ ERROR: Container build failed"
         exit 1
     fi
+
+    # Clean up the temporary file
+    rm -f "$TOKEN_FILE"
     echo "✅ Container build successful"
 fi
 
@@ -182,6 +205,16 @@ if [[ "$USER_CHECK" != "aiAssistant" ]]; then
 fi
 echo "✅ User: $USER_CHECK"
 
+echo "Testing security: .npmrc credentials not persisted..."
+NPMRC_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.npmrc 2>/dev/null || echo 'file not found'" 2>&1)
+if [[ "$NPMRC_CHECK" != "file not found" ]]; then
+    echo "❌ ERROR: Security issue - .npmrc file with GitHub token still present in container:"
+    echo "$NPMRC_CHECK"
+    echo "This could leak the GITHUB_PACKAGE_READ_TOKEN. The Dockerfile should remove .npmrc after npm install."
+    exit 1
+fi
+echo "✅ Security: .npmrc credentials properly cleaned up"
+
 echo "Testing Claude Code init script..."
 CLAUDE_INIT_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.claude/claude_code_init.sh" 2>&1)
 if [[ $? -ne 0 ]]; then
@@ -189,6 +222,41 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 echo "✅ Claude init script present"
+
+echo "Testing MCP dev-commands server installation..."
+MCP_SERVER_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.npm-global/lib/node_modules/@rise8-us/dev-commands-mcp-server/dist/index.js" 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo "❌ ERROR: MCP dev-commands server not found at expected path: $MCP_SERVER_CHECK"
+    exit 1
+fi
+echo "✅ MCP dev-commands server installed"
+
+echo "Testing Claude Code MCP auto-configuration..."
+MCP_CONFIG_TEST=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "
+    # Run the initialization script to configure MCP
+    ~/.claude/claude_code_init.sh > /dev/null 2>&1
+    # Check if MCP server is registered
+    claude mcp list | grep -q 'dev-commands' && echo 'MCP_CONFIGURED' || echo 'MCP_NOT_CONFIGURED'
+" 2>&1)
+
+if [[ "$MCP_CONFIG_TEST" != "MCP_CONFIGURED" ]]; then
+    echo "❌ ERROR: MCP dev-commands server not automatically configured: $MCP_CONFIG_TEST"
+    exit 1
+fi
+echo "✅ Claude Code MCP auto-configuration working"
+
+echo "Testing MCP server communication..."
+MCP_COMMUNICATION_TEST=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "
+    ~/.claude/claude_code_init.sh > /dev/null 2>&1
+    # Test if Claude can list MCP prompts (should not fail)
+    timeout 30 claude mcp get dev-commands > /dev/null 2>&1 && echo 'MCP_COMMUNICATION_OK' || echo 'MCP_COMMUNICATION_FAILED'
+" 2>&1)
+
+if [[ "$MCP_COMMUNICATION_TEST" != "MCP_COMMUNICATION_OK" ]]; then
+    echo "❌ ERROR: MCP server communication test failed: $MCP_COMMUNICATION_TEST"
+    exit 1
+fi
+echo "✅ MCP server communication working"
 
 echo "🎉 All tests passed! Container is ready."
 exit 0

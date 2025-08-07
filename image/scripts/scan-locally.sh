@@ -36,20 +36,64 @@ if ! command -v trivy > /dev/null; then
     exit 1
 fi
 
-# Clean existing builds
-echo "🧹 Cleaning existing builds..."
-if [[ -f "./clean.sh" ]]; then
-    ./clean.sh
-else
-    echo "⚠️  Warning: clean.sh not found, skipping cleanup"
-fi
+# Force fresh build (no cache) to ensure we scan the latest code
+echo "🧹 Forcing fresh build (no cache)..."
 
 # Build the container
 echo "🔨 Building container image: $IMAGE_TAG"
-if ! $CONTAINER_RUNTIME build -t "$IMAGE_TAG" .; then
+
+# Check if GITHUB_PACKAGE_READ_TOKEN is set (required for npm package installation)
+if [[ -z "$GITHUB_PACKAGE_READ_TOKEN" ]]; then
+    echo "⚠️  GITHUB_PACKAGE_READ_TOKEN not found. Attempting to load from .env file..."
+
+    if [[ -f ".env" ]]; then
+        echo "📁 Found .env file. Loading environment variables..."
+        # Source the .env file to load variables
+        set -a  # automatically export all variables
+        source .env
+        set +a  # turn off automatic export
+
+        # Re-check if variable is now set
+        if [[ -z "$GITHUB_PACKAGE_READ_TOKEN" ]]; then
+            echo "❌ ERROR: GITHUB_PACKAGE_READ_TOKEN still not found after loading .env file"
+            echo "  This token is needed to install private npm packages from GitHub Package Registry"
+            echo "  Please either:"
+            echo "  1. Set environment variable directly:"
+            echo "     export GITHUB_PACKAGE_READ_TOKEN=your_github_token"
+            echo "  2. Or add GITHUB_PACKAGE_READ_TOKEN to .env file"
+            echo ""
+            echo "For GITHUB_PACKAGE_READ_TOKEN: This token needs 'read:packages' permission"
+            echo "to access @rise8-us/dev-commands-mcp-server from GitHub Packages."
+            exit 1
+        fi
+        echo "✅ GITHUB_PACKAGE_READ_TOKEN loaded from .env file"
+    else
+        echo "❌ ERROR: GITHUB_PACKAGE_READ_TOKEN environment variable is required for building the container"
+        echo "  This token is needed to install private npm packages from GitHub Package Registry"
+        echo "  Please either:"
+        echo "  1. Set environment variable directly:"
+        echo "     export GITHUB_PACKAGE_READ_TOKEN=your_github_token"
+        echo "  2. Or create a .env file with this variable"
+        echo ""
+        echo "For GITHUB_PACKAGE_READ_TOKEN: This token needs 'read:packages' permission"
+        echo "to access @rise8-us/dev-commands-mcp-server from GitHub Packages."
+        exit 1
+    fi
+fi
+
+# Create a temporary file for the GitHub token (more compatible with both Docker and Podman)
+TOKEN_FILE=$(mktemp)
+echo "$GITHUB_PACKAGE_READ_TOKEN" > "$TOKEN_FILE"
+
+# Build with GitHub token as build secret using temporary file
+if ! $CONTAINER_RUNTIME build --no-cache --secret id=github_token,src="$TOKEN_FILE" -t "$IMAGE_TAG" .; then
+    rm -f "$TOKEN_FILE"
     echo "❌ ERROR: Container build failed"
     exit 1
 fi
+
+# Clean up the temporary file
+rm -f "$TOKEN_FILE"
 echo "✅ Container build successful"
 
 # Run security scan

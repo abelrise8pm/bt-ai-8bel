@@ -1,5 +1,12 @@
+# syntax=docker/dockerfile:1
 # Pinned Ubuntu 24.04 LTS for multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
 FROM ubuntu:24.04@sha256:6633ff3b87e40bf09281277f1072458819e915da008095ebdcc76c921a3628a1
+
+# Version definitions
+ARG CLAUDE_CODE_VERSION=1.0.69
+ARG GEMINI_CLI_VERSION=0.1.18
+ARG GOOSE_VERSION=1.2.0
+ARG MCP_DEV_COMMANDS_VERSION=0.0.1
 
 # Copy certificate and install in single layer
 COPY src/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
@@ -36,7 +43,7 @@ RUN apt-get update && \
 # openssh-client: SSH client for git operations (Claude Code, Goose)
 # gnupg2: GPG cryptographic tools for verification (system security)
 # bzip2: Compression utility for Goose installation archive (Goose)
-# libxcb1: X11 client library required by Goose v1.1.4+ (Goose GUI framework dependency)
+# libxcb1: X11 client library required by Goose (Goose GUI framework dependency)
 
 # Install Node.js v22.17.0 (pinned version for Claude Code and Gemini CLI)
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
@@ -59,7 +66,7 @@ RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
 # Set PATH environment variable for the container
 ENV PATH="/home/aiAssistant/.npm-global/bin:$PATH"
 
-# Install Goose v1.1.4 (AI-powered developer toolkit)
+# Install Goose (AI-powered developer toolkit)
 # Goose provides AI-assisted development workflows and integrates with Claude
 RUN ARCH=$(dpkg --print-architecture) && \
     if [ "$ARCH" = "arm64" ]; then \
@@ -67,7 +74,7 @@ RUN ARCH=$(dpkg --print-architecture) && \
     else \
         GOOSE_ARCH="x86_64"; \
     fi && \
-    curl -fsSL https://github.com/block/goose/releases/download/v1.1.4/goose-${GOOSE_ARCH}-unknown-linux-gnu.tar.bz2 -o /tmp/goose.tar.bz2 && \
+    curl -fsSL https://github.com/block/goose/releases/download/v${GOOSE_VERSION}/goose-${GOOSE_ARCH}-unknown-linux-gnu.tar.bz2 -o /tmp/goose.tar.bz2 && \
     tar -xjf /tmp/goose.tar.bz2 -C /tmp && \
     mv /tmp/goose /usr/local/bin/goose && \
     chmod +x /usr/local/bin/goose && \
@@ -76,15 +83,25 @@ RUN ARCH=$(dpkg --print-architecture) && \
 # Set up Goose configuration
 RUN mkdir -p /home/aiAssistant/.config/goose
 COPY src/goose-config.yaml /home/aiAssistant/.config/goose/config.yaml
-RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.config
+
+# Install AI development tools via npm using BuildKit secrets (as root to access secrets)
+# @anthropic-ai/claude-code: Official Anthropic CLI for Claude AI assistant
+# @google/gemini-cli: Google's CLI for Gemini AI models
+# @rise8-us/dev-commands-mcp-server: MCP server for structured development workflows
+RUN --mount=type=secret,id=github_token \
+    echo "@rise8-us:registry=https://npm.pkg.github.com" > /tmp/.npmrc && \
+    echo "//npm.pkg.github.com/:_authToken=$(cat /run/secrets/github_token)" >> /tmp/.npmrc && \
+    # Install packages globally to /home/aiAssistant/.npm-global
+    npm --userconfig=/tmp/.npmrc config set prefix /home/aiAssistant/.npm-global && \
+    npm --userconfig=/tmp/.npmrc install -g \
+        @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} \
+        @google/gemini-cli@${GEMINI_CLI_VERSION} \
+        @rise8-us/dev-commands-mcp-server@${MCP_DEV_COMMANDS_VERSION} && \
+    npm cache clean --force && \
+    # Clean up npm credentials
+    rm -f /tmp/.npmrc
+
+# Set proper ownership and switch to aiAssistant user
+RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.config /home/aiAssistant/.npm-global
 
 USER aiAssistant
-
-# Install AI development tools via npm
-# @anthropic-ai/claude-code@1.0.51: Official Anthropic CLI for Claude AI assistant
-# @google/gemini-cli@0.1.12: Google's CLI for Gemini AI models
-RUN npm config set prefix '~/.npm-global' && \
-    npm install -g \
-    @anthropic-ai/claude-code@1.0.61 \
-    @google/gemini-cli@0.1.14 && \
-    npm cache clean --force

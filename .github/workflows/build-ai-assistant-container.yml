@@ -73,6 +73,8 @@ jobs:
         with:
           context: ./ai-assistant-container
           file: ./ai-assistant-container/Dockerfile
+          secrets: |
+            github_token=${{ secrets.GITHUB_TOKEN }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/arm64,linux/amd64
@@ -85,6 +87,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_PACKAGE_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd ai-assistant-container
           # Test using the staging image (AMD64 variant on GitHub runners)

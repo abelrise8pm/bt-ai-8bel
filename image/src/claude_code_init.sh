@@ -78,22 +78,34 @@ claude config set --global autoUpdates false
 # - ideally you limit the read access to the .claude.json or ~/.claude with umask or similar
 #################################
 
-# claude code install doesn't give much output during install
-# therefore I pull the container typically seperate
-# docker pull mcp/puppeteer
+#################################
+# Configuring MCP dev-commands server
+# - uses direct node execution to avoid npm symlink issues
+# - implements error handling and graceful conflict resolution
+# - verifies successful registration
+#################################
 
-# example that generates the config into the MCP_JSON var
-# read -r -d '' MCP_JSON <<'EOF'
-# {
-#       "command": "docker",
-#       "args": ["run", "-i", "--rm", "--init", "-e", "DOCKER_CONTAINER=true", "mcp/puppeteer"]
-# }
-# EOF
+echo "Configuring MCP dev-commands server..."
 
-# then add it
-# claude mcp add-json puppeteer "$MCP_JSON"
-# listing the server
-# claude mcp list
+# Check if dev-commands server is already configured
+if claude mcp list 2>/dev/null | grep -q "dev-commands"; then
+    echo "MCP dev-commands server already configured, skipping..."
+else
+    # Generate MCP server configuration using direct node execution
+    # This avoids npm symlink issues as recommended in MCP documentation
+    read -r -d '' MCP_DEV_COMMANDS_JSON <<'EOF'
+{
+    "command": "node",
+    "args": ["/home/aiAssistant/.npm-global/lib/node_modules/@rise8-us/dev-commands-mcp-server/dist/index.js"]
+}
+EOF
+
+    # Register the MCP server with Claude Code
+    echo "Registering MCP dev-commands server..."
+    claude mcp add-json dev-commands "$MCP_DEV_COMMANDS_JSON" 2>/dev/null || {
+        echo "Warning: Failed to register MCP dev-commands server during init"
+    }
+fi
 
 #################################
 # Setting up permissions
