@@ -7,12 +7,20 @@ on:
       - 'ai-assistant-container/**'
       - '.github/workflows/build-ai-assistant-container.yml'
       - '!ai-assistant-container/README.md'
+      - '!**/notes/**'
+      - '!**/scripts/**'
+      - '!**/specs/**'
+      - '!**/stores/**'
   pull_request:
     branches: [main]
     paths:
       - 'ai-assistant-container/**'
       - '.github/workflows/build-ai-assistant-container.yml'
       - '!ai-assistant-container/README.md'
+      - '!**/notes/**'
+      - '!**/scripts/**'
+      - '!**/specs/**'
+      - '!**/stores/**'
   workflow_dispatch:
 
 env:
