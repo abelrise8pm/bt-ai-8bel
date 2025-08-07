@@ -123,32 +123,107 @@ jobs:
               --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           fi
 
-      - name: Clean up old images
-        if: always()
+      - name: Clean up container registry
+        if: steps.test.conclusion == 'success' && steps.scan.conclusion == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Clean up staging image and old package versions
-          echo "Cleaning up staging image..."
-          gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/staging-${{ github.sha }} || echo "Staging image cleanup failed or already removed"
-          
-          # Clean up old SHA-tagged versions (keep only latest and current SHA)
+          # Only run cleanup after successful promotion to avoid removing images during failed deployments
           if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "Cleaning up old SHA-tagged versions..."
-            KEEP_LATEST_SHA_COUNT=5
-            # Get all package versions and remove old ones (keep latest N SHA versions)
-            gh api /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions \
-              --jq '
-                .[]
-                | select(
-                    # Select versions with SHA prefix tags like "sha-abc123"
-                    (.metadata.container.tags[] | test("^sha-"))
-                    or
-                    # Select versions with 40-character hash tags
-                    (.metadata.container.tags[] | test("^[a-f0-9]{40}$"))
-                  )
-                # Exclude versions tagged as "latest"
-                | select(.metadata.container.tags[] != "latest")
+            echo "🧹 Starting container registry cleanup..."
+            
+            # Clean up staging image first
+            echo "🗑️ Cleaning up staging image..."
+            gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/staging-${{ github.sha }} || echo "⚠️ Staging image cleanup failed or already removed"
+            
+            # Get all package versions with metadata
+            echo "📦 Fetching all package versions..."
+            ALL_VERSIONS=$(gh api /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions --paginate)
+            
+            # Find promoted images (those with commit SHA tags but no staging/buildcache prefixes)
+            # Safeguard: Ensure we have valid JSON before processing
+            if ! echo "$ALL_VERSIONS" | jq empty 2>/dev/null; then
+              echo "❌ ERROR: Invalid JSON response from API, aborting cleanup"
+              exit 1
+            fi
+            
+            PROMOTED_VERSIONS=$(echo "$ALL_VERSIONS" | jq -r '
+              .[] 
+              | select(
+                  (.metadata.container.tags[]? // "") != "buildcache" and
+                  (.metadata.container.tags[]? // "") != "staging" and
+                  ((.metadata.container.tags[]? // "") | test("^staging-")) == false and
+                  ((.metadata.container.tags[]? // "") | test("^[a-f0-9]{40}$|^latest$"))
+                )
+              | {id: .id, created_at: .created_at, tags: .metadata.container.tags}
+            ' | jq -s '. | sort_by(.created_at) | reverse')
+            
+            # Keep only top 5 promoted images
+            KEEP_COUNT=5
+            PROMOTED_COUNT=$(echo "$PROMOTED_VERSIONS" | jq 'length')
+            echo "📊 Found $PROMOTED_COUNT promoted images, keeping latest $KEEP_COUNT"
+            
+            if [ "$PROMOTED_COUNT" -gt 0 ]; then
+              # Edge case: If we have fewer than KEEP_COUNT images, keep all of them
+              ACTUAL_KEEP_COUNT=$([ "$PROMOTED_COUNT" -lt "$KEEP_COUNT" ] && echo "$PROMOTED_COUNT" || echo "$KEEP_COUNT")
+              echo "📋 Keeping $ACTUAL_KEEP_COUNT promoted images"
+              
+              # Get IDs of images to keep (top N most recent)
+              KEEP_IDS=$(echo "$PROMOTED_VERSIONS" | jq -r ".[0:$ACTUAL_KEEP_COUNT] | .[].id")
+              
+              # Safeguard: Ensure we have at least one image to keep
+              if [ -z "$KEEP_IDS" ]; then
+                echo "❌ ERROR: No promoted images found to keep, aborting cleanup to prevent deleting all images"
+                exit 1
+              fi
+              
+              # Get the most recent promoted image ID for latest tag management
+              LATEST_ID=$(echo "$PROMOTED_VERSIONS" | jq -r '.[0].id')
+              LATEST_SHA=$(echo "$PROMOTED_VERSIONS" | jq -r '.[0].tags[] | select(test("^[a-f0-9]{40}$"))')
+              
+              # Safeguard: Ensure we have a valid SHA for the latest image
+              if [ -z "$LATEST_SHA" ]; then
+                echo "⚠️ WARNING: Could not find SHA tag for latest promoted image, skipping latest tag update"
+              else
+                echo "🏷️ Most recent promoted image: $LATEST_ID (SHA: $LATEST_SHA)"
+              fi
+              
+              # Remove all non-promoted images and old promoted images
+              echo "🗑️ Removing old and non-promoted images..."
+              DELETE_IDS=$(echo "$ALL_VERSIONS" | jq -r --argjson keep_ids "$(echo "$KEEP_IDS" | jq -R . | jq -s .)" '
+                .[] 
+                | select(.id as $id | $keep_ids | index($id) == null)
                 | .id
-              ' \
-              | tail -n +$((KEEP_LATEST_SHA_COUNT + 1)) \
-              | xargs -I {} gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/{} || echo "Old version cleanup finished (some deletions may have failed)"
+              ')
+              
+              # Safeguard: Show what will be deleted before proceeding
+              DELETE_COUNT=$(echo "$DELETE_IDS" | wc -l)
+              if [ -n "$DELETE_IDS" ] && [ "$DELETE_COUNT" -gt 0 ]; then
+                echo "🗑️ Will delete $DELETE_COUNT versions"
+                echo "$DELETE_IDS" | while read -r version_id; do
+                  if [ -n "$version_id" ]; then
+                    echo "🗑️ Deleting version: $version_id"
+                    gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/$version_id || echo "⚠️ Failed to delete version $version_id"
+                  fi
+                done
+              else
+                echo "ℹ️ No versions to delete"
+              fi
+              
+              # Ensure latest tag points to most recent promoted image
+              if [ -n "$LATEST_SHA" ]; then
+                echo "🏷️ Ensuring latest tag points to most recent promoted image ($LATEST_SHA)..."
+                docker buildx imagetools create \
+                  ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$LATEST_SHA \
+                  --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest || echo "⚠️ WARNING: Failed to update latest tag"
+              fi
+            else
+              echo "ℹ️ No promoted images found, skipping cleanup"
+            fi
+            
+            # Final verification
+            echo "✅ Final registry state:"
+            gh api /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions --jq '.[] | {id: .id, tags: .metadata.container.tags, created_at: .created_at}' | head -20
+          else
+            echo "ℹ️ Skipping cleanup - not a main branch push or tests/scan failed"
           fi
