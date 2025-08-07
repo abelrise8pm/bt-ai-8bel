@@ -6,7 +6,7 @@ FROM ubuntu:24.04@sha256:6633ff3b87e40bf09281277f1072458819e915da008095ebdcc76c9
 ARG CLAUDE_CODE_VERSION=1.0.69
 ARG GEMINI_CLI_VERSION=0.1.18
 ARG GOOSE_VERSION=1.2.0
-ARG MCP_DEV_COMMANDS_VERSION=0.0.1
+ARG MCP_DEV_COMMANDS_VERSION=1.0.1
 
 # Copy certificate and install in single layer
 COPY src/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
