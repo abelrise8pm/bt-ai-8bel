@@ -205,6 +205,48 @@ if [[ "$USER_CHECK" != "aiAssistant" ]]; then
 fi
 echo "✅ User: $USER_CHECK"
 
+echo "Testing OCI metadata labels for container provenance..."
+
+# Skip OCI metadata check for local builds (only check for remote registry images)
+if [[ "$IMAGE_TAG" =~ ^(ghcr\.io/|[^/]+\.[^/]+/) ]]; then
+    # Get image metadata in JSON format and check for required OCI labels
+    IMAGE_LABELS=$($CONTAINER_RUNTIME inspect $IMAGE_TAG --format='{{json .Config.Labels}}' 2>&1)
+    if [[ $? -ne 0 ]]; then
+        echo "❌ ERROR: Failed to inspect image labels: $IMAGE_LABELS"
+        exit 1
+    fi
+
+    # Check for required OCI metadata labels
+    REQUIRED_LABELS=("org.opencontainers.image.revision" "org.opencontainers.image.created" "org.opencontainers.image.source" "org.opencontainers.image.url")
+    MISSING_LABELS=()
+
+    for label in "${REQUIRED_LABELS[@]}"; do
+        if ! echo "$IMAGE_LABELS" | jq -e --arg label "$label" 'has($label)' >/dev/null 2>&1; then
+            MISSING_LABELS+=("$label")
+        fi
+    done
+
+    if [[ ${#MISSING_LABELS[@]} -gt 0 ]]; then
+        echo "❌ ERROR: Missing required OCI metadata labels:"
+        for label in "${MISSING_LABELS[@]}"; do
+            echo "  - $label"
+        done
+        echo ""
+        echo "Current labels:"
+        echo "$IMAGE_LABELS" | jq -r 'to_entries[] | "  \(.key): \(.value)"'
+        exit 1
+    fi
+
+    # Display the provenance metadata labels
+    echo "✅ OCI metadata labels present:"
+    for label in "${REQUIRED_LABELS[@]}"; do
+        VALUE=$(echo "$IMAGE_LABELS" | jq -r --arg label "$label" '.[$label] // "null"')
+        echo "  $label: $VALUE"
+    done
+else
+    echo "⏭️ Skipping OCI metadata label check for local build (labels are added by CI process)"
+fi
+
 echo "Testing security: .npmrc credentials not persisted..."
 NPMRC_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.npmrc 2>/dev/null || echo 'file not found'" 2>&1)
 if [[ "$NPMRC_CHECK" != "file not found" ]]; then
@@ -233,8 +275,6 @@ echo "✅ MCP dev-commands server installed"
 
 echo "Testing Claude Code MCP auto-configuration..."
 MCP_CONFIG_TEST=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "
-    # Run the initialization script to configure MCP
-    ~/.claude/claude_code_init.sh > /dev/null 2>&1
     # Check if MCP server is registered
     claude mcp list | grep -q 'dev-commands' && echo 'MCP_CONFIGURED' || echo 'MCP_NOT_CONFIGURED'
 " 2>&1)
@@ -247,7 +287,6 @@ echo "✅ Claude Code MCP auto-configuration working"
 
 echo "Testing MCP server communication..."
 MCP_COMMUNICATION_TEST=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "
-    ~/.claude/claude_code_init.sh > /dev/null 2>&1
     # Test if Claude can list MCP prompts (should not fail)
     timeout 30 claude mcp get dev-commands > /dev/null 2>&1 && echo 'MCP_COMMUNICATION_OK' || echo 'MCP_COMMUNICATION_FAILED'
 " 2>&1)

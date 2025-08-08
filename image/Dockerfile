@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # Pinned Ubuntu 24.04 LTS for multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
-FROM ubuntu:24.04@sha256:6633ff3b87e40bf09281277f1072458819e915da008095ebdcc76c921a3628a1
+FROM ubuntu:24.04@sha256:a08e551cb33850e4740772b38217fc1796a66da2506d312abe51acda354ff061
 
 # Version definitions
 ARG CLAUDE_CODE_VERSION=1.0.69
@@ -60,7 +60,6 @@ RUN useradd -m -s /bin/bash aiAssistant && \
 COPY src/claude_code_init.sh /home/aiAssistant/.claude/claude_code_init.sh
 RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
     chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude /home/aiAssistant/.npm-global && \
-    echo '[ -f ~/.claude.json ] || /home/aiAssistant/.claude/claude_code_init.sh' >> /home/aiAssistant/.bashrc && \
     echo 'export PATH=/home/aiAssistant/.npm-global/bin:$PATH' >> /home/aiAssistant/.bashrc
 
 # Set PATH environment variable for the container
@@ -105,3 +104,6 @@ RUN --mount=type=secret,id=github_token \
 RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.config /home/aiAssistant/.npm-global
 
 USER aiAssistant
+
+# Run Claude Code initialization at build time to configure MCP
+RUN /home/aiAssistant/.claude/claude_code_init.sh
