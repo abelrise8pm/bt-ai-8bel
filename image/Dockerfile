@@ -105,5 +105,12 @@ RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.config /home/aiAssistant
 
 USER aiAssistant
 
-# Run Claude Code initialization at build time to configure MCP
-RUN /home/aiAssistant/.claude/claude_code_init.sh
+# Set up first-login initialization for Claude Code
+# Note: We run this at first login rather than build time because the ANTHROPIC_API_KEY
+# environment variable is not available during the build process - it's only available
+# at runtime when the container starts. The initialization script needs this API key
+# to configure Claude Code's authentication and approve the API key for use.
+RUN echo '# Run Claude Code initialization once at first login' >> /home/aiAssistant/.bashrc && \
+    echo 'if [ ! -f ~/.claude_code_initialized ]; then' >> /home/aiAssistant/.bashrc && \
+    echo '  /home/aiAssistant/.claude/claude_code_init.sh && touch ~/.claude_code_initialized' >> /home/aiAssistant/.bashrc && \
+    echo 'fi' >> /home/aiAssistant/.bashrc
