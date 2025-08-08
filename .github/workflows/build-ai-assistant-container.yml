@@ -142,17 +142,7 @@ jobs:
               exit 0
             fi
 
-            # Clean up staging image first
-            echo "🗑️ Cleaning up staging image..."
-            STAGING_VERSION_ID=$(echo "$ALL_VERSIONS" | jq -r '.[] | select(.metadata.container.tags[]? == "staging-${{ github.sha }}") | .id' | head -1)
-            if [ -n "$STAGING_VERSION_ID" ] && [ "$STAGING_VERSION_ID" != "null" ]; then
-              echo "🗑️ Deleting staging image version: $STAGING_VERSION_ID"
-              gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$STAGING_VERSION_ID || echo "⚠️ Staging image cleanup failed"
-            else
-              echo "ℹ️ Staging image not found or already removed"
-            fi
-
-            # Find promoted images (those with commit SHA tags but no staging/buildcache prefixes)
+            # Find promoted images FIRST (those with commit SHA tags but no staging/buildcache prefixes)
             # Safeguard: Ensure we have valid JSON before processing
             if ! echo "$ALL_VERSIONS" | jq empty 2>/dev/null; then
               echo "❌ ERROR: Invalid JSON response from API, aborting cleanup"
@@ -165,7 +155,7 @@ jobs:
                   (.metadata.container.tags[]? // "") != "buildcache" and
                   (.metadata.container.tags[]? // "") != "staging" and
                   ((.metadata.container.tags[]? // "") | test("^staging-")) == false and
-                  ((.metadata.container.tags[]? // "") | test("^[a-f0-9]{40}$|^latest$"))
+                  ([.metadata.container.tags[]? // "" | test("^[a-f0-9]{40}$")] | any)
                 )
               | {id: .id, created_at: .created_at, tags: .metadata.container.tags}
             ' | jq -s '. | sort_by(.created_at) | reverse')
@@ -202,20 +192,42 @@ jobs:
 
               # Remove all non-promoted images and old promoted images
               echo "🗑️ Removing old and non-promoted images..."
-              DELETE_IDS=$(echo "$ALL_VERSIONS" | jq -r --argjson keep_ids "$(echo "$KEEP_IDS" | jq -R . | jq -s .)" '
+              # Get staging image ID to exclude it from deletions
+              STAGING_VERSION_ID=$(echo "$ALL_VERSIONS" | jq -r '.[] | select(.metadata.container.tags[]? == "staging-${{ github.sha }}") | .id' | head -1)
+
+              DELETE_IDS=$(echo "$ALL_VERSIONS" | jq -r --argjson keep_ids "$(echo "$KEEP_IDS" | jq -R . | jq -s .)" --arg staging_id "$STAGING_VERSION_ID" '
                 .[]
-                | select(.id as $id | $keep_ids | index($id) == null)
+                | select(
+                    (.id as $id | $keep_ids | index($id) == null) and
+                    (.id != $staging_id)
+                  )
                 | .id
               ')
 
+              # Clean up staging image separately FIRST
+              if [ -n "$STAGING_VERSION_ID" ] && [ "$STAGING_VERSION_ID" != "null" ]; then
+                echo "🗑️ Would clean up staging image: $STAGING_VERSION_ID"
+                echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$STAGING_VERSION_ID"
+              else
+                echo "ℹ️ No staging image to clean up"
+              fi
+
               # Safeguard: Show what will be deleted before proceeding
               DELETE_COUNT=$(echo "$DELETE_IDS" | wc -l)
+
+              # Critical safeguard: Don't delete more than 50 versions at once
+              if [ "$DELETE_COUNT" -gt 50 ]; then
+                echo "⚠️ WARNING: Attempted to delete $DELETE_COUNT versions (limit: 50)"
+                echo "ℹ️ This suggests a logic error. Aborting cleanup to prevent accidental mass deletion."
+                exit 1
+              fi
+
               if [ -n "$DELETE_IDS" ] && [ "$DELETE_COUNT" -gt 0 ]; then
-                echo "🗑️ Will delete $DELETE_COUNT versions"
+                echo "🗑️ Would delete $DELETE_COUNT versions"
                 echo "$DELETE_IDS" | while read -r version_id; do
                   if [ -n "$version_id" ]; then
-                    echo "🗑️ Deleting version: $version_id"
-                    gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$version_id || echo "⚠️ Failed to delete version $version_id"
+                    echo "🗑️ Would delete version: $version_id"
+                    echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$version_id"
                   fi
                 done
               else
