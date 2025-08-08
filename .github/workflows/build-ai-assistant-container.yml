@@ -133,24 +133,33 @@ jobs:
           # Only run cleanup after successful promotion to avoid removing images during failed deployments
           if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "🧹 Starting container registry cleanup..."
-            
+
+            # Get all package versions with metadata first
+            echo "📦 Fetching all package versions..."
+            if ! ALL_VERSIONS=$(gh api /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions --paginate 2>/dev/null); then
+              echo "⚠️ Package not found or API error, skipping cleanup"
+              exit 0
+            fi
+
             # Clean up staging image first
             echo "🗑️ Cleaning up staging image..."
-            gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/staging-${{ github.sha }} || echo "⚠️ Staging image cleanup failed or already removed"
-            
-            # Get all package versions with metadata
-            echo "📦 Fetching all package versions..."
-            ALL_VERSIONS=$(gh api /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions --paginate)
-            
+            STAGING_VERSION_ID=$(echo "$ALL_VERSIONS" | jq -r '.[] | select(.metadata.container.tags[]? == "staging-${{ github.sha }}") | .id' | head -1)
+            if [ -n "$STAGING_VERSION_ID" ] && [ "$STAGING_VERSION_ID" != "null" ]; then
+              echo "🗑️ Deleting staging image version: $STAGING_VERSION_ID"
+              gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/$STAGING_VERSION_ID || echo "⚠️ Staging image cleanup failed"
+            else
+              echo "ℹ️ Staging image not found or already removed"
+            fi
+
             # Find promoted images (those with commit SHA tags but no staging/buildcache prefixes)
             # Safeguard: Ensure we have valid JSON before processing
             if ! echo "$ALL_VERSIONS" | jq empty 2>/dev/null; then
               echo "❌ ERROR: Invalid JSON response from API, aborting cleanup"
               exit 1
             fi
-            
+
             PROMOTED_VERSIONS=$(echo "$ALL_VERSIONS" | jq -r '
-              .[] 
+              .[]
               | select(
                   (.metadata.container.tags[]? // "") != "buildcache" and
                   (.metadata.container.tags[]? // "") != "staging" and
@@ -159,45 +168,45 @@ jobs:
                 )
               | {id: .id, created_at: .created_at, tags: .metadata.container.tags}
             ' | jq -s '. | sort_by(.created_at) | reverse')
-            
+
             # Keep only top 5 promoted images
             KEEP_COUNT=5
             PROMOTED_COUNT=$(echo "$PROMOTED_VERSIONS" | jq 'length')
             echo "📊 Found $PROMOTED_COUNT promoted images, keeping latest $KEEP_COUNT"
-            
+
             if [ "$PROMOTED_COUNT" -gt 0 ]; then
               # Edge case: If we have fewer than KEEP_COUNT images, keep all of them
               ACTUAL_KEEP_COUNT=$([ "$PROMOTED_COUNT" -lt "$KEEP_COUNT" ] && echo "$PROMOTED_COUNT" || echo "$KEEP_COUNT")
               echo "📋 Keeping $ACTUAL_KEEP_COUNT promoted images"
-              
+
               # Get IDs of images to keep (top N most recent)
               KEEP_IDS=$(echo "$PROMOTED_VERSIONS" | jq -r ".[0:$ACTUAL_KEEP_COUNT] | .[].id")
-              
+
               # Safeguard: Ensure we have at least one image to keep
               if [ -z "$KEEP_IDS" ]; then
                 echo "❌ ERROR: No promoted images found to keep, aborting cleanup to prevent deleting all images"
                 exit 1
               fi
-              
+
               # Get the most recent promoted image ID for latest tag management
               LATEST_ID=$(echo "$PROMOTED_VERSIONS" | jq -r '.[0].id')
               LATEST_SHA=$(echo "$PROMOTED_VERSIONS" | jq -r '.[0].tags[] | select(test("^[a-f0-9]{40}$"))')
-              
+
               # Safeguard: Ensure we have a valid SHA for the latest image
               if [ -z "$LATEST_SHA" ]; then
                 echo "⚠️ WARNING: Could not find SHA tag for latest promoted image, skipping latest tag update"
               else
                 echo "🏷️ Most recent promoted image: $LATEST_ID (SHA: $LATEST_SHA)"
               fi
-              
+
               # Remove all non-promoted images and old promoted images
               echo "🗑️ Removing old and non-promoted images..."
               DELETE_IDS=$(echo "$ALL_VERSIONS" | jq -r --argjson keep_ids "$(echo "$KEEP_IDS" | jq -R . | jq -s .)" '
-                .[] 
+                .[]
                 | select(.id as $id | $keep_ids | index($id) == null)
                 | .id
               ')
-              
+
               # Safeguard: Show what will be deleted before proceeding
               DELETE_COUNT=$(echo "$DELETE_IDS" | wc -l)
               if [ -n "$DELETE_IDS" ] && [ "$DELETE_COUNT" -gt 0 ]; then
