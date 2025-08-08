@@ -16,7 +16,7 @@ Use the published image as your base in `.devcontainer/devcontainer.json`:
 
 ```json
 {
-  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:<current digest>",
+  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:<latest digest>",
   "features": {
     // Add any additional features your project needs
   },
@@ -28,8 +28,8 @@ Use the published image as your base in `.devcontainer/devcontainer.json`:
 ```
 
 To find the digest of the latest container:
-1. Visit https://github.com/rise8-us/XPai/pkgs/container/xpai%2Fai-assistant-home/481515837?tag=latest.
-2. Copy the digest text. ![latest image](docs/latest-image.png)
+1. Visit https://github.com/rise8-us/XPai/pkgs/container/xpai%2Fai-assistant-home/versions?filters%5Bversion_type%5D=tagged.
+2. Copy the digest text. ![digest](docs/digest.png)
 3. Replace current digest with new digest.
 
 ### 2. Create Your Project's Environment File
@@ -39,17 +39,7 @@ You can use `./.env.example` as a starting point.
 Or if you already have a `.env` file, you can add
 the necessary env vars there.
 
-### 3. Pin to Specific SHA
-
-**Important**: Always pin to a specific SHA digest rather than using tags like `latest` or `main`. This ensures your development environment remains consistent and prevents unexpected changes.
-
-To find the SHA for the latest version:
-1. Go to [GitHub Container Registry](https://github.com/rise8-us/XPai/pkgs/container/xpai%2Fai-assistant-home)
-2. Find the image you want to use
-3. Copy the SHA256 digest
-4. Use it in your devcontainer configuration as shown above
-
-### 4. Authentication Setup
+### 3. Authentication Setup
 
 If your project team encounters authentication issues with `ghcr.io`, follow these steps on your host machine:
 
@@ -70,20 +60,20 @@ If your project team encounters authentication issues with `ghcr.io`, follow the
   podman pull ghcr.io/rise8-us/xpai/ai-assistant-home:<sha>
   ```
 
-### 5. Available AI Assistants
+### 4. Available AI Assistants
 
 The container comes pre-installed with:
 - **Claude Code**: `claude-code` command for AI-powered development
 - **Gemini CLI**: `gemini` command for Google's AI assistant
 
-### 6. Best Practices
+### 5. Best Practices
 
 - Store your `.env` file locally and never commit it to version control
 - Pin to specific SHA digests for production deployments
 - Test your devcontainer configuration before distributing to your team
 - Follow Rise8's [AI-Generated Code Execution](https://delivery-playbooks.rise8.us/content/plays/engineering/ai-generated-code-execution/) playbook for safely using AI-generated code
 
-### 7. Known Issues
+### 6. Known Issues
 
 - Zscaler internet security may cause pulling issues. See [issue #210](https://github.com/rise8-us/XPai/issues/210) for workarounds.
 
