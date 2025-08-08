@@ -204,10 +204,15 @@ jobs:
                 | .id
               ')
 
-              # Clean up staging image separately FIRST
+              # Clean up staging image separately FIRST (only if it's not a promoted image)
               if [ -n "$STAGING_VERSION_ID" ] && [ "$STAGING_VERSION_ID" != "null" ]; then
-                echo "🗑️ Would clean up staging image: $STAGING_VERSION_ID"
-                echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$STAGING_VERSION_ID"
+                # Check if staging image is also in the keep list (promoted)
+                if echo "$KEEP_IDS" | grep -q "^$STAGING_VERSION_ID$"; then
+                  echo "ℹ️ Staging image $STAGING_VERSION_ID is promoted, keeping it"
+                else
+                  echo "🗑️ Would clean up staging image: $STAGING_VERSION_ID"
+                  echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$STAGING_VERSION_ID"
+                fi
               else
                 echo "ℹ️ No staging image to clean up"
               fi
