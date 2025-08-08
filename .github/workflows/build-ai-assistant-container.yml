@@ -136,7 +136,8 @@ jobs:
 
             # Get all package versions with metadata first
             echo "📦 Fetching all package versions..."
-            if ! ALL_VERSIONS=$(gh api /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions --paginate 2>/dev/null); then
+            PACKAGE_NAME=$(echo "${{ env.IMAGE_NAME }}" | sed 's|^${{ github.repository_owner }}/||' | sed 's|/|%2F|g')
+            if ! ALL_VERSIONS=$(gh api /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions --paginate 2>/dev/null); then
               echo "⚠️ Package not found or API error, skipping cleanup"
               exit 0
             fi
@@ -146,7 +147,7 @@ jobs:
             STAGING_VERSION_ID=$(echo "$ALL_VERSIONS" | jq -r '.[] | select(.metadata.container.tags[]? == "staging-${{ github.sha }}") | .id' | head -1)
             if [ -n "$STAGING_VERSION_ID" ] && [ "$STAGING_VERSION_ID" != "null" ]; then
               echo "🗑️ Deleting staging image version: $STAGING_VERSION_ID"
-              gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/$STAGING_VERSION_ID || echo "⚠️ Staging image cleanup failed"
+              gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$STAGING_VERSION_ID || echo "⚠️ Staging image cleanup failed"
             else
               echo "ℹ️ Staging image not found or already removed"
             fi
@@ -214,7 +215,7 @@ jobs:
                 echo "$DELETE_IDS" | while read -r version_id; do
                   if [ -n "$version_id" ]; then
                     echo "🗑️ Deleting version: $version_id"
-                    gh api --method DELETE /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions/$version_id || echo "⚠️ Failed to delete version $version_id"
+                    gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$version_id || echo "⚠️ Failed to delete version $version_id"
                   fi
                 done
               else
@@ -234,7 +235,7 @@ jobs:
 
             # Final verification
             echo "✅ Final registry state:"
-            gh api /user/packages/container/$(basename ${{ env.IMAGE_NAME }})/versions --jq '.[] | {id: .id, tags: .metadata.container.tags, created_at: .created_at}' | head -20
+            gh api /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions --jq '.[] | {id: .id, tags: .metadata.container.tags, created_at: .created_at}' | head -20
           else
             echo "ℹ️ Skipping cleanup - not a main branch push or tests/scan failed"
           fi
