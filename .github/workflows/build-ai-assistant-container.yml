@@ -192,8 +192,8 @@ jobs:
               DELETE_IDS=$(echo "$ALL_VERSIONS" | jq -r --argjson keep_ids "$(echo "$KEEP_IDS" | jq -R . | jq -s .)" --arg staging_id "$STAGING_VERSION_ID" '
                 .[]
                 | select(
-                    (.id as $id | $keep_ids | index($id) == null) and
-                    (.id != $staging_id)
+                    (.id as $id | $keep_ids | index(($id | tostring)) == null) and
+                    (.id != ($staging_id | tonumber))
                   )
                 | .id
               ')
