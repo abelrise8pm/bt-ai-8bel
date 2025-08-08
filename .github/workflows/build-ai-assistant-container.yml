@@ -4,25 +4,19 @@ on:
   push:
     branches: [main]
     paths:
-      - 'ai-assistant-container/**'
+      - 'ai-assistant-container/Dockerfile'
+      - 'ai-assistant-container/src/**'
+      - 'ai-assistant-container/scripts/test.sh'
+      - 'ai-assistant-container/.trivyignore'
       - '.github/workflows/build-ai-assistant-container.yml'
-      - '!ai-assistant-container/README.md'
-      - '!**/notes/**'
-      - '!**/scripts/**'
-      - '!**/specs/**'
-      - '!**/stores/**'
-      - '!**/docs/**'
   pull_request:
     branches: [main]
     paths:
-      - 'ai-assistant-container/**'
+      - 'ai-assistant-container/Dockerfile'
+      - 'ai-assistant-container/src/**'
+      - 'ai-assistant-container/scripts/test.sh'
+      - 'ai-assistant-container/.trivyignore'
       - '.github/workflows/build-ai-assistant-container.yml'
-      - '!ai-assistant-container/README.md'
-      - '!**/notes/**'
-      - '!**/scripts/**'
-      - '!**/specs/**'
-      - '!**/stores/**'
-      - '!**/docs/**'
   workflow_dispatch:
 
 env:
