@@ -16,7 +16,7 @@ Use the published image as your base in `.devcontainer/devcontainer.json`:
 
 ```json
 {
-  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home:<sha>",
+  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:<current digest>",
   "features": {
     // Add any additional features your project needs
   },
@@ -26,6 +26,11 @@ Use the published image as your base in `.devcontainer/devcontainer.json`:
   "remoteUser": "aiAssistant"
 }
 ```
+
+To find the digest of the latest container:
+1. Visit https://github.com/rise8-us/XPai/pkgs/container/xpai%2Fai-assistant-home/481515837?tag=latest.
+2. Copy the digest text. ![latest image](docs/latest-image.png)
+3. Replace current digest with new digest.
 
 ### 2. Create Your Project's Environment File
 
