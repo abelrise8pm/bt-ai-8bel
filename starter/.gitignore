@@ -1,0 +1,2 @@
+# Never commit .env files to source control
+.env
