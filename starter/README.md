@@ -1,6 +1,6 @@
 # AI Assistant Conatiner Project Starter Repository
 
-**NOTE: This repository is automatically synchronized from the `ai-assistant-container-starter-repo/` directory of the main XPai repository using Git subtree push.**
+**NOTE: This repository is automatically synchronized from the [`ai-assistant-container-starter-repo/` directory of the main XPai](https://github.com/rise8-us/XPai/tree/main/ai-assistant-container-starter-repo) repository using Git subtree push.**
 
 ## Important Notes
 
