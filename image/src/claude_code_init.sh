@@ -85,27 +85,32 @@ claude config set --global autoUpdates false
 # - verifies successful registration
 #################################
 
-echo "Configuring MCP dev-commands server..."
+# Registration does not seem to work whe devcontainers
+# so we will just manually register them for each project.
+# This seems like a better idea because it let's the projects
+# determine what MCP servers they want to use.
 
-# Check if dev-commands server is already configured
-if claude mcp list 2>/dev/null | grep -q "dev-commands"; then
-    echo "MCP dev-commands server already configured, skipping..."
-else
-    # Generate MCP server configuration using direct node execution
-    # This avoids npm symlink issues as recommended in MCP documentation
-    read -r -d '' MCP_DEV_COMMANDS_JSON <<'EOF'
-{
-    "command": "node",
-    "args": ["/home/aiAssistant/.npm-global/lib/node_modules/@rise8-us/dev-commands-mcp-server/dist/index.js"]
-}
-EOF
+# echo "Configuring MCP dev-commands server..."
 
-    # Register the MCP server with Claude Code
-    echo "Registering MCP dev-commands server..."
-    claude mcp add-json dev-commands "$MCP_DEV_COMMANDS_JSON" 2>/dev/null || {
-        echo "Warning: Failed to register MCP dev-commands server during init"
-    }
-fi
+# # Check if dev-commands server is already configured
+# if claude mcp list 2>/dev/null | grep -q "dev-commands"; then
+#     echo "MCP dev-commands server already configured, skipping..."
+# else
+#     # Generate MCP server configuration using direct node execution
+#     # This avoids npm symlink issues as recommended in MCP documentation
+#     read -r -d '' MCP_DEV_COMMANDS_JSON <<'EOF'
+# {
+#     "command": "node",
+#     "args": ["/home/aiAssistant/.npm-global/lib/node_modules/@rise8-us/dev-commands-mcp-server/dist/index.js"]
+# }
+# EOF
+
+#     # Register the MCP server with Claude Code
+#     echo "Registering MCP dev-commands server..."
+#     claude mcp add-json dev-commands "$MCP_DEV_COMMANDS_JSON" 2>/dev/null || {
+#         echo "Warning: Failed to register MCP dev-commands server during init"
+#     }
+# fi
 
 #################################
 # Setting up permissions

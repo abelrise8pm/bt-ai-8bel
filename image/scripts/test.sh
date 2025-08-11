@@ -273,29 +273,5 @@ if [[ $? -ne 0 ]]; then
 fi
 echo "✅ MCP dev-commands server installed"
 
-echo "Testing Claude Code MCP configuration after simulated first login..."
-MCP_CONFIG_TEST=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -l -i -c "
-    # -l -i flags simulate interactive login shell, properly triggering .bashrc initialization
-    claude mcp list | grep -q 'dev-commands' && echo 'MCP_CONFIGURED' || echo 'MCP_NOT_CONFIGURED'
-" 2>&1 | grep -v "cannot set terminal process group\|no job control in this shell" | tail -1)
-
-if [[ "$MCP_CONFIG_TEST" != "MCP_CONFIGURED" ]]; then
-    echo "❌ ERROR: MCP dev-commands server not automatically configured: $MCP_CONFIG_TEST"
-    exit 1
-fi
-echo "✅ Claude Code MCP configuration working after first login"
-
-echo "Testing MCP server communication..."
-MCP_COMMUNICATION_TEST=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -l -i -c "
-    # Test if Claude can list MCP prompts (should not fail) - using interactive login shell to ensure initialization
-    timeout 30 claude mcp get dev-commands > /dev/null 2>&1 && echo 'MCP_COMMUNICATION_OK' || echo 'MCP_COMMUNICATION_FAILED'
-" 2>&1 | grep -v "cannot set terminal process group\|no job control in this shell" | tail -1)
-
-if [[ "$MCP_COMMUNICATION_TEST" != "MCP_COMMUNICATION_OK" ]]; then
-    echo "❌ ERROR: MCP server communication test failed: $MCP_COMMUNICATION_TEST"
-    exit 1
-fi
-echo "✅ MCP server communication working"
-
 echo "🎉 All tests passed! Container is ready."
 exit 0

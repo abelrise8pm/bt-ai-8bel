@@ -66,14 +66,22 @@ The container comes pre-installed with:
 - **Claude Code**: `claude-code` command for AI-powered development
 - **Gemini CLI**: `gemini` command for Google's AI assistant
 
-### 5. Best Practices
+### 5. Available MCP servers
+
+#### [Dev Commands](https://github.com/rise8-us/XPai/blob/main/mcp/dev-commands/README.md)
+
+Installed in `/home/aiAssistant/.npm-global/lib/node_modules/@rise8-us/dev-commands-mcp-server/dist/index.js`.
+
+See dev commands README.md for installation instructions.
+
+### 6. Best Practices
 
 - Store your `.env` file locally and never commit it to version control
 - Pin to specific SHA digests for production deployments
 - Test your devcontainer configuration before distributing to your team
 - Follow Rise8's [AI-Generated Code Execution](https://delivery-playbooks.rise8.us/content/plays/engineering/ai-generated-code-execution/) playbook for safely using AI-generated code
 
-### 6. Known Issues
+### 7. Known Issues
 
 - Zscaler internet security may cause pulling issues. See [issue #210](https://github.com/rise8-us/XPai/issues/210) for workarounds.
 
@@ -105,7 +113,7 @@ podman build -t localhost/ai-assistant-home:latest .
 
 3. Run the container
 ```shell
-podman run --env-file ../.env -it localhost/ai-assistant-home:latest /bin/bash
+podman run --env-file .env -it localhost/ai-assistant-home:latest /bin/bash
 ```
 
 ## Updating Package Versions
