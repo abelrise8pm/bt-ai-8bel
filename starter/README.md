@@ -25,6 +25,8 @@ This starter repository provides everything you need to quickly set up an AI ass
 | `DEVELOPMENT.md` | Documentation explaining the synchronization process from the main XPai repository and how to make changes to this starter repository |
 | `README.md` | This file - provides setup instructions, troubleshooting guides, and usage information for the AI assistant container environment |
 
+For more details about the container itself, check out https://github.com/rise8-us/XPai/tree/main/ai-assistant-container.
+
 ## Container versions
 
 To find the digest of the latest container:
