@@ -1,5 +1,5 @@
 {
-  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:a9d2e34e40cb6d9c965f4494b59dce4576dcb3836c33c5174919b2d83852e998",
+  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:0674e6ac45d6dd58de1e9b52520a325d8f6ea31c7a9ffc889cc71fe712de674d",
   "postCreateCommand": "echo 'Container ready with AI assistants pre-installed'",
   // This works if you aren't going to use GitHub Codespaces
   // "runArgs": ["--env-file",".env"],
