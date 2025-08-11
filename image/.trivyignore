@@ -4,28 +4,35 @@
 
 # CVE-2025-30204 - golang-jwt/jwt excessive memory allocation during header parsing
 # Affects: github.com/golang-jwt/jwt v3.2.2+incompatible and github.com/golang-jwt/jwt/v4 v4.5.1
-# Reason: Goose is a Rust application, Go binaries appear to be dependencies/embedded tools
-# Risk: Needs validation with Goose team - see GitHub issue for follow-up
+# Reason: Goose is a Rust application, Go binaries are embedded dependencies
+# Risk: Validated as false positive by Goose team - see https://github.com/block/goose/issues/3681
 CVE-2025-30204
 
 # CVE-2025-22869 - golang.org/x/crypto/ssh denial of service in key exchange
 # Affects: golang.org/x/crypto v0.33.0
-# Reason: Goose is a Rust application, Go binaries appear to be dependencies/embedded tools
-# Risk: Needs validation with Goose team - see GitHub issue for follow-up
+# Reason: Goose is a Rust application, Go binaries are embedded dependencies
+# Risk: Validated as false positive by Goose team - see https://github.com/block/goose/issues/3681
 CVE-2025-22869
 
 # CVE-2025-22868 - golang.org/x/oauth2/jws unexpected memory consumption during token parsing
 # Affects: golang.org/x/oauth2 v0.26.0
-# Reason: Goose is a Rust application, Go binaries appear to be dependencies/embedded tools
-# Risk: Needs validation with Goose team - see GitHub issue for follow-up
+# Reason: Goose is a Rust application, Go binaries are embedded dependencies
+# Risk: Validated as false positive by Goose team - see https://github.com/block/goose/issues/3681
 CVE-2025-22868
 
 # CVE-2024-34156 - encoding/gob golang calling Decoder.Decode on deeply nested structures
 # Affects: stdlib v1.23.0 (status: fixed in 1.22.7, 1.23.1)
 # Reason: Goose is a Rust application, Go binaries appear to be dependencies/embedded tools
-# Risk: Needs validation with Goose team - see GitHub issue for follow-up
+# Risk: Validated as false positive by Goose team - see https://github.com/block/goose/issues/3681
 CVE-2024-34156
 
+# CVE-2025-47907 - Go stdlib query cancellation issue
+# Affects: stdlib v1.23.0 and v1.23.2 in Goose binaries
+# Reason: Goose is a Rust application, Go binaries are embedded dependencies
+# Risk: Validated as false positive by Goose team - see https://github.com/block/goose/issues/3681
+CVE-2025-47907
+
 # Note: This ignore file should be reviewed quarterly and updated as packages are upgraded
-# These CVEs relate to Go dependencies found in Goose binaries - validation needed with upstream
-# Last reviewed: 2025-07-28
+# These CVEs relate to Go dependencies found in Goose binaries - validated as false positives
+# Goose team validation: https://github.com/block/goose/issues/3681
+# Last reviewed: 2025-08-11
