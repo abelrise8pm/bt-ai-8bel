@@ -88,6 +88,14 @@ If you prefer using your own terminal or don't use VSCode, you can use the Devco
 
 Instructions coming soon...
 
+## Getting started with the dev-commands flow
+
+1. Type `claude` in a terminal window.
+
+2. Type `/dev-commands:help`.
+
+3. Follow the online instructions.
+
 ## Troubleshooting
 
 ### Authentication to pull containers

@@ -6,7 +6,7 @@
   // This is required for GitHub Codespaces.
   // If you use this and want to use it locally, you need to load env vars from the .env file
   // into memory before starting VSCode or starting the container in the terminal via
-  // `export \$(grep -v '^#' .env | xargs)`
+  // `export $(grep -v '^#' .env | xargs)`
   "containerEnv": {
 		"GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}",
 		"ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}",
