@@ -204,12 +204,8 @@ jobs:
                 if echo "$KEEP_IDS" | grep -q "^$STAGING_VERSION_ID$"; then
                   echo "ℹ️ Staging image $STAGING_VERSION_ID is promoted, keeping it"
                 else
-                  echo "🗑️ Cleaning up staging image: $STAGING_VERSION_ID"
-                  if gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$STAGING_VERSION_ID; then
-                    echo "✅ Successfully deleted staging image: $STAGING_VERSION_ID"
-                  else
-                    echo "⚠️ Warning: Failed to delete staging image: $STAGING_VERSION_ID"
-                  fi
+                  echo "🗑️ Would clean up staging image: $STAGING_VERSION_ID"
+                  echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$STAGING_VERSION_ID"
                 fi
               else
                 echo "ℹ️ No staging image to clean up"
@@ -228,15 +224,11 @@ jobs:
               fi
 
               if [ -n "$DELETE_IDS" ] && [ "$DELETE_COUNT" -gt 0 ]; then
-                echo "🗑️ Deleting $DELETE_COUNT versions"
+                echo "🗑️ Would delete $DELETE_COUNT versions"
                 echo "$DELETE_IDS" | while read -r version_id; do
                   if [ -n "$version_id" ]; then
-                    echo "🗑️ Deleting version: $version_id"
-                    if gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$version_id; then
-                      echo "✅ Successfully deleted version: $version_id"
-                    else
-                      echo "⚠️ Warning: Failed to delete version: $version_id"
-                    fi
+                    echo "🗑️ Would delete version: $version_id"
+                    echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$version_id"
                   fi
                 done
               else
