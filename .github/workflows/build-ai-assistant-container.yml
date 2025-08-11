@@ -136,12 +136,33 @@ jobs:
               exit 0
             fi
 
+            # Show all images first for debugging
+            echo "🔍 DEBUG: All images in registry:"
+            echo "$ALL_VERSIONS" | jq -r '.[] | "ID: \(.id), Created: \(.created_at), Tags: \(.metadata.container.tags // [] | join(", "))"' | head -20
+
             # Find promoted images FIRST (those with commit SHA tags but no staging/buildcache prefixes)
             # Safeguard: Ensure we have valid JSON before processing
             if ! echo "$ALL_VERSIONS" | jq empty 2>/dev/null; then
               echo "❌ ERROR: Invalid JSON response from API, aborting cleanup"
               exit 1
             fi
+
+            # Debug: Show which images match each promotion criteria
+            echo "🔍 DEBUG: Checking promotion criteria for each image:"
+            echo "$ALL_VERSIONS" | jq -r '
+              .[] |
+              "ID: \(.id) - Tags: \(.metadata.container.tags // [] | join(", ")) - " +
+              "HasBuildcache: \((.metadata.container.tags[]? // "") == "buildcache") - " +
+              "HasStaging: \((.metadata.container.tags[]? // "") == "staging") - " +
+              "HasStagingPrefix: \([.metadata.container.tags[]? // "" | test("^staging-")] | any) - " +
+              "HasSHA: \([.metadata.container.tags[]? // "" | test("^[a-f0-9]{40}$")] | any) - " +
+              "IsPromoted: \(
+                (.metadata.container.tags[]? // "") != "buildcache" and
+                (.metadata.container.tags[]? // "") != "staging" and
+                ([.metadata.container.tags[]? // "" | test("^staging-")] | any) == false and
+                ([.metadata.container.tags[]? // "" | test("^[a-f0-9]{40}$")] | any)
+              )"
+            ' | head -10
 
             PROMOTED_VERSIONS=$(echo "$ALL_VERSIONS" | jq -r '
               .[]
@@ -159,6 +180,10 @@ jobs:
             PROMOTED_COUNT=$(echo "$PROMOTED_VERSIONS" | jq 'length')
             echo "📊 Found $PROMOTED_COUNT promoted images, keeping latest $KEEP_COUNT"
 
+            # Debug: Show the promoted images that were found
+            echo "🔍 DEBUG: Promoted images found (sorted by creation time):"
+            echo "$PROMOTED_VERSIONS" | jq -r '.[] | "ID: \(.id), Created: \(.created_at), Tags: \(.tags | join(", "))"'
+
             if [ "$PROMOTED_COUNT" -gt 0 ]; then
               # Edge case: If we have fewer than KEEP_COUNT images, keep all of them
               ACTUAL_KEEP_COUNT=$([ "$PROMOTED_COUNT" -lt "$KEEP_COUNT" ] && echo "$PROMOTED_COUNT" || echo "$KEEP_COUNT")
@@ -166,6 +191,10 @@ jobs:
 
               # Get IDs of images to keep (top N most recent)
               KEEP_IDS=$(echo "$PROMOTED_VERSIONS" | jq -r ".[0:$ACTUAL_KEEP_COUNT] | .[].id")
+
+              # Debug: Show which images will be kept
+              echo "🔍 DEBUG: Images to KEEP:"
+              echo "$PROMOTED_VERSIONS" | jq -r ".[0:$ACTUAL_KEEP_COUNT] | .[] | \"KEEP - ID: \(.id), Created: \(.created_at), Tags: \(.tags | join(\", \"))\""
 
               # Safeguard: Ensure we have at least one image to keep
               if [ -z "$KEEP_IDS" ]; then
@@ -198,6 +227,17 @@ jobs:
                 | .id
               ')
 
+              # Debug: Show all images that will be deleted with their details
+              echo "🔍 DEBUG: Images that will be DELETED (excluding staging and kept images):"
+              echo "$ALL_VERSIONS" | jq -r --argjson keep_ids "$(echo "$KEEP_IDS" | jq -R . | jq -s .)" --arg staging_id "$STAGING_VERSION_ID" '
+                .[]
+                | select(
+                    (.id as $id | $keep_ids | index(($id | tostring)) == null) and
+                    (.id != ($staging_id | tonumber))
+                  )
+                | "DELETE - ID: \(.id), Created: \(.created_at), Tags: \(.metadata.container.tags // [] | join(\", \"))"
+              ' | head -10
+
               # Clean up staging image separately FIRST (only if it's not a promoted image)
               if [ -n "$STAGING_VERSION_ID" ] && [ "$STAGING_VERSION_ID" != "null" ]; then
                 # Check if staging image is also in the keep list (promoted)
@@ -205,6 +245,11 @@ jobs:
                   echo "ℹ️ Staging image $STAGING_VERSION_ID is promoted, keeping it"
                 else
                   echo "🗑️ Would clean up staging image: $STAGING_VERSION_ID"
+                  # Show details of the staging image
+                  echo "$ALL_VERSIONS" | jq -r --arg staging_id "$STAGING_VERSION_ID" '
+                    .[] | select(.id == ($staging_id | tonumber)) |
+                    "STAGING DELETE - ID: \(.id), Created: \(.created_at), Tags: \(.metadata.container.tags // [] | join(\", \"))"
+                  '
                   echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$STAGING_VERSION_ID"
                 fi
               else
