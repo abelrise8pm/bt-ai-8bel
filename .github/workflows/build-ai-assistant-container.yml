@@ -204,7 +204,7 @@ jobs:
             # Find promoted logical image groups (those with SHA tags from main branch builds)
             PROMOTED_GROUPS=$(echo "$LOGICAL_IMAGE_GROUPS" | jq '
               [.[] | select(
-                (.tag_set[]? // "") != "buildcache" and
+                (.tag_set // [] | index("buildcache") == null) and
                 ([.tag_set[]? // "" | test("^[a-f0-9]{40}$")] | any)
               )]
             ')
