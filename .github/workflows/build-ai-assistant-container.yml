@@ -107,16 +107,15 @@ jobs:
         run: |
           # Promote the tested staging image to production tags
           if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            # Main branch push: add both sha and latest tags
+            # Main branch push: add both sha and latest tags (PROMOTED)
             docker buildx imagetools create \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }} \
               --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
               --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            echo "✅ Promoted to production: ${{ github.sha }} (tagged with sha and latest)"
           else
-            # PR or other branch: only add sha tag
-            docker buildx imagetools create \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }} \
-              --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            # PR or other branch: keep only staging tag (NOT PROMOTED)
+            echo "ℹ️ PR/branch build - keeping only staging tag, not promoting to production"
           fi
 
       - name: Clean up container registry
@@ -124,8 +123,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # NOTE: Cleanup now runs on PRs for testing - RETURN TO MAIN-ONLY BEFORE ENABLING DELETE API CALLS
           # Only run cleanup after successful promotion to avoid removing images during failed deployments
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          if ([ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]) || [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "🧹 Starting container registry cleanup..."
 
             # Get all package versions with metadata first
@@ -136,9 +136,41 @@ jobs:
               exit 0
             fi
 
+            # Pre-compute common data extractions to avoid redundant jq processing
+            echo "🔧 Pre-processing image data..."
+
+            # Extract basic image info for debugging (used multiple times)
+            ALL_IMAGES_DEBUG=$(echo "$ALL_VERSIONS" | jq -r '.[] | "ID: \(.id), Created: \(.created_at), Tags: \(.metadata.container.tags // [] | join(", "))"')
+
+            # Extract multi-arch manifest details for debugging
+            MULTIARCH_DEBUG=$(echo "$ALL_VERSIONS" | jq -r '.[] | "ID: \(.id) - Created: \(.created_at) - Tags: \(.metadata.container.tags // [] | sort | join(",")) - Size: \(.metadata.container.digest // "unknown")"')
+
+            # Extract staging image IDs (used multiple times)
+            STAGING_VERSION_IDS=$(echo "$ALL_VERSIONS" | jq -r '.[] | select(.metadata.container.tags[]? == "staging-${{ github.sha }}") | .id')
+
+            # Extract grouped images debug info
+            GROUPED_IMAGES_DEBUG=$(echo "$ALL_VERSIONS" | jq -r 'group_by(.metadata.container.tags // [] | sort) | .[] | "TagSet: \(.[0].metadata.container.tags // [] | sort | join(",")) - Count: \(length) - IDs: \([.[].id] | join(","))"')
+
+            # Extract promotion criteria debug info
+            PROMOTION_DEBUG=$(echo "$ALL_VERSIONS" | jq -r '
+              .[] |
+              "ID: \(.id) - Tags: \(.metadata.container.tags // [] | join(", ")) - " +
+              "HasBuildcache: \((.metadata.container.tags[]? // "") == "buildcache") - " +
+              "HasSHA: \([.metadata.container.tags[]? // "" | test("^[a-f0-9]{40}$")] | any) - " +
+              "IsPromoted: \((.metadata.container.tags[]? // "") != "buildcache" and ([.metadata.container.tags[]? // "" | test("^[a-f0-9]{40}$")] | any))"
+            ')
+
             # Show all images first for debugging
             echo "🔍 DEBUG: All images in registry:"
-            echo "$ALL_VERSIONS" | jq -r '.[] | "ID: \(.id), Created: \(.created_at), Tags: \(.metadata.container.tags // [] | join(", "))"' | head -20
+            echo "$ALL_IMAGES_DEBUG" | head -20
+
+            # Debug: Show multi-architecture manifest details
+            echo "🏗️ DEBUG: Multi-architecture manifest analysis:"
+            echo "$MULTIARCH_DEBUG" | head -20
+
+            # Debug: Group images by identical tag sets to identify multi-arch duplicates
+            echo "🔍 DEBUG: Images grouped by identical tag sets:"
+            echo "$GROUPED_IMAGES_DEBUG" | head -10
 
             # Find promoted images FIRST (those with commit SHA tags but no staging/buildcache prefixes)
             # Safeguard: Ensure we have valid JSON before processing
@@ -147,54 +179,63 @@ jobs:
               exit 1
             fi
 
-            # Debug: Show which images match each promotion criteria
+            # Debug: Show which images match promotion criteria (simplified: has SHA tag = promoted)
             echo "🔍 DEBUG: Checking promotion criteria for each image:"
-            echo "$ALL_VERSIONS" | jq -r '
-              .[] |
-              "ID: \(.id) - Tags: \(.metadata.container.tags // [] | join(", ")) - " +
-              "HasBuildcache: \((.metadata.container.tags[]? // "") == "buildcache") - " +
-              "HasStaging: \((.metadata.container.tags[]? // "") == "staging") - " +
-              "HasStagingPrefix: \([.metadata.container.tags[]? // "" | test("^staging-")] | any) - " +
-              "HasSHA: \([.metadata.container.tags[]? // "" | test("^[a-f0-9]{40}$")] | any) - " +
-              "IsPromoted: \(
-                (.metadata.container.tags[]? // "") != "buildcache" and
-                (.metadata.container.tags[]? // "") != "staging" and
-                ([.metadata.container.tags[]? // "" | test("^staging-")] | any) == false and
-                ([.metadata.container.tags[]? // "" | test("^[a-f0-9]{40}$")] | any)
-              )"
-            ' | head -10
+            echo "$PROMOTION_DEBUG" | head -10
 
-            PROMOTED_VERSIONS=$(echo "$ALL_VERSIONS" | jq -r '
-              .[]
-              | select(
-                  (.metadata.container.tags[]? // "") != "buildcache" and
-                  (.metadata.container.tags[]? // "") != "staging" and
-                  ((.metadata.container.tags[]? // "") | test("^staging-")) == false and
-                  ([.metadata.container.tags[]? // "" | test("^[a-f0-9]{40}$")] | any)
-                )
-              | {id: .id, created_at: .created_at, tags: .metadata.container.tags}
-            ' | jq -s '. | sort_by(.created_at) | reverse')
+            # Group images by identical tag sets (multi-arch manifests share same tags)
+            echo "🏗️ DEBUG: Creating logical image groups from multi-arch manifests..."
+            LOGICAL_IMAGE_GROUPS=$(echo "$ALL_VERSIONS" | jq '
+              group_by(.metadata.container.tags // [] | sort) |
+              map({
+                tag_set: (.[0].metadata.container.tags // [] | sort),
+                manifests: .,
+                earliest_created: (map(.created_at) | min),
+                latest_created: (map(.created_at) | max),
+                manifest_ids: [.[].id],
+                manifest_count: length
+              }) |
+              sort_by(.latest_created) | reverse
+            ')
+
+            echo "🔍 DEBUG: Logical image groups found:"
+            echo "$LOGICAL_IMAGE_GROUPS" | jq -r '.[] | "TagSet: \(.tag_set | join(",")) - Manifests: \(.manifest_count) - IDs: \(.manifest_ids | join(",")) - Created: \(.latest_created)"' | head -10
+
+            # Find promoted logical image groups (those with SHA tags from main branch builds)
+            PROMOTED_GROUPS=$(echo "$LOGICAL_IMAGE_GROUPS" | jq '
+              [.[] | select(
+                (.tag_set[]? // "") != "buildcache" and
+                ([.tag_set[]? // "" | test("^[a-f0-9]{40}$")] | any)
+              )]
+            ')
+
+            # Handle empty PROMOTED_GROUPS to avoid jq errors when no promoted images exist
+            if [ -n "$PROMOTED_GROUPS" ] && [ "$PROMOTED_GROUPS" != "null" ] && [ "$PROMOTED_GROUPS" != "" ]; then
+              PROMOTED_VERSIONS=$(echo "$PROMOTED_GROUPS" | jq '. | sort_by(.latest_created) | reverse')
+            else
+              PROMOTED_VERSIONS="[]"
+            fi
 
             # Keep only top 5 promoted images
             KEEP_COUNT=5
             PROMOTED_COUNT=$(echo "$PROMOTED_VERSIONS" | jq 'length')
-            echo "📊 Found $PROMOTED_COUNT promoted images, keeping latest $KEEP_COUNT"
+            echo "📊 Found $PROMOTED_COUNT promoted image groups, keeping latest $KEEP_COUNT"
 
-            # Debug: Show the promoted images that were found
-            echo "🔍 DEBUG: Promoted images found (sorted by creation time):"
-            echo "$PROMOTED_VERSIONS" | jq -r '.[] | "ID: \(.id), Created: \(.created_at), Tags: \(.tags | join(", "))"'
+            # Debug: Show the promoted image groups that were found
+            echo "🔍 DEBUG: Promoted image groups found (sorted by creation time):"
+            echo "$PROMOTED_VERSIONS" | jq -r '.[] | "TagSet: \(.tag_set | join(",")) - Manifests: \(.manifest_count) - IDs: \(.manifest_ids | join(",")) - Created: \(.latest_created)"'
 
             if [ "$PROMOTED_COUNT" -gt 0 ]; then
               # Edge case: If we have fewer than KEEP_COUNT images, keep all of them
               ACTUAL_KEEP_COUNT=$([ "$PROMOTED_COUNT" -lt "$KEEP_COUNT" ] && echo "$PROMOTED_COUNT" || echo "$KEEP_COUNT")
               echo "📋 Keeping $ACTUAL_KEEP_COUNT promoted images"
 
-              # Get IDs of images to keep (top N most recent)
-              KEEP_IDS=$(echo "$PROMOTED_VERSIONS" | jq -r ".[0:$ACTUAL_KEEP_COUNT] | .[].id")
+              # Get ALL manifest IDs from the groups to keep (top N most recent groups)
+              KEEP_IDS=$(echo "$PROMOTED_VERSIONS" | jq -r ".[0:$ACTUAL_KEEP_COUNT] | .[].manifest_ids[]")
 
-              # Debug: Show which images will be kept
-              echo "🔍 DEBUG: Images to KEEP:"
-              echo "$PROMOTED_VERSIONS" | jq -r ".[0:$ACTUAL_KEEP_COUNT] | .[] | \"KEEP - ID: \(.id), Created: \(.created_at), Tags: \(.tags | join(\", \"))\""
+              # Debug: Show which image groups will be kept
+              echo "🔍 DEBUG: Image groups to KEEP:"
+              echo "$PROMOTED_VERSIONS" | jq -r '.[0:'"$ACTUAL_KEEP_COUNT"'] | .[] | "KEEP GROUP - TagSet: \(.tag_set | join(", ")) - Manifests: \(.manifest_count) - IDs: \(.manifest_ids | join(", ")) - Created: \(.latest_created)"'
 
               # Safeguard: Ensure we have at least one image to keep
               if [ -z "$KEEP_IDS" ]; then
@@ -202,58 +243,71 @@ jobs:
                 exit 1
               fi
 
-              # Get the most recent promoted image ID for latest tag management
-              LATEST_ID=$(echo "$PROMOTED_VERSIONS" | jq -r '.[0].id')
-              LATEST_SHA=$(echo "$PROMOTED_VERSIONS" | jq -r '.[0].tags[] | select(test("^[a-f0-9]{40}$"))')
+              # Get the most recent promoted image group for latest tag management
+              LATEST_GROUP_IDS=$(echo "$PROMOTED_VERSIONS" | jq -r '.[0].manifest_ids | join(",")')
+              LATEST_SHA=$(echo "$PROMOTED_VERSIONS" | jq -r '.[0].tag_set[] | select(test("^[a-f0-9]{40}$"))')
 
               # Safeguard: Ensure we have a valid SHA for the latest image
               if [ -z "$LATEST_SHA" ]; then
-                echo "⚠️ WARNING: Could not find SHA tag for latest promoted image, skipping latest tag update"
+                echo "⚠️ WARNING: Could not find SHA tag for latest promoted image group, skipping latest tag update"
               else
-                echo "🏷️ Most recent promoted image: $LATEST_ID (SHA: $LATEST_SHA)"
+                echo "🏷️ Most recent promoted image group: IDs [$LATEST_GROUP_IDS] (SHA: $LATEST_SHA)"
               fi
 
               # Remove all non-promoted images and old promoted images
               echo "🗑️ Removing old and non-promoted images..."
-              # Get staging image ID to exclude it from deletions
-              STAGING_VERSION_ID=$(echo "$ALL_VERSIONS" | jq -r '.[] | select(.metadata.container.tags[]? == "staging-${{ github.sha }}") | .id' | head -1)
+              # Note: STAGING_VERSION_IDS already pre-computed above
 
-              DELETE_IDS=$(echo "$ALL_VERSIONS" | jq -r --argjson keep_ids "$(echo "$KEEP_IDS" | jq -R . | jq -s .)" --arg staging_id "$STAGING_VERSION_ID" '
+              # Pre-compute deletion candidates to avoid redundant filtering
+              KEEP_IDS_JSON=$(echo "$KEEP_IDS" | jq -R . | jq -s .)
+              STAGING_IDS_JSON=$(echo "$STAGING_VERSION_IDS" | jq -R . | jq -s .)
+
+              DELETE_IDS=$(echo "$ALL_VERSIONS" | jq -r --argjson keep_ids "$KEEP_IDS_JSON" --argjson staging_ids "$STAGING_IDS_JSON" '
                 .[]
                 | select(
                     (.id as $id | $keep_ids | index(($id | tostring)) == null) and
-                    (.id != ($staging_id | tonumber))
+                    (.id as $id | $staging_ids | index(($id | tostring)) == null)
                   )
                 | .id
               ')
 
               # Debug: Show all images that will be deleted with their details
               echo "🔍 DEBUG: Images that will be DELETED (excluding staging and kept images):"
-              echo "$ALL_VERSIONS" | jq -r --argjson keep_ids "$(echo "$KEEP_IDS" | jq -R . | jq -s .)" --arg staging_id "$STAGING_VERSION_ID" '
+              echo "$ALL_VERSIONS" | jq -r --argjson keep_ids "$KEEP_IDS_JSON" --argjson staging_ids "$STAGING_IDS_JSON" '
                 .[]
                 | select(
                     (.id as $id | $keep_ids | index(($id | tostring)) == null) and
-                    (.id != ($staging_id | tonumber))
+                    (.id as $id | $staging_ids | index(($id | tostring)) == null)
                   )
-                | "DELETE - ID: \(.id), Created: \(.created_at), Tags: \(.metadata.container.tags // [] | join(\", \"))"
+                | "DELETE - ID: \(.id), Created: \(.created_at), Tags: \(.metadata.container.tags // [] | join(", "))"
               ' | head -10
 
-              # Clean up staging image separately FIRST (only if it's not a promoted image)
-              if [ -n "$STAGING_VERSION_ID" ] && [ "$STAGING_VERSION_ID" != "null" ]; then
-                # Check if staging image is also in the keep list (promoted)
-                if echo "$KEEP_IDS" | grep -q "^$STAGING_VERSION_ID$"; then
-                  echo "ℹ️ Staging image $STAGING_VERSION_ID is promoted, keeping it"
-                else
-                  echo "🗑️ Would clean up staging image: $STAGING_VERSION_ID"
-                  # Show details of the staging image
-                  echo "$ALL_VERSIONS" | jq -r --arg staging_id "$STAGING_VERSION_ID" '
-                    .[] | select(.id == ($staging_id | tonumber)) |
-                    "STAGING DELETE - ID: \(.id), Created: \(.created_at), Tags: \(.metadata.container.tags // [] | join(\", \"))"
-                  '
-                  echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$STAGING_VERSION_ID"
+              # Clean up staging images separately FIRST (only if they're not promoted images)
+              if [ -n "$STAGING_VERSION_IDS" ] && [ "$STAGING_VERSION_IDS" != "" ]; then
+                echo "🔍 DEBUG: Found staging image IDs: $(echo "$STAGING_VERSION_IDS" | tr '\n' ',' | sed 's/,$//')"
+
+                # Check if any staging images are in the keep list (promoted)
+                STAGING_PROMOTED=false
+                while read -r staging_id; do
+                  [ -n "$staging_id" ] || continue
+                  if echo "$KEEP_IDS" | grep -q "^$staging_id$"; then
+                    echo "ℹ️ Staging image $staging_id is promoted, keeping it"
+                    STAGING_PROMOTED=true
+                    break
+                  fi
+                done <<< "$STAGING_VERSION_IDS"
+
+                if [ "$STAGING_PROMOTED" = "false" ]; then
+                  echo "🗑️ Would clean up staging images:"
+                  echo "$STAGING_VERSION_IDS" | while read -r staging_id; do
+                    [ -n "$staging_id" ] || continue
+                    # Show details of the staging image using pre-computed debug info
+                    echo "$ALL_VERSIONS" | jq -c --arg id "$staging_id" '.[] | select(.id == ($id|tonumber))' | sed 's/^/STAGING DELETE - /'
+                    echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$staging_id"
+                  done
                 fi
               else
-                echo "ℹ️ No staging image to clean up"
+                echo "ℹ️ No staging images to clean up"
               fi
 
               # Safeguard: Show what will be deleted before proceeding
@@ -271,10 +325,9 @@ jobs:
               if [ -n "$DELETE_IDS" ] && [ "$DELETE_COUNT" -gt 0 ]; then
                 echo "🗑️ Would delete $DELETE_COUNT versions"
                 echo "$DELETE_IDS" | while read -r version_id; do
-                  if [ -n "$version_id" ]; then
-                    echo "🗑️ Would delete version: $version_id"
-                    echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$version_id"
-                  fi
+                  [ -n "$version_id" ] || continue
+                  echo "🗑️ Would delete version: $version_id"
+                  echo "DEBUG: Would run: gh api --method DELETE /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions/$version_id"
                 done
               else
                 echo "ℹ️ No versions to delete"
