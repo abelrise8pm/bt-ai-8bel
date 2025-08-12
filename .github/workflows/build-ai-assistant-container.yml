@@ -313,11 +313,11 @@ jobs:
               # Safeguard: Show what will be deleted before proceeding
               DELETE_COUNT=$(echo "$DELETE_IDS" | wc -l)
 
-              # Critical safeguard: Don't delete more than 80 versions at once
-              # NOTE: Temporarily increased from 50 to 80 to handle backlog of accumulated versions
+              # Critical safeguard: Don't delete more than 1000 versions at once
+              # NOTE: Temporarily increased from 50 to 1000 to handle backlog of accumulated versions
               # TODO: Reduce back to 50 when logging-only mode is removed and actual deletions are enabled
-              if [ "$DELETE_COUNT" -gt 80 ]; then
-                echo "⚠️ WARNING: Attempted to delete $DELETE_COUNT versions (limit: 80)"
+              if [ "$DELETE_COUNT" -gt 1000 ]; then
+                echo "⚠️ WARNING: Attempted to delete $DELETE_COUNT versions (limit: 1000)"
                 echo "ℹ️ This suggests a logic error. Aborting cleanup to prevent accidental mass deletion."
                 exit 1
               fi
