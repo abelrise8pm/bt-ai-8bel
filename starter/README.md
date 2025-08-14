@@ -88,7 +88,39 @@ If you prefer using your own terminal or don't use VSCode, you can use the Devco
 
 #### GitHub Codespaces
 
-Instructions coming soon...
+Bypass local development entirely by running directly in GitHub Codespaces!
+
+##### 1/2 - Configure Environment variables for Codespaces
+
+Securely add your API key to your GitHub profile for codespaces usage:
+
+1. GitHub User Profile > Settings > Codespaces > Codespace user secrets
+2. Add env variable (eg `ANTHROPIC_API_KEY`) and grant access to particular repositories you need
+3. Fire up new codespace, and your key is loaded into your environment
+
+##### 2/2 - Launch Codespace
+
+0. Ensure environment variables are configured per above section
+1. Go to the XPai AI Assistant Container Starter repository (example URL, may change): https://github.com/rise8-us/xpai-ai-assistant-container-starter
+2. Click the "Code" button
+3. Select Codespaces tab
+4. Click "+"
+
+This will launch a familiar VSCode environment directly in your browser.
+
+##### Existing repo with AI Assistant devcontainer
+
+If a devcontainer is already configured to fetch the AI assistant container, `claude` etc will already be available to you.
+
+##### New repo
+
+To get an AI Assistant devcontainer for use with your repo:
+
+1. Use the barebones setup at https://github.com/rise8-us/xpai-ai-assistant-container-starter as a guide.
+2. Copy its `devcontainer.json` and `.mcp.json` files into your project.
+3. Request helpdesk ticket for your repo to gain access the AI image repository
+
+NOTE that codespaces expire within 24 hours by default and are intended to be short-lived and repeatable execution environments.
 
 ## Getting started with the dev-commands flow
 
