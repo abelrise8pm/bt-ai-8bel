@@ -13,79 +13,10 @@ env:
 jobs:
   nightly-security-scan:
     runs-on: ubuntu-latest
-    outputs:
-      tag-matrix: ${{ steps.get-tags.outputs.tag-matrix }}
     permissions:
       contents: read
       packages: read
       security-events: write
-
-    steps:
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get latest 5 production image tags
-        id: get-tags
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "🔍 Fetching latest production image tags..."
-
-          # Get package name
-          PACKAGE_NAME=$(echo "${{ env.IMAGE_NAME }}" | sed 's|^${{ github.repository_owner }}/||' | sed 's|/|%2F|g')
-
-          # Get all package versions with metadata
-          if ! ALL_VERSIONS=$(gh api /orgs/${{ github.repository_owner }}/packages/container/$PACKAGE_NAME/versions --paginate 2>/dev/null); then
-            echo "❌ ERROR: Package not found or API error"
-            exit 1
-          fi
-
-          # Find promoted images (those with commit SHA tags but no staging/buildcache prefixes)
-          PROMOTED_VERSIONS=$(echo "$ALL_VERSIONS" | jq -r '
-            .[]
-            | select(
-                (.metadata.container.tags[]? // "") != "buildcache" and
-                (.metadata.container.tags[]? // "") != "staging" and
-                ((.metadata.container.tags[]? // "") | test("^staging-")) == false and
-                ([.metadata.container.tags[]? // "" | test("^[a-f0-9]{40}$")] | any)
-              )
-            | {id: .id, created_at: .created_at, tags: .metadata.container.tags}
-          ' | jq -s '. | sort_by(.created_at) | reverse')
-
-          # Get latest 5 production images with their SHA tags
-          LATEST_TAGS=$(echo "$PROMOTED_VERSIONS" | jq -r '.[0:5] | .[] | .tags[] | select(test("^[a-f0-9]{40}$"))')
-
-          echo "📋 Latest 5 production image tags:"
-          echo "$LATEST_TAGS"
-
-          # Convert to JSON array for matrix strategy
-          TAG_MATRIX=$(echo "$LATEST_TAGS" | jq -R . | jq -s .)
-          echo "tag-matrix=$TAG_MATRIX" >> $GITHUB_OUTPUT
-
-          # Check if we have any tags
-          TAG_COUNT=$(echo "$TAG_MATRIX" | jq 'length')
-          if [ "$TAG_COUNT" -eq 0 ]; then
-            echo "⚠️ WARNING: No production images found to scan"
-            exit 1
-          fi
-
-          echo "✅ Found $TAG_COUNT production images to scan"
-
-  scan-images:
-    needs: nightly-security-scan
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-      security-events: write
-    strategy:
-      matrix:
-        tag: ${{ fromJson(needs.nightly-security-scan.outputs.tag-matrix) }}
-      fail-fast: false
 
     steps:
       - name: Log in to Container Registry
@@ -101,9 +32,9 @@ jobs:
         # Pinned to specific commit for security and reproducibility
         uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.tag }}
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           format: 'sarif'
-          output: 'trivy-results-${{ matrix.tag }}.sarif'
+          output: 'trivy-results-latest.sarif'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
         env:
@@ -113,64 +44,31 @@ jobs:
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
-          sarif_file: 'trivy-results-${{ matrix.tag }}.sarif'
+          sarif_file: 'trivy-results-latest.sarif'
 
       - name: Record scan result
         if: always()
         run: |
           if [ "${{ steps.scan.outcome }}" = "success" ]; then
-            echo "✅ Security scan passed for image: ${{ matrix.tag }}"
+            echo "✅ Security scan passed for latest image"
           else
-            echo "❌ Security scan failed for image: ${{ matrix.tag }}"
+            echo "❌ Security scan failed for latest image"
           fi
 
   notify-on-failure:
-    needs: [nightly-security-scan, scan-images]
+    needs: [nightly-security-scan]
     runs-on: ubuntu-latest
-    if: always() && needs.scan-images.result == 'failure'
+    if: always() && needs.nightly-security-scan.result == 'failure'
     permissions:
       contents: read
       issues: write
 
     steps:
-      - name: Get failed scans
-        id: failed-scans
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "🔍 Analyzing scan results..."
-
-          # For matrix jobs, we can only detect overall failure, not individual tag failures
-          # This is a limitation of GitHub Actions matrix job result reporting
-          if [ "${{ needs.scan-images.result }}" = "failure" ]; then
-            echo "failed-detected=true" >> $GITHUB_OUTPUT
-            echo "failed-tags=[\"Matrix job failed - check workflow logs for details\"]" >> $GITHUB_OUTPUT
-          else
-            echo "failed-detected=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Create failure notification issue
-        if: steps.failed-scans.outputs.failed-detected == 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const failedTags = '${{ steps.failed-scans.outputs.failed-tags }}' || '[]';
-            const parsedFailedTags = JSON.parse(failedTags);
-            let failedTagsList;
-            if (
-              parsedFailedTags.length === 1 &&
-              parsedFailedTags[0] === "Matrix job failed - check workflow logs for details"
-            ) {
-              failedTagsList = parsedFailedTags[0];
-            } else if (parsedFailedTags.length > 0) {
-              failedTagsList = parsedFailedTags
-                .map(tag => `- \`${tag.substring(0, 12)}...\``)
-                .join('\n              ');
-            } else {
-              failedTagsList = 'Unable to determine specific failed images';
-            }
-
             const issue = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -184,13 +82,10 @@ jobs:
               **Scan Time:** ${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC
 
               ### Scan Results Summary:
-              One or more of the latest 5 production images failed security scanning with CRITICAL or HIGH severity vulnerabilities.
+              The latest production image failed security scanning with CRITICAL or HIGH severity vulnerabilities.
 
-              ### Failed Images:
-              ${failedTagsList}
-
-              ### Total Images Scanned:
-              Latest 5 production images from the container registry
+              ### Failed Image:
+              `:latest` tag from the container registry
 
               ### Next Steps:
               1. 🔍 **Review the Security tab** for detailed vulnerability reports
