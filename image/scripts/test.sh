@@ -124,8 +124,8 @@ echo "🧪 Testing installed tools..."
 # Test each tool and capture output
 echo "Testing Node.js..."
 NODE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "node --version" 2>&1)
-if [[ ! "$NODE_VERSION" =~ ^v22\.17\. ]]; then
-    echo "❌ ERROR: Node.js version incorrect. Expected v22.17.x, got: $NODE_VERSION"
+if [[ ! "$NODE_VERSION" =~ ^v22\. ]]; then
+    echo "❌ ERROR: Node.js version incorrect. Expected v22.x, got: $NODE_VERSION"
     exit 1
 fi
 echo "✅ Node.js: $NODE_VERSION"

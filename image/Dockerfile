@@ -3,9 +3,13 @@
 FROM ubuntu:24.04@sha256:a08e551cb33850e4740772b38217fc1796a66da2506d312abe51acda354ff061
 
 # Version definitions
-ARG CLAUDE_CODE_VERSION=1.0.72
-ARG GEMINI_CLI_VERSION=0.1.18
-ARG GOOSE_VERSION=1.3.0
+#Search https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
+ARG CLAUDE_CODE_VERSION=1.0.84
+#Search https://www.npmjs.com/package/@google/gemini-cli for latest version
+ARG GEMINI_CLI_VERSION=0.1.22
+#Search https://github.com/block/goose/releases for latest version
+ARG GOOSE_VERSION=1.5.0
+# Changed manually when new version published.
 ARG MCP_DEV_COMMANDS_VERSION=1.0.1
 
 # Copy certificate and install in single layer
@@ -45,9 +49,10 @@ RUN apt-get update && \
 # bzip2: Compression utility for Goose installation archive (Goose)
 # libxcb1: X11 client library required by Goose (Goose GUI framework dependency)
 
-# Install Node.js v22.17.0 (pinned version for Claude Code and Gemini CLI)
+# Install Node.js v22.18.0 (pinned version for Claude Code and Gemini CLI)
+# To update: Check https://nodejs.org/download/release/ for latest v22.x
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs=22.17.0* && \
+    apt-get install -y nodejs=22.18.0* && \
     rm -f /etc/apt/sources.list.d/nodesource.list && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
