@@ -16,7 +16,6 @@ jobs:
     permissions:
       contents: read
       packages: read
-      security-events: write
 
     steps:
       - name: Log in to Container Registry
@@ -40,11 +39,6 @@ jobs:
         env:
           TRIVY_CACHE_BACKEND: memory
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: 'trivy-results-latest.sarif'
 
       - name: Record scan result
         if: always()
