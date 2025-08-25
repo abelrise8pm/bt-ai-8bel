@@ -39,7 +39,7 @@ jobs:
           output: 'trivy-results-latest.sarif'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
-          ignorefile: 'ai-assistant-container/.trivyignore'
+          trivyignores: 'ai-assistant-container/.trivyignore'
         env:
           TRIVY_CACHE_BACKEND: memory
 
