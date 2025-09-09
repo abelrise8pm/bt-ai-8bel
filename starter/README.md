@@ -13,17 +13,7 @@
 
 ## Overview
 
-This starter repository provides everything you need to quickly set up an AI assistant development environment using containers. Below is an explanation of each file and directory:
-
-| File/Directory | Purpose |
-|----------------|---------|
-| `.devcontainer/devcontainer.json` | VSCode Dev Containers configuration that defines the container image, environment variables, and post-creation commands for the development environment |
-| `.env.example` | Template environment file containing required API key variables (GEMINI_API_KEY, ANTHROPIC_API_KEY) that users should copy to `.env` |
-| `.gitignore` | Git ignore rules to prevent committing sensitive files like `.env` to version control |
-| `.mcp.json` | Model Context Protocol (MCP) server configuration that registers the dev-commands MCP server for enhanced AI assistant capabilities |
-| `CLAUDE.md.example` | Example Claude Code instruction file that defines development principles, TDD workflow, and coding standards for AI assistant interactions |
-| `DEVELOPMENT.md` | Documentation explaining the synchronization process from the main XPai repository and how to make changes to this starter repository |
-| `README.md` | This file - provides setup instructions, troubleshooting guides, and usage information for the AI assistant container environment |
+This starter repository provides everything you need to quickly set up an AI assistant development environment using containers.
 
 For more details about the container itself, check out https://github.com/rise8-us/XPai/tree/main/ai-assistant-container.
 
@@ -36,91 +26,72 @@ To find the digest of the latest container:
 
 ## Setup
 
-### 1. Create Your Project's Environment File
+This starter supports two configurations based on your data requirements:
 
-You can use `./.env.example` as a starting point.
+### **CUI Data**
+Your project gives the container access to CUI data.
 
-Or if you already have a `.env` file, you can add
-the necessary env vars there.
+**→ Use AWS Bedrock (required for CUI)**
 
-```base
-cp .env.example .env
+   - [Haiku and Claude 3.5](https://aws.amazon.com/blogs/publicsector/accelerating-government-innovation-amazon-bedrock-models-get-fedramp-high-and-dod-il-4-5-approval-in-aws-govcloud-us/)
+   - [Claude 3.7](https://aws.amazon.com/about-aws/whats-new/2025/07/anthropics-claude-3-7-sonnet-available-amazon-bedrock-aws-govcloud-us-west/)
+
+#### **📖 [CUI Setup Guide](docs/SETUP-CUI.md)**
+- AWS Bedrock with FedRAMP and IL4/5 compliance
+- Local development only
+- Enhanced security requirements
+
+### **No CUI Data**
+Your project does not give the container access to CUI data.
+
+**→ Use Anthropic API (simpler setup, works in Codespaces)**
+
+#### **📖 [No CUI Setup Guide](docs/SETUP-NO-CUI.md)**
+- Simple Anthropic API setup
+- Works with GitHub Codespaces
+- Quick configuration
+
+Refer to the detailed setup guides above for complete instructions.
+
+
+## Development Environment
+
+After completing the setup guide, you can start your development environment using:
+- **VSCode DevContainers** (recommended)
+- **DevContainer CLI**
+- **GitHub Codespaces** (no CUI projects only)
+
+### Option A: VSCode DevContainer (Recommended)
+
+1. Make sure you have the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) installed
+2. Open the project folder in VSCode
+3. VSCode will prompt to "Reopen in Container" - click this button
+4. Wait for the container to initialize
+
+### Option B: DevContainer CLI
+
+```bash
+# Install DevContainer CLI
+npm install -g @devcontainers/cli
+
+# Build and start container
+devcontainer up --workspace-folder .
+
+# Open shell in container
+devcontainer exec --workspace-folder . bash
 ```
 
-### 2. Open in either VSCode, a terminal window or GitHub Codespaces
+### Option C: GitHub Codespaces
 
-#### Using the Devcontainer in VSCode
+1. **Configure environment variables** in GitHub:
+   - Go to GitHub User Profile > Settings > Codespaces > Codespace user secrets
+   - Add `ANTHROPIC_API_KEY` and grant access to your repositories
 
-Using the devcontainer in VSCode provides a smooth, integrated development experience:
+2. **Launch Codespace:**
+   - Go to your repository on GitHub
+   - Click "Code" button > Codespaces tab > "+"
 
-1. Make sure you have the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) installed in VSCode
-2. Open the XPai repository folder in VSCode
-3. VSCode will detect the devcontainer configuration and prompt you to "Reopen in Container" - click this button
-4. Wait for the container to build and initialize (this may take a few minutes the first time)
-5. Once complete, your VSCode window is now running inside the development container with all dependencies pre-installed
-6. Open the terminal in VSCode (Terminal → New Terminal) to access the container's command line
-7. You can now develop, run, and test your code in the containerized environment
-
-#### Using the Devcontainer CLI
-
-If you prefer using your own terminal or don't use VSCode, you can use the Devcontainer CLI:
-
-1. Install the Devcontainer CLI if you haven't already:
-   ```bash
-   npm install -g @devcontainers/cli
-   ```
-
-2. Navigate to the XPai repository in your terminal
-
-3. Build and start the devcontainer:
-   ```bash
-   devcontainer up --workspace-folder .
-   ```
-
-4. Open a shell in the running devcontainer:
-   ```bash
-   devcontainer exec --workspace-folder . bash
-   ```
-5. You are now inside the development container and can execute commands
-
-6. To exit the container shell, type `exit`
-
-
-#### GitHub Codespaces
-
-Bypass local development entirely by running directly in GitHub Codespaces!
-
-##### 1/2 - Configure Environment variables for Codespaces
-
-Securely add your API key to your GitHub profile for codespaces usage:
-
-1. GitHub User Profile > Settings > Codespaces > Codespace user secrets
-2. Add env variable (eg `ANTHROPIC_API_KEY`) and grant access to particular repositories you need
-3. Fire up new codespace, and your key is loaded into your environment
-
-##### 2/2 - Launch Codespace
-
-0. Ensure environment variables are configured per above section
-1. Go to the XPai AI Assistant Container Starter repository (example URL, may change): https://github.com/rise8-us/xpai-ai-assistant-container-starter
-2. Click the "Code" button
-3. Select Codespaces tab
-4. Click "+"
-
-This will launch a familiar VSCode environment directly in your browser.
-
-##### Existing repo with AI Assistant devcontainer
-
-If a devcontainer is already configured to fetch the AI assistant container, `claude` etc will already be available to you.
-
-##### New repo
-
-To get an AI Assistant devcontainer for use with your repo:
-
-1. Use the barebones setup at https://github.com/rise8-us/xpai-ai-assistant-container-starter as a guide.
-2. Copy its `devcontainer.json` and `.mcp.json` files into your project.
-3. Request helpdesk ticket for your repo to gain access the AI image repository
-
-NOTE that codespaces expire within 24 hours by default and are intended to be short-lived and repeatable execution environments.
+3. **Note:** The `.devcontainer/devcontainer.json` file is configured to work with Codespaces automatically.
 
 ## Getting started with the dev-commands flow
 
@@ -131,6 +102,10 @@ NOTE that codespaces expire within 24 hours by default and are intended to be sh
 3. Follow the online instructions.
 
 ## Troubleshooting
+
+For project-specific troubleshooting:
+- **No CUI Projects**: See [No CUI Setup Guide](docs/SETUP-NO-CUI.md)
+- **CUI Projects**: See [CUI Setup Guide](docs/SETUP-CUI.md)
 
 ### Authentication to pull containers
 
@@ -153,10 +128,10 @@ If your project team encounters authentication issues with `ghcr.io`, follow the
   podman pull ghcr.io/rise8-us/xpai/ai-assistant-home@sha:<digest>
   ```
 
-  ## Example advanced uses
+## Example advanced uses
 
-  - [XPai](https://github.com/rise8-us/XPai/tree/main)
+- [XPai](https://github.com/rise8-us/XPai/tree/main)
 
-  ## Assistance
+## Assistance
 
-  If you run into issues, please hit us up in the #r-and-d Slack channel.
+If you run into issues, please hit us up in the #r-and-d Slack channel.
