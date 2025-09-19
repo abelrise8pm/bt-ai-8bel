@@ -66,41 +66,46 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const today = new Date().toISOString().split('T')[0];
+            const workflowUrl = context.payload.repository.html_url + '/actions/runs/' + context.runId;
+            const repoUrl = context.payload.repository.html_url;
+            const owner = context.repo.owner;
+            
             const issue = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `🚨 Nightly AI Assistant Container Security Scan Failed - ${new Date().toISOString().split('T')[0]}`,
+              title: '🚨 Nightly AI Assistant Container Security Scan Failed - ' + today,
               body: `## Nightly Security Scan Failure
 
-              The nightly security scan for AI assistant container images has detected vulnerabilities.
+The nightly security scan for AI assistant container images has detected vulnerabilities.
 
-              **Workflow Run:** ${context.payload.repository.html_url}/actions/runs/${context.runId}
-              **Date:** ${new Date().toISOString()}
-              **Scan Time:** ${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC
+**Workflow Run:** ${workflowUrl}
+**Date:** ${new Date().toISOString()}
+**Scan Time:** ${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC
 
-              ### Scan Results Summary:
-              The latest production image failed security scanning with CRITICAL or HIGH severity vulnerabilities.
+### Scan Results Summary:
+The latest production image failed security scanning with CRITICAL or HIGH severity vulnerabilities.
 
-              ### Failed Image:
-              `:latest` tag from the container registry
+### Failed Image:
+\`:latest\` tag from the container registry
 
-              ### Next Steps:
-              1. 🔍 **Review the Security tab** for detailed vulnerability reports
-              2. 📊 **Check the workflow logs** for specific scan results
-              3. 🔄 **Update dependencies** or base images to address vulnerabilities
-              4. 🏗️ **Rebuild and redeploy** containers with security fixes
-              5. ✅ **Re-run this workflow** once issues are resolved
+### Next Steps:
+1. 🔍 **Review the Security tab** for detailed vulnerability reports
+2. 📊 **Check the workflow logs** for specific scan results
+3. 🔄 **Update dependencies** or base images to address vulnerabilities
+4. 🏗️ **Rebuild and redeploy** containers with security fixes
+5. ✅ **Re-run this workflow** once issues are resolved
 
-              ### Security Resources:
-              - [GitHub Security Advisories](${context.payload.repository.html_url}/security/advisories)
-              - [Container Registry Packages](https://github.com/orgs/${context.repo.owner}/packages)
-              - [Trivy Documentation](https://aquasecurity.github.io/trivy/)
+### Security Resources:
+- [GitHub Security Advisories](${repoUrl}/security/advisories)
+- [Container Registry Packages](https://github.com/orgs/${owner}/packages)
+- [Trivy Documentation](https://aquasecurity.github.io/trivy/)
 
-              **Priority:** High - Security vulnerabilities detected in production images
+**Priority:** High - Security vulnerabilities detected in production images
 
-              @mikegehard-rise8 please investigate this security scan failure.`,
+@mikegehard-rise8 please investigate this security scan failure.`,
               assignees: ['mikegehard-rise8'],
               labels: ['security', 'container', 'nightly', 'vulnerability']
             });
 
-            console.log(`Created issue #${issue.data.number}: ${issue.data.html_url}`);
+            console.log('Created issue #' + issue.data.number + ': ' + issue.data.html_url);
