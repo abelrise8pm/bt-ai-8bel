@@ -1,5 +1,5 @@
 {
-  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:5c6cd1cb1fa0a6fae9abaa3cf21cb317e71ed505ed55d55c1fcfe5469ae397b2",
+  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:f57264e82f148efdf0e17eb5d3b26c544e4e71ffea6cd582a953d5ed44e03a16",
   "postCreateCommand": "echo 'Container ready for CUI projects with AI assistants pre-installed'",
   "runArgs": [
     "--env-file",".env.bedrock",
