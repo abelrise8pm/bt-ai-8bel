@@ -10,6 +10,7 @@
 
 ## Prerequisites
 - Podman (latest version recommended)
+- Githb CLI (latest version recommended)
 
 ## Overview
 
@@ -28,19 +29,6 @@ To find the digest of the latest container:
 
 This starter supports two configurations based on your data requirements:
 
-### **CUI Data**
-Your project gives the container access to CUI data.
-
-**→ Use AWS Bedrock (required for CUI)**
-
-   - [Haiku and Claude 3.5](https://aws.amazon.com/blogs/publicsector/accelerating-government-innovation-amazon-bedrock-models-get-fedramp-high-and-dod-il-4-5-approval-in-aws-govcloud-us/)
-   - [Claude 3.7](https://aws.amazon.com/about-aws/whats-new/2025/07/anthropics-claude-3-7-sonnet-available-amazon-bedrock-aws-govcloud-us-west/)
-
-#### **📖 [CUI Setup Guide](docs/SETUP-CUI.md)**
-- AWS Bedrock with FedRAMP and IL4/5 compliance
-- Local development only
-- Enhanced security requirements
-
 ### **No CUI Data**
 Your project does not give the container access to CUI data.
 
@@ -53,6 +41,21 @@ Your project does not give the container access to CUI data.
 
 Refer to the detailed setup guides above for complete instructions.
 
+### **CUI Data**
+Your project gives the container access to CUI data.
+
+NOTE: The use of the AI assistant container for CUI data is still a work in
+progress and should not be used on a customer project.
+
+**→ Use AWS Bedrock (required for CUI)**
+
+   - [Haiku and Claude 3.5](https://aws.amazon.com/blogs/publicsector/accelerating-government-innovation-amazon-bedrock-models-get-fedramp-high-and-dod-il-4-5-approval-in-aws-govcloud-us/)
+   - [Claude 3.7](https://aws.amazon.com/about-aws/whats-new/2025/07/anthropics-claude-3-7-sonnet-available-amazon-bedrock-aws-govcloud-us-west/)
+
+#### **📖 [CUI Setup Guide](docs/SETUP-CUI.md)**
+- AWS Bedrock with FedRAMP and IL4/5 compliance
+- Local development only
+- Enhanced security requirements
 
 ## Development Environment
 
@@ -60,6 +63,14 @@ After completing the setup guide, you can start your development environment usi
 - **VSCode DevContainers** (recommended)
 - **DevContainer CLI**
 - **GitHub Codespaces** (no CUI projects only)
+
+Before starting the container with either Option A or B, you must be logged into `ghcr.io`.
+```bash
+gh auth login -s read:packages
+gh auth token | podman login ghcr.io -u $(gh api user --jq .login) --password-stdin
+```
+
+See "Troubleshooting" below if you have issues with the above.
 
 ### Option A: VSCode DevContainer (Recommended)
 
