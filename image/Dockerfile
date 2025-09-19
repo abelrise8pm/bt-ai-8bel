@@ -107,7 +107,8 @@ RUN --mount=type=secret,id=github_token \
         @rise8-us/dev-commands-mcp-server@${MCP_DEV_COMMANDS_VERSION} && \
     npm cache clean --force && \
     # Clean up npm credentials
-    rm -f /tmp/.npmrc
+    rm -f /tmp/.npmrc && \
+    rm -rf /tmp/* /var/tmp/*
 
 # Set proper ownership and switch to aiAssistant user
 RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.config /home/aiAssistant/.npm-global
