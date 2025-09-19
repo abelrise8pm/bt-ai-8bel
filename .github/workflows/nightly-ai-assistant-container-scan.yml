@@ -70,40 +70,45 @@ jobs:
             const workflowUrl = context.payload.repository.html_url + '/actions/runs/' + context.runId;
             const repoUrl = context.payload.repository.html_url;
             const owner = context.repo.owner;
-            
+
+            // Build issue body using simple string concatenation to avoid template literal complexity
+            const issueBody = [
+              '## Nightly Security Scan Failure',
+              '',
+              'The nightly security scan for AI assistant container images has detected vulnerabilities.',
+              '',
+              '**Workflow Run:** ' + workflowUrl,
+              '**Date:** ' + new Date().toISOString(),
+              '**Scan Time:** ' + new Date().toLocaleString('en-US', { timeZone: 'UTC' }) + ' UTC',
+              '',
+              '### Scan Results Summary:',
+              'The latest production image failed security scanning with CRITICAL or HIGH severity vulnerabilities.',
+              '',
+              '### Failed Image:',
+              '`:latest` tag from the container registry',
+              '',
+              '### Next Steps:',
+              '1. 🔍 **Review the Security tab** for detailed vulnerability reports',
+              '2. 📊 **Check the workflow logs** for specific scan results',
+              '3. 🔄 **Update dependencies** or base images to address vulnerabilities',
+              '4. 🏗️ **Rebuild and redeploy** containers with security fixes',
+              '5. ✅ **Re-run this workflow** once issues are resolved',
+              '',
+              '### Security Resources:',
+              '- [GitHub Security Advisories](' + repoUrl + '/security/advisories)',
+              '- [Container Registry Packages](https://github.com/orgs/' + owner + '/packages)',
+              '- [Trivy Documentation](https://aquasecurity.github.io/trivy/)',
+              '',
+              '**Priority:** High - Security vulnerabilities detected in production images',
+              '',
+              '@mikegehard-rise8 please investigate this security scan failure.'
+            ].join('\n');
+
             const issue = await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: '🚨 Nightly AI Assistant Container Security Scan Failed - ' + today,
-              body: `## Nightly Security Scan Failure
-
-The nightly security scan for AI assistant container images has detected vulnerabilities.
-
-**Workflow Run:** ${workflowUrl}
-**Date:** ${new Date().toISOString()}
-**Scan Time:** ${new Date().toLocaleString('en-US', { timeZone: 'UTC' })} UTC
-
-### Scan Results Summary:
-The latest production image failed security scanning with CRITICAL or HIGH severity vulnerabilities.
-
-### Failed Image:
-\`:latest\` tag from the container registry
-
-### Next Steps:
-1. 🔍 **Review the Security tab** for detailed vulnerability reports
-2. 📊 **Check the workflow logs** for specific scan results
-3. 🔄 **Update dependencies** or base images to address vulnerabilities
-4. 🏗️ **Rebuild and redeploy** containers with security fixes
-5. ✅ **Re-run this workflow** once issues are resolved
-
-### Security Resources:
-- [GitHub Security Advisories](${repoUrl}/security/advisories)
-- [Container Registry Packages](https://github.com/orgs/${owner}/packages)
-- [Trivy Documentation](https://aquasecurity.github.io/trivy/)
-
-**Priority:** High - Security vulnerabilities detected in production images
-
-@mikegehard-rise8 please investigate this security scan failure.`,
+              body: issueBody,
               assignees: ['mikegehard-rise8'],
               labels: ['security', 'container', 'nightly', 'vulnerability']
             });
