@@ -75,6 +75,9 @@ See "Troubleshooting" below if you have issues with the above.
 ### Option A: VSCode DevContainer (Recommended)
 
 1. Make sure you have the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) installed
+2. Also make sure that you have the proper container runtime configured.
+![devcontainer settings](docs/devcontainer-settings.png)
+![container runtime](docs/container-runtime.png)
 2. Open the project folder in VSCode
 3. VSCode will prompt to "Reopen in Container" - click this button
 4. Wait for the container to initialize
