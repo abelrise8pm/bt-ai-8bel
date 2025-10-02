@@ -1,18 +1,18 @@
 # syntax=docker/dockerfile:1
 # Pinned Ubuntu 24.04 LTS for multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
 # Use `crane digest ubuntu:24.04`to get the sha256 digest.
-FROM ubuntu:24.04@sha256:a08e551cb33850e4740772b38217fc1796a66da2506d312abe51acda354ff061
+FROM ubuntu:24.04@sha256:fdb6c9ceb1293dcb0b7eda5df195b15303b01857d7b10f98489e7691d20aa2a1
 
 # Version definitions
 # curl https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
 # curl https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md for changelog information.
-ARG CLAUDE_CODE_VERSION=1.0.107
+ARG CLAUDE_CODE_VERSION=2.0.1
 # curl https://www.npmjs.com/package/@google/gemini-cli for latest version
 # curl https://github.com/google-gemini/gemini-cli/releases for changelog information
-ARG GEMINI_CLI_VERSION=0.3.2
+ARG GEMINI_CLI_VERSION=0.7.0
 # curl https://github.com/block/goose/releases for latest version
 # curl https://github.com/block/goose/releases for changelog information
-ARG GOOSE_VERSION=1.7.0
+ARG GOOSE_VERSION=1.9.1
 # Changed manually when new version published.
 ARG MCP_DEV_COMMANDS_VERSION=1.0.1
 
@@ -53,10 +53,10 @@ RUN apt-get update && \
 # bzip2: Compression utility for Goose installation archive (Goose)
 # libxcb1: X11 client library required by Goose (Goose GUI framework dependency)
 
-# Install Node.js v22.18.0 (pinned version for Claude Code and Gemini CLI)
+# Install Node.js v22.20.0 (pinned version for Claude Code and Gemini CLI)
 # To update: Check https://nodejs.org/download/release/ for latest v22.x
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs=22.19.0* && \
+    apt-get install -y nodejs=22.20.0* && \
     rm -f /etc/apt/sources.list.d/nodesource.list && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
