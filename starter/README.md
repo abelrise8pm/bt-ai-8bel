@@ -84,6 +84,8 @@ See "Troubleshooting" below if you have issues with the above.
 
 ### Option B: DevContainer CLI
 
+**Prerequisite**: Ensure `docker` binary is symlinked to `podman` (e.g., `ln -s /opt/homebrew/bin/podman ~/.local/bin/docker`)
+
 ```bash
 # Install DevContainer CLI
 npm install -g @devcontainers/cli
