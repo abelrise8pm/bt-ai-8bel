@@ -33,39 +33,19 @@ jobs:
 
       - name: Run Claude Code software version updates
         id: claude_updates
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          echo "Running Claude Code with update-software-versions command for ai-assistant-container/Dockerfile"
-
-          # Copy update script to temp location for container access
-          cat > /tmp/claude_update.sh << 'EOF'
-          #!/bin/bash
-          set -e
-
-          echo "Starting Claude Code software version update process..."
-          echo "Working directory: $(pwd)"
-          echo "Target: ai-assistant-container/Dockerfile"
-
-          # Update ai-assistant-container Dockerfile
-          echo "Running /update-software-versions command for ai-assistant-container/Dockerfile"
-          claude -p "/update-software-versions ai-assistant-container/Dockerfile" --dangerously-skip-permissions
-
-          echo "Claude Code software version update completed successfully"
-          EOF
-
-          chmod +x /tmp/claude_update.sh
-
-          # Run updates in dev-container
-          docker run --rm \
-            -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" \
-            -e GITHUB_TOKEN="$GITHUB_TOKEN" \
-            -v "$GITHUB_WORKSPACE":/workspaces/XPai \
-            -v /tmp/claude_update.sh:/tmp/claude_update.sh \
-            --workdir /workspaces/XPai \
-            ghcr.io/${{ github.repository_owner }}/xpai/dev-container:latest \
-            /tmp/claude_update.sh
+        uses: ./.github/actions/container-script-executor
+        with:
+          script-content: |
+            #!/bin/bash
+            set -e
+            echo "Starting Claude Code software version update process..."
+            echo "Working directory: $(pwd)"
+            echo "Target: ai-assistant-container/Dockerfile"
+            echo "Running /update-software-versions command for ai-assistant-container/Dockerfile"
+            claude -p "/update-software-versions ai-assistant-container/Dockerfile" --dangerously-skip-permissions
+            echo "Claude Code software version update completed successfully"
+          anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github-token: ${{ steps.app-token.outputs.token }}
 
       - name: Check for changes and create PR
         env:

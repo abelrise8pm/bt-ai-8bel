@@ -39,29 +39,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
+      - name: Setup container build environment
+        id: setup
+        uses: ./.github/actions/setup-container-build
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix=sha-
-            type=raw,value=latest,enable={{is_default_branch}}
+          image-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push staging image
         id: build
@@ -72,7 +57,7 @@ jobs:
           secrets: |
             github_token=${{ secrets.GITHUB_TOKEN }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: ${{ steps.setup.outputs.labels }}
           platforms: linux/arm64,linux/amd64
           push: true
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
@@ -90,17 +75,12 @@ jobs:
           export DOCKER_DEFAULT_PLATFORM=linux/amd64
           CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}" ./scripts/test.sh
 
-      - name: Run Trivy vulnerability scanner
+      - name: Security scan
         id: scan
-        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
+        uses: ./.github/actions/trivy-scan
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
-          format: 'table'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '1'
-          trivyignores: 'ai-assistant-container/.trivyignore'
-        env:
-          TRIVY_CACHE_BACKEND: memory
+          trivyignores-path: 'ai-assistant-container/.trivyignore'
 
       - name: Promote staging image to production tags
         if: steps.test.conclusion == 'success' && steps.scan.conclusion == 'success'
