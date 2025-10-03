@@ -1,0 +1,36 @@
+name: 'Trivy Security Scan'
+description: 'Run Trivy vulnerability scanner on container image'
+inputs:
+  image-ref:
+    description: 'Container image reference to scan'
+    required: true
+  trivyignores-path:
+    description: 'Path to .trivyignore file'
+    required: false
+    default: '.trivyignore'
+  format:
+    description: 'Output format'
+    required: false
+    default: 'table'
+  severity:
+    description: 'Severity levels to scan for'
+    required: false
+    default: 'CRITICAL,HIGH'
+  exit-code:
+    description: 'Exit code when vulnerabilities found'
+    required: false
+    default: '1'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2
+      with:
+        image-ref: ${{ inputs.image-ref }}
+        format: ${{ inputs.format }}
+        severity: ${{ inputs.severity }}
+        exit-code: ${{ inputs.exit-code }}
+        trivyignores: ${{ inputs.trivyignores-path }}
+      env:
+        TRIVY_CACHE_BACKEND: memory
