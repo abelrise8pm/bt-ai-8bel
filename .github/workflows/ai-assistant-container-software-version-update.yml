@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Claude Code software version updates
         id: claude_updates
-        uses: ./.github/actions/claude-automation
+        uses: ./.github/actions/container-script-executor
         with:
           script-content: |
             #!/bin/bash

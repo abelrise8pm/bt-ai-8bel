@@ -1,0 +1,69 @@
+name: 'Container Script Executor'
+description: 'Execute bash scripts in dev-container environment'
+inputs:
+  script-content:
+    description: 'Content of the script to execute'
+    required: true
+  anthropic-api-key:
+    description: 'Anthropic API key for Claude'
+    required: true
+  github-token:
+    description: 'GitHub token for repository access'
+    required: true
+  container-image:
+    description: 'Container image to use for execution'
+    required: false
+    default: 'ghcr.io/${{ github.repository_owner }}/xpai/dev-container:latest'
+  workspace-path:
+    description: 'Workspace mount path inside container'
+    required: false
+    default: '/workspaces/XPai'
+  timeout-seconds:
+    description: 'Timeout for script execution'
+    required: false
+    default: '600'
+outputs:
+  result:
+    description: 'Execution result (success/failure)'
+    value: ${{ steps.script-exec.outputs.result }}
+  log-file:
+    description: 'Path to output log file'
+    value: ${{ steps.script-exec.outputs.log-file }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepare script
+      shell: bash
+      run: |
+        echo '${{ inputs.script-content }}' > /tmp/script.sh
+        chmod +x /tmp/script.sh
+
+    - name: Execute script in container
+      id: script-exec
+      shell: bash
+      run: |
+        echo "Starting script execution..."
+
+        # Run script in container with timeout, capturing all output
+        timeout ${{ inputs.timeout-seconds }}s docker run --rm \
+          -e ANTHROPIC_API_KEY="${{ inputs.anthropic-api-key }}" \
+          -e GITHUB_TOKEN="${{ inputs.github-token }}" \
+          -v "$GITHUB_WORKSPACE":${{ inputs.workspace-path }} \
+          -v /tmp/script.sh:/tmp/script.sh \
+          -v /tmp:/tmp \
+          --workdir ${{ inputs.workspace-path }} \
+          ${{ inputs.container-image }} \
+          /tmp/script.sh 2>&1 | tee /tmp/output.log || RESULT=$?
+
+        # Set outputs based on result
+        if [ -f /tmp/output.log ]; then
+          echo "result=success" >> $GITHUB_OUTPUT
+          echo "log-file=/tmp/output.log" >> $GITHUB_OUTPUT
+        else
+          echo "result=failure" >> $GITHUB_OUTPUT
+          echo "log-file=" >> $GITHUB_OUTPUT
+        fi
+
+        # Exit with original result
+        exit ${RESULT:-0}
