@@ -1,12 +1,12 @@
 # syntax=docker/dockerfile:1
 # Pinned Ubuntu 24.04 LTS for multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
 # Use `crane digest ubuntu:24.04`to get the sha256 digest.
-FROM ubuntu:24.04@sha256:fdb6c9ceb1293dcb0b7eda5df195b15303b01857d7b10f98489e7691d20aa2a1
+FROM ubuntu:24.04@sha256:728785b59223d755e3e5c5af178fab1be7031f3522c5ccd7a0b32b80d8248123
 
 # Version definitions
 # curl https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
 # curl https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md for changelog information.
-ARG CLAUDE_CODE_VERSION=2.0.1
+ARG CLAUDE_CODE_VERSION=2.0.8
 # curl https://www.npmjs.com/package/@google/gemini-cli for latest version
 # curl https://github.com/google-gemini/gemini-cli/releases for changelog information
 ARG GEMINI_CLI_VERSION=0.7.0
