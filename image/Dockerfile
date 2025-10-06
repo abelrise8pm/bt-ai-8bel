@@ -105,8 +105,8 @@ RUN --mount=type=secret,id=github_token \
         @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} \
         @google/gemini-cli@${GEMINI_CLI_VERSION} \
         @rise8-us/dev-commands-mcp-server@${MCP_DEV_COMMANDS_VERSION} && \
-    npm cache clean --force && \
-    # Clean up npm credentials
+    # Clean up npm cache and credentials
+    rm -rf /root/.npm && \
     rm -f /tmp/.npmrc && \
     rm -rf /tmp/* /var/tmp/*
 
