@@ -44,73 +44,24 @@ jobs:
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check for changes and create PR
-        env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          # Configure git
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+      - name: Create automated PR
+        uses: ./.github/actions/create-automated-pr
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          pr-title: "Update AI assistant container software versions ($(date +%Y-%m-%d))"
+          pr-body: |
+            ## Summary
 
-          # Check if there are any changes
-          if git diff --quiet && git diff --cached --quiet; then
-            echo "No changes detected after running software version updates"
-            echo "::notice::No software version updates were needed"
-            exit 0
-          fi
+            Automated software version updates performed using Claude Code's `/update-software-versions` command.
 
-          # Create a new branch for the updates
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          BRANCH_NAME="auto-update-software-versions-${TIMESTAMP}"
-          git checkout -b "$BRANCH_NAME"
+            🤖 Generated with [Claude Code](https://claude.ai/code)
+          commit-message: |
+            Update AI assistant container software versions via Claude Code
 
-          # Stage all changes
-          git add -A
+            Automated software version updates performed using /update-software-versions command.
+            Target: ai-assistant-container/Dockerfile
 
-          # Show what changed for debugging
-          echo "Changes detected:"
-          git diff --cached --name-only
+            🤖 Generated with [Claude Code](https://claude.ai/code)
 
-          # Commit the changes
-          git commit -m "Update AI assistant container software versions via Claude Code
-
-          Automated software version updates performed using /update-software-versions command.
-          Target: ai-assistant-container/Dockerfile
-
-          🤖 Generated with [Claude Code](https://claude.ai/code)
-
-          Co-Authored-By: Claude <noreply@anthropic.com>"
-
-          # Push the branch
-          git push origin "$BRANCH_NAME"
-
-          # Create a pull request
-          gh pr create \
-            --title "Update AI assistant container software versions ($(date +%Y-%m-%d))" \
-            --body "## Summary
-
-          Automated software version updates performed using Claude Code's \`/update-software-versions\` command.
-
-          **Target:** \`ai-assistant-container/Dockerfile\`
-          **Triggered by:** Manual workflow dispatch
-          **Date:** $(date '+%Y-%m-%d %H:%M:%S UTC')
-
-          🤖 Generated with [Claude Code](https://claude.ai/code)" \
-            --base main \
-            --head "$BRANCH_NAME"
-
-      - name: Log completion
-        if: always()
-        run: |
-          echo "✅ Workflow completed"
-          if [ "${{ steps.claude_updates.outcome }}" = "success" ]; then
-            echo "✅ Claude Code updates ran successfully"
-            if [ -n "${{ env.PR_URL }}" ]; then
-              echo "✅ Pull request created: ${{ env.PR_URL }}"
-            else
-              echo "ℹ️  No changes detected - no PR created"
-            fi
-          else
-            echo "❌ Claude Code updates failed"
-            echo "Check the workflow logs for details"
-          fi
+            Authored-By: Claude <noreply@anthropic.com>
+          branch-name: "software-versions-$(date +%Y%m%d-%H%M%S)"
