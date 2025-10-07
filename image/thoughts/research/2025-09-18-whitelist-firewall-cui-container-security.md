@@ -389,7 +389,7 @@ services:
       - firewall-manager
       
   ai-assistant-cui:
-    image: ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:74162847e16fbd30e542da565e402bee5642db6e16230caab0052cb53252b579
+    image: ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:689a7449a65d981b8eca3ab8955c32b052a28eb47bccecaf0f4d4fcb3a440d9b
     environment:
       - HTTP_PROXY=http://content-sanitizer-proxy:3128
       - HTTPS_PROXY=http://content-sanitizer-proxy:3128
