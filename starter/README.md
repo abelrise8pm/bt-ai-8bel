@@ -144,6 +144,45 @@ If your project team encounters authentication issues with `ghcr.io`, follow the
   podman pull ghcr.io/rise8-us/xpai/ai-assistant-home@sha:<digest>
   ```
 
+### File permission issues in devcontainer
+
+If you experience file permission problems inside the devcontainer (e.g., unable to create files/folders, files owned by 'root' or 'dialout' instead of 'aiAssistant', "Permission denied" errors), this is typically caused by running podman in rootful mode instead of rootless mode.
+
+**Diagnosis:**
+
+Check if your podman machine is running in rootless mode:
+```bash
+podman info --format '{{.Host.Security.Rootless}}'
+```
+
+This should return `true`. If it returns `false`, you are running in rootful mode.
+
+**Solution:**
+
+Rootless mode is the default for podman. If your machine is running in rootful mode, the recommended approach is to delete the podman machine and recreate it:
+
+```bash
+# Stop and delete the current machine
+podman machine stop
+podman machine rm
+
+# Create and start a new machine (will default to rootless)
+podman machine init
+podman machine start
+```
+
+After recreating the machine, rebuild your devcontainer in VSCode.
+
+**Note:** In some cases, even with rootless mode, files may still be owned by 'root'. If this occurs after recreating your podman machine, you can add the following to your `.devcontainer/devcontainer.json` `runArgs`:
+
+```json
+"runArgs": [
+  "--userns=keep-id:uid=1001,gid=1001"
+]
+```
+
+Then rebuild the devcontainer.
+
 ## Example advanced uses
 
 - [XPai](https://github.com/rise8-us/XPai/tree/main)
