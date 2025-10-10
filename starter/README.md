@@ -1,4 +1,4 @@
-# AI Assistant Conatiner Project Starter Repository
+# AI Assistant Container Project Starter Repository
 
 **NOTE: This repository is automatically synchronized from the [`ai-assistant-container-starter-repo/` directory of the main XPai](https://github.com/rise8-us/XPai/tree/main/ai-assistant-container-starter-repo) repository using Git subtree push.**
 
@@ -10,20 +10,25 @@
 
 ## Prerequisites
 - Podman (latest version recommended)
-- Githb CLI (latest version recommended)
+- Or you can use GitHub codespaces
 
 ## Overview
 
 This starter repository provides everything you need to quickly set up an AI assistant development environment using containers.
 
-For more details about the container itself, check out https://github.com/rise8-us/XPai/tree/main/ai-assistant-container.
+For more details about the AI assistant base container itself, check out https://github.com/rise8-us/XPai/tree/main/ai-assistant-container.
 
-## Container versions
+For details about using a customized project container for project specific tools, see [that readme](project-container/README.md).
 
-To find the digest of the latest container:
-1. Visit https://github.com/rise8-us/XPai/pkgs/container/xpai%2Fai-assistant-home/versions?filters%5Bversion_type%5D=tagged.
-2. Copy the digest text. ![digest](docs/digest.png)
-3. Replace current digest with new digest.
+## GitHub Workflows
+
+This starter includes automated CI/CD workflows for building, testing, and securing your project container:
+
+- **Build & Publish** - Automatically builds and publishes container images when changes are pushed
+- **Security Scanning** - Daily vulnerability scans with Trivy
+- **Base Container Updates** - Monitors and updates AI assistant base container references
+
+📖 **[Workflow Setup Guide](.github/workflows/README.md)** - Complete setup instructions and configuration options
 
 ## Setup
 
