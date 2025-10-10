@@ -1,5 +1,5 @@
 {
-  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:689a7449a65d981b8eca3ab8955c32b052a28eb47bccecaf0f4d4fcb3a440d9b",
+  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:4adcd6b58aaf206554affcbfa18cee949ce1cd1d8f6931a105533d7e3c8ae0ca",
   "postCreateCommand": "echo 'Container ready for Codespaces development with AI assistants pre-installed'",
   // This is required for GitHub Codespaces.
   // If you use this and want to use it locally, you need to load env vars from the .env file
