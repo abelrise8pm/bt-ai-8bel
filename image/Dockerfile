@@ -18,7 +18,22 @@ ARG MCP_DEV_COMMANDS_VERSION=1.0.1
 
 # Copy certificate and install in single layer
 COPY src/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
-RUN apt-get update && \
+
+# Fix /tmp permissions for container runtime compatibility
+# Background: Both runc v1.1.8 and crun v1.11+ introduced regressions where the sticky bit
+# on /tmp is not properly set (missing from tmpfs mounts). This causes APT and other tools
+# to fail with "Couldn't create temporary file /tmp/apt.conf.*" errors.
+#
+# Technical details:
+# - Expected permissions: 1777 (drwxrwxrwt) - the leading 1 is the sticky bit
+# - Without fix: 777 (drwxrwxrwx) - missing sticky bit causes security checks to fail
+# - runc bug: https://github.com/opencontainers/runc/issues/3952 (fixed in v1.1.9)
+# - crun bug: Changed behavior in v1.11+ to use underlying directory permissions
+#
+# Impact: Affects both Docker (typically uses runc) and Podman (typically uses crun)
+# Solution: Explicitly set /tmp permissions to ensure correct behavior across all runtimes
+RUN chmod 1777 /tmp && \
+    apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
     update-ca-certificates && \
     apt-get clean && \
