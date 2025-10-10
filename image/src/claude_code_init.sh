@@ -47,28 +47,28 @@ ANTHROPIC_API_KEY_LAST_20_CHARS=${ANTHROPIC_API_KEY: -20}
 
 # We write the global config to ~/.claude.json
 # Warning this overwrites your existing
+# Trust the current dir/project
+# - when you enter a new directoy, claude asks it you trust it
+# - we use the claude config to trust it
 cat <<EOM > ~/.claude.json
 {
     "customApiKeyResponses": {
         "approved": [ "$ANTHROPIC_API_KEY_LAST_20_CHARS"],
         "rejected": [  ]
-    }
+    },
+    "hasTrustDialogAccepted": true
 }
 EOM
 
-##################################
-# Trust the current dir/project
-# - when you enter a new directoy, claude asks it you trust it
-# - we use the claude config to trust it
-##################################
-claude config set hasTrustDialogAccepted true
-
 # We turn off autoupdates because we want to control the
 # versions people are using for security.
-claude config set --global autoUpdates false
-
-# - hasCompletedOnboarding indicates configuration is done
-# claude config set hasCompletedProjectOnboarding true
+cat <<EOM > ~/.claude/settings.json
+{
+    "env": {
+        "DISABLE_AUTOUPDATER": "1"
+    }
+}
+EOM
 
 #################################
 # Configuring MCP servers
