@@ -44,6 +44,10 @@ jobs:
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate branch name
+        id: branch-name
+        run: echo "name=software-versions-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
       - name: Create automated PR
         uses: ./.github/actions/create-automated-pr
         with:
@@ -64,4 +68,4 @@ jobs:
             🤖 Generated with [Claude Code](https://claude.ai/code)
 
             Authored-By: Claude <noreply@anthropic.com>
-          branch-name: "software-versions-$(date +%Y%m%d-%H%M%S)"
+          branch-name: ${{ steps.branch-name.outputs.name }}
