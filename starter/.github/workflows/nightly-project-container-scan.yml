@@ -7,9 +7,13 @@ name: Nightly Project Container Security Scan
 # - Suggested remediation steps
 
 on:
-  schedule:
-    # Run nightly at 2:00 AM UTC
-    - cron: '0 2 * * *'
+  # IMPORTANT: Uncomment the schedule trigger below to enable nightly security scans
+  # This is commented out by default to prevent unintended workflow runs
+  # in forked repositories. Remove the '#' at the start of each line to enable.
+
+  # schedule:
+  #   # Run nightly at 2:00 AM UTC
+  #   - cron: '0 2 * * *'
   workflow_dispatch:
 
 env:

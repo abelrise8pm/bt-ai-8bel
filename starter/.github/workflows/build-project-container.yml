@@ -7,17 +7,21 @@ name: Build Project Container
 # - Manual trigger via workflow_dispatch
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'project-container/**'
-      - '.github/workflows/build-project-container.yml'
-      - '.github/actions/**'
-  pull_request:
-    paths:
-      - 'project-container/**'
-      - '.github/workflows/build-project-container.yml'
-      - '.github/actions/**'
+  # IMPORTANT: Uncomment the triggers below to enable automatic builds
+  # These are commented out by default to prevent unintended workflow runs
+  # in forked repositories. Remove the '#' at the start of each line to enable.
+
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'project-container/**'
+  #     - '.github/workflows/build-project-container.yml'
+  #     - '.github/actions/**'
+  # pull_request:
+  #   paths:
+  #     - 'project-container/**'
+  #     - '.github/workflows/build-project-container.yml'
+  #     - '.github/actions/**'
   workflow_dispatch:
 
 env:
