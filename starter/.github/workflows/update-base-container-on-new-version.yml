@@ -116,6 +116,14 @@ jobs:
           echo "Running devcontainer update script with SHA: $FORMATTED_SHA"
           ./.github/scripts/update-ai-assistant-base-image.sh "$FORMATTED_SHA"
 
+      - name: Prepare branch name
+        if: steps.sha-check.outputs.sha_changed == 'true'
+        id: branch-name
+        run: |
+          BRANCH_NAME="base-container-sha-$(echo ${{ steps.current-sha.outputs.latest_sha }} | cut -d: -f2 | cut -c1-12)"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "Branch name: $BRANCH_NAME"
+
       - name: Create automated PR
         if: steps.sha-check.outputs.sha_changed == 'true'
         uses: ./.github/actions/create-automated-pr
@@ -145,4 +153,4 @@ jobs:
             Updated base image SHA references in devcontainer files.
 
             🤖 Automated by GitHub Actions
-          branch-name: "base-container-sha-$(echo ${{ steps.current-sha.outputs.latest_sha }} | cut -d: -f2 | cut -c1-12)"
+          branch-name: ${{ steps.branch-name.outputs.branch_name }}
