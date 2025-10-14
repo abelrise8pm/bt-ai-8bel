@@ -1,18 +1,18 @@
 # syntax=docker/dockerfile:1
 # Pinned Ubuntu 24.04 LTS for multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
 # Use `crane digest ubuntu:24.04`to get the sha256 digest.
-FROM ubuntu:24.04@sha256:728785b59223d755e3e5c5af178fab1be7031f3522c5ccd7a0b32b80d8248123
+FROM ubuntu:24.04@sha256:66460d557b25769b102175144d538d88219c077c678a49af4afca6fbfc1b5252
 
 # Version definitions
 # curl https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
 # curl https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md for changelog information.
-ARG CLAUDE_CODE_VERSION=2.0.8
+ARG CLAUDE_CODE_VERSION=2.0.14
 # curl https://www.npmjs.com/package/@google/gemini-cli for latest version
 # curl https://github.com/google-gemini/gemini-cli/releases for changelog information
-ARG GEMINI_CLI_VERSION=0.7.0
+ARG GEMINI_CLI_VERSION=0.8.2
 # curl https://github.com/block/goose/releases for latest version
 # curl https://github.com/block/goose/releases for changelog information
-ARG GOOSE_VERSION=1.9.1
+ARG GOOSE_VERSION=1.9.3
 # Changed manually when new version published.
 ARG MCP_DEV_COMMANDS_VERSION=1.0.1
 
