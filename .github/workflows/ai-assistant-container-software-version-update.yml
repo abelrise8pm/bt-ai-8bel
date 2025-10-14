@@ -44,15 +44,17 @@ jobs:
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate branch name
+      - name: Generate branch name and date
         id: branch-name
-        run: echo "name=software-versions-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+        run: |
+          echo "name=software-versions-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+          echo "date=$(date +%Y-%m-%d)" >> $GITHUB_OUTPUT
 
       - name: Create automated PR
         uses: ./.github/actions/create-automated-pr
         with:
           github-token: ${{ steps.app-token.outputs.token }}
-          pr-title: "Update AI assistant container software versions ($(date +%Y-%m-%d))"
+          pr-title: "Update AI assistant container software versions (${{ steps.branch-name.outputs.date }})"
           pr-body: |
             ## Summary
 
