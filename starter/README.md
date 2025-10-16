@@ -61,6 +61,7 @@ progress and should not be used on a customer project.
 - AWS Bedrock with FedRAMP and IL4/5 compliance
 - Local development only
 - Enhanced security requirements
+- Required firewall protection for network isolation (CMMC Level 2)
 
 ## Development Environment
 
@@ -121,6 +122,23 @@ devcontainer exec --workspace-folder . bash
 2. Type `/dev-commands:help`.
 
 3. Follow the online instructions.
+
+## Multi-Project Support
+
+This starter template supports running multiple projects simultaneously with isolated containers.
+
+**Setup:**
+1. Each project gets its own copy of this starter repository
+2. Set `PROJECT_NAME` in `.env` to match your project directory name
+3. Containers are named with your project prefix (e.g., `my-project-firewall-manager`)
+
+**Benefits:**
+- Work on multiple projects at the same time
+- No container name conflicts
+- Each project has isolated network namespace (CUI projects)
+- Independent credentials and configuration per project
+
+See setup guides for configuration details.
 
 ## Troubleshooting
 

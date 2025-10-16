@@ -5,7 +5,8 @@ This guide is for projects that work with **sensitive or controlled data**.
 ## ⚠️ Important Security Requirements
 
 - **Local development only** - Cannot use GitHub Codespaces
-- **AWS Bedrock required**
+- **AWS Bedrock required** - FedRAMP High and DoD IL4/5 approved models
+- **Firewall protection required** - CMMC Level 2 compliant network isolation mandatory for CUI data
 - **Time-limited credentials** - 8-hour session expiration for security
 
 ## Prerequisites
@@ -33,20 +34,33 @@ aws configure sso --profile claude-bedrock
 
 ### 2. Configure DevContainer
 
-Copy the CUI devcontainer template:
+Use the CUI devcontainer with mandatory firewall protection:
 
 ```bash
 mv .devcontainer/devcontainer.cui.json .devcontainer/devcontainer.json
 rm .devcontainer/devcontainer.no-cui.json
 ```
 
-### 3. Configure Claude Code Settings
+**Firewall Features (Required for CUI):**
+- Deny-by-default iptables firewall
+- Whitelist-based network access control
+- Prevents data exfiltration via prompt injection attacks
+- CMMC Level 2 compliant boundary protection
 
-Copy the CUI environment template:
+📖 **[Complete Firewall Documentation](firewall/README-FIREWALL.md)** - Setup, configuration, and troubleshooting
+
+### 3. Configure Project Settings
+
+Copy and configure the environment template:
 
 ```bash
-cp .env.cui.example .env.claude
+cp .env.example .env
 ```
+
+Edit `.env` and:
+1. Set `PROJECT_NAME` to your project directory name (e.g., `my-cui-project`)
+2. Uncomment the **CUI Projects** section
+3. Delete the Non-CUI section
 
 ### 4. Daily Authentication Workflow
 
@@ -84,7 +98,8 @@ aws configure sso --profile claude-bedrock
 
 ## Features
 
-🔒 **Security Compliance** - Meets government security standards
+🔒 **Security Compliance** - Meets CMMC Level 2 and government security standards
+🛡️ **Network Firewall** - Deny-by-default iptables firewall prevents data exfiltration
 🔄 **Automatic refresh** - 8-hour credential rotation for security
 🏠 **Local only** - No cloud development environments
-🛡️ **Minimal permissions** - Only Bedrock model access
+🔐 **Minimal permissions** - Only Bedrock model access, zero container capabilities

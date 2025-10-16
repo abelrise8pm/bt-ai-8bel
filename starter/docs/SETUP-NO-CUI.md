@@ -19,10 +19,14 @@ rm .devcontainer/devcontainer.cui.json
 Create your environment file from the example:
 
 ```bash
-cp .env.no-cui.example .env
+cp .env.example .env
 ```
 
-Edit `.env` and add your API keys.
+Edit `.env` and:
+1. Set `PROJECT_NAME` to your project directory name (e.g., `my-project`)
+2. Uncomment the **Non-CUI Projects** section
+3. Add your `ANTHROPIC_API_KEY` (file a #helpdesk ticket for keys)
+4. Delete the section related to CUI data.
 
 ## Features
 

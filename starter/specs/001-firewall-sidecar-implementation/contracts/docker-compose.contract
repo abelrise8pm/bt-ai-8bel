@@ -1,0 +1,397 @@
+# Contract: Docker Compose Multi-Container Configuration
+
+**Version**: 1.0.0
+**Last Updated**: 2025-10-15
+**Parties**: Docker/Podman Compose (executor), Developers (configuration authors), VSCode devcontainer (consumer)
+
+## Purpose
+
+Defines the required structure and constraints for the multi-container docker-compose.yml that orchestrates the firewall sidecar and AI assistant.
+
+## File Format
+
+- **Format**: YAML 1.2
+- **Compose Version**: 3.8 or higher
+- **Location**: `.devcontainer/docker-compose.yml`
+
+## Required Services
+
+### 1. firewall-manager Service
+
+#### MUST Requirements
+
+```yaml
+services:
+  firewall-manager:
+    image: alpine:latest  # Or specific version, e.g., alpine:3.18
+    container_name: cui-firewall-manager
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ../firewall:/firewall:ro
+    command: ["/bin/sh", "/firewall/init-firewall.sh"]
+    healthcheck:
+      test: ["CMD", "sh", "-c", "iptables -L OUTPUT | grep -q 'policy DROP'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+```
+
+**Required Properties**:
+- `image`: MUST use Alpine Linux (any version) for minimal attack surface
+- `container_name`: MUST be `cui-firewall-manager` (referenced by network_mode)
+- `cap_add`: MUST include `NET_ADMIN` (exactly; not full privileged mode)
+- `volumes`: MUST mount firewall directory containing whitelist.txt and init-firewall.sh
+  - MUST be read-only mount (`:ro` suffix)
+- `command`: MUST execute init-firewall.sh script
+- `healthcheck`: MUST validate iptables configuration
+  - MUST check for DROP policy or specific firewall rules
+  - MUST have reasonable interval/timeout (10s/5s recommended)
+
+**MUST NOT Properties**:
+- MUST NOT use `privileged: true` (too permissive; use specific capabilities)
+- MUST NOT expose ports externally
+- MUST NOT have independent network configuration (uses default bridge)
+- MUST NOT mount Docker socket
+
+#### SHOULD Requirements
+- `image` SHOULD pin specific Alpine version for reproducibility (e.g., `alpine:3.18`)
+- `restart` SHOULD be `unless-stopped` for automatic recovery
+- `logging` SHOULD configure log driver for audit trail
+
+### 2. ai-assistant Service
+
+#### MUST Requirements
+
+```yaml
+services:
+  ai-assistant:
+    image: ghcr.io/rise8-us/xpai/ai-assistant-home:latest
+    container_name: cui-ai-assistant
+    network_mode: "service:firewall-manager"
+    cap_drop:
+      - ALL
+    depends_on:
+      firewall-manager:
+        condition: service_healthy
+    volumes:
+      - ../..:/workspace:cached
+    environment:
+      - AWS_REGION=us-gov-east-1
+    env_file:
+      - ../.env.bedrock
+      - ../.env.claude
+```
+
+**Required Properties**:
+- `image`: MUST reference AI assistant container image
+- `container_name`: MUST be `cui-ai-assistant`
+- `network_mode`: MUST be `"service:firewall-manager"` (network namespace sharing)
+- `cap_drop`: MUST include `ALL` (drop all Linux capabilities)
+- `depends_on`: MUST depend on firewall-manager with `condition: service_healthy`
+  - Ensures firewall is configured before AI container starts
+- `volumes`: MUST mount workspace directory
+- `environment` or `env_file`: MUST configure AWS credentials/region
+
+**MUST NOT Properties**:
+- MUST NOT have `cap_add` (zero capabilities required)
+- MUST NOT have `privileged: true`
+- MUST NOT have independent `networks` configuration (conflicts with network_mode)
+- MUST NOT have `ports` (cannot publish ports when using service network_mode)
+- MUST NOT mount Docker socket
+
+#### SHOULD Requirements
+- `volumes` SHOULD use `cached` or `delegated` consistency for performance on macOS
+- `restart` SHOULD be `unless-stopped` for automatic recovery
+
+## Validation Rules
+
+### Compose File Validation
+
+```bash
+# Syntax validation
+yamllint .devcontainer/docker-compose.yml
+
+# Schema validation
+docker-compose -f .devcontainer/docker-compose.yml config
+
+# Required services check
+docker-compose -f .devcontainer/docker-compose.yml config --services | grep -q firewall-manager
+docker-compose -f .devcontainer/docker-compose.yml config --services | grep -q ai-assistant
+```
+
+### Runtime Validation
+
+```bash
+# Firewall container has NET_ADMIN
+docker inspect cui-firewall-manager --format '{{.HostConfig.CapAdd}}' | grep -q NET_ADMIN
+
+# AI container has no capabilities
+docker inspect cui-ai-assistant --format '{{.HostConfig.CapDrop}}' | grep -q ALL
+
+# AI container shares firewall network
+firewall_net=$(docker inspect cui-firewall-manager --format '{{.NetworkSettings.SandboxKey}}')
+ai_net=$(docker inspect cui-ai-assistant --format '{{.NetworkSettings.SandboxKey}}')
+[ "$firewall_net" = "$ai_net" ]  # Must be equal
+```
+
+## Service Lifecycle
+
+### Startup Sequence
+
+1. **firewall-manager starts**:
+   - Alpine container boots
+   - init-firewall.sh executes
+   - Whitelist loaded
+   - iptables rules applied
+   - Health check passes
+
+2. **ai-assistant starts** (blocked until firewall healthy):
+   - Waits for firewall-manager health check
+   - Container boots using firewall's network namespace
+   - Application starts with network access controlled by firewall
+
+### Shutdown Sequence
+
+1. **docker-compose down** issued
+2. **ai-assistant stops** (dependencies stop first)
+3. **firewall-manager stops**
+
+## Health Check Contract
+
+### Firewall Health Check
+
+**Purpose**: Verify iptables is configured correctly before AI container starts
+
+**Test Command**:
+```bash
+iptables -L OUTPUT | grep -q 'policy DROP'
+```
+
+**Success Criteria**:
+- Command exits with status 0
+- Indicates OUTPUT chain has DROP policy (deny-by-default active)
+
+**Failure Handling**:
+- If health check fails, ai-assistant will not start
+- Firewall container remains running for debugging
+- Check firewall logs: `docker logs cui-firewall-manager`
+
+**Alternative Health Checks**:
+```bash
+# Option 1: Check for specific rule count
+test $(iptables -L OUTPUT | wc -l) -gt 5
+
+# Option 2: Check for whitelist rule existence
+iptables -L OUTPUT | grep -q "ACCEPT.*dpt:443"
+
+# Option 3: Validate all critical rules present
+iptables -L OUTPUT | grep -q "state ESTABLISHED,RELATED" && \
+  iptables -L OUTPUT | grep -q "dpt:53" && \
+  iptables -L OUTPUT | grep -q "policy DROP"
+```
+
+## Error Scenarios
+
+### Scenario 1: Health Check Never Passes
+
+**Cause**: init-firewall.sh failed to configure iptables
+
+**Detection**:
+- ai-assistant container not starting
+- `docker-compose ps` shows firewall-manager as "unhealthy"
+
+**Resolution**:
+```bash
+# Check firewall logs
+docker logs cui-firewall-manager
+
+# Common issues:
+# - whitelist.txt not found → check volume mount
+# - DNS resolution failed → check network connectivity
+# - iptables command failed → check CAP_NET_ADMIN granted
+```
+
+### Scenario 2: Network Mode Conflict
+
+**Cause**: ai-assistant has both `network_mode` and `networks` defined
+
+**Detection**:
+- docker-compose config fails with error
+- Error message: "network_mode and networks cannot be combined"
+
+**Resolution**:
+- Remove `networks` section from ai-assistant service
+- Use only `network_mode: "service:firewall-manager"`
+
+### Scenario 3: Firewall Container Missing NET_ADMIN
+
+**Cause**: `cap_add` not specified or incorrect
+
+**Detection**:
+- Firewall container starts but iptables commands fail
+- Logs show: "iptables: Permission denied"
+
+**Resolution**:
+```yaml
+cap_add:
+  - NET_ADMIN  # Add this
+```
+
+### Scenario 4: AI Container Has Capabilities
+
+**Cause**: `cap_drop: [ALL]` missing or incorrect
+
+**Detection**:
+- Security test fails: `docker inspect cui-ai-assistant` shows capabilities
+
+**Resolution**:
+```yaml
+cap_drop:
+  - ALL  # Add this
+```
+
+## Testing Contract Compliance
+
+### Unit Tests (Contract Validation)
+
+```bash
+#!/bin/bash
+# test-compose-contract.sh
+
+# Test 1: YAML syntax valid
+if yamllint .devcontainer/docker-compose.yml; then
+  echo "PASS: YAML syntax valid"
+else
+  echo "FAIL: YAML syntax invalid"
+fi
+
+# Test 2: Required services present
+services=$(docker-compose -f .devcontainer/docker-compose.yml config --services)
+if echo "$services" | grep -q "firewall-manager" && echo "$services" | grep -q "ai-assistant"; then
+  echo "PASS: Required services present"
+else
+  echo "FAIL: Missing required services"
+fi
+
+# Test 3: Firewall has NET_ADMIN
+cap_add=$(docker-compose -f .devcontainer/docker-compose.yml config | yq '.services.firewall-manager.cap_add[]')
+if echo "$cap_add" | grep -q "NET_ADMIN"; then
+  echo "PASS: Firewall has NET_ADMIN"
+else
+  echo "FAIL: Firewall missing NET_ADMIN"
+fi
+
+# Test 4: AI drops all capabilities
+cap_drop=$(docker-compose -f .devcontainer/docker-compose.yml config | yq '.services.ai-assistant.cap_drop[]')
+if echo "$cap_drop" | grep -q "ALL"; then
+  echo "PASS: AI drops all capabilities"
+else
+  echo "FAIL: AI does not drop all capabilities"
+fi
+
+# Test 5: AI uses firewall network
+network_mode=$(docker-compose -f .devcontainer/docker-compose.yml config | yq '.services.ai-assistant.network_mode')
+if [ "$network_mode" = "service:firewall-manager" ]; then
+  echo "PASS: AI uses firewall network"
+else
+  echo "FAIL: AI does not use firewall network"
+fi
+```
+
+### Integration Tests (Runtime Validation)
+
+```bash
+# Test 1: Containers start successfully
+docker-compose -f .devcontainer/docker-compose.yml up -d
+sleep 10  # Wait for startup
+
+# Test 2: Firewall is healthy
+if docker ps --filter "name=cui-firewall-manager" --filter "health=healthy" | grep -q cui-firewall-manager; then
+  echo "PASS: Firewall container healthy"
+else
+  echo "FAIL: Firewall container not healthy"
+fi
+
+# Test 3: AI container running
+if docker ps --filter "name=cui-ai-assistant" --filter "status=running" | grep -q cui-ai-assistant; then
+  echo "PASS: AI container running"
+else
+  echo "FAIL: AI container not running"
+fi
+
+# Test 4: Network namespace shared
+firewall_net=$(docker inspect cui-firewall-manager --format '{{.NetworkSettings.SandboxKey}}')
+ai_net=$(docker inspect cui-ai-assistant --format '{{.NetworkSettings.SandboxKey}}')
+if [ "$firewall_net" = "$ai_net" ]; then
+  echo "PASS: Network namespace shared"
+else
+  echo "FAIL: Network namespace not shared"
+fi
+```
+
+## Versioning
+
+### Current Version: 1.0.0
+
+### Breaking Changes (MAJOR version bump)
+- Changing required service names
+- Removing required capabilities
+- Changing network_mode pattern
+- Requiring different base images
+
+### Non-Breaking Changes (MINOR version bump)
+- Adding optional services
+- Adding optional environment variables
+- Supporting additional health check strategies
+
+### Patch Changes
+- Improving health check reliability
+- Updating image versions
+- Documentation clarifications
+
+## Migration Guide
+
+### From Single Container to Firewall Sidecar
+
+**Before (single container)**:
+```yaml
+services:
+  ai-assistant:
+    image: ghcr.io/rise8-us/xpai/ai-assistant-home:latest
+    volumes:
+      - ../..:/workspace
+```
+
+**After (with firewall sidecar)**:
+```yaml
+services:
+  firewall-manager:
+    image: alpine:latest
+    cap_add: [NET_ADMIN]
+    volumes:
+      - ../firewall:/firewall:ro
+    command: ["/bin/sh", "/firewall/init-firewall.sh"]
+    healthcheck:
+      test: ["CMD", "sh", "-c", "iptables -L OUTPUT | grep -q 'policy DROP'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  ai-assistant:
+    image: ghcr.io/rise8-us/xpai/ai-assistant-home:latest
+    network_mode: "service:firewall-manager"  # NEW
+    cap_drop: [ALL]                           # NEW
+    depends_on:                               # NEW
+      firewall-manager:
+        condition: service_healthy
+    volumes:
+      - ../..:/workspace
+```
+
+## References
+
+- Docker Compose file version 3 reference: https://docs.docker.com/compose/compose-file/compose-file-v3/
+- Linux capabilities: https://man7.org/linux/man-pages/man7/capabilities.7.html
+- Container networking modes: https://docs.docker.com/network/

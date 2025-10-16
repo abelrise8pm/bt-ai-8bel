@@ -1,0 +1,426 @@
+# Contract: iptables Firewall Rules Structure
+
+**Version**: 1.0.0
+**Last Updated**: 2025-10-15
+**Parties**: init-firewall.sh script (producer), Linux kernel netfilter (executor), Security auditors (consumers)
+
+## Purpose
+
+Defines the required structure, order, and behavior of iptables rules applied by the firewall initialization script.
+
+## Rule Application Order
+
+iptables rules are evaluated sequentially. Order is critical for both security and performance.
+
+### Required Rule Sequence
+
+```bash
+# 1. STATEFUL RULES (evaluate first for performance)
+iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# 2. DNS RULES (required for domain resolution)
+iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+
+# 3. WHITELIST RULES (per whitelist.txt entries)
+# For each entry: iptables -A OUTPUT -d <IP> -p tcp --dport <PORT> -j ACCEPT
+iptables -A OUTPUT -d 52.46.145.72 -p tcp --dport 443 -j ACCEPT
+iptables -A OUTPUT -d 52.222.147.69 -p tcp --dport 443 -j ACCEPT
+# ... additional whitelist rules
+
+# 4. LOGGING RULES (must be before DROP)
+iptables -A INPUT -j LOG --log-prefix "FW-BLOCKED-IN: " --log-level 4
+iptables -A OUTPUT -j LOG --log-prefix "FW-BLOCKED-OUT: " --log-level 4
+iptables -A FORWARD -j LOG --log-prefix "FW-BLOCKED-FWD: " --log-level 4
+
+# 5. DEFAULT POLICIES (applied last)
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+```
+
+## Rule Specifications
+
+### 1. Stateful Rules
+
+**Purpose**: Allow responses to initiated connections (performance optimization)
+
+**Required Rules**:
+```bash
+iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+```
+
+**Properties**:
+- MUST use conntrack module (`-m conntrack`)
+- MUST match ESTABLISHED and RELATED states (`--ctstate ESTABLISHED,RELATED`)
+- MUST be first rules in OUTPUT and INPUT chains
+- MUST use ACCEPT target
+
+**Rationale**:
+- Most packets in active connections are responses (ESTABLISHED state)
+- Evaluating these first improves performance (short-circuit evaluation)
+- RELATED allows FTP-style protocols (if needed)
+
+**Testing**:
+```bash
+# Verify rule exists
+iptables -L OUTPUT -n | grep "state ESTABLISHED,RELATED"
+
+# Test: Make allowed connection, verify response works
+curl https://bedrock-runtime.us-gov-east-1.amazonaws.com  # Outbound
+# Response arrives (inbound) via ESTABLISHED state
+```
+
+### 2. DNS Rules
+
+**Purpose**: Allow DNS queries for domain name resolution
+
+**Required Rules**:
+```bash
+iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
+iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
+```
+
+**Properties**:
+- MUST allow UDP port 53 (primary DNS)
+- MUST allow TCP port 53 (fallback for large responses)
+- MUST be in OUTPUT chain (client-initiated queries)
+- MUST use ACCEPT target
+- MUST NOT restrict destination (allow any DNS server)
+
+**Rationale**:
+- Applications need DNS resolution to function
+- UDP is standard, TCP is fallback (e.g., DNSSEC, large responses)
+- Restricting DNS servers would require additional configuration
+
+**Testing**:
+```bash
+# Verify rules exist
+iptables -L OUTPUT -n | grep "dpt:53.*ACCEPT"
+
+# Test: DNS query works
+nslookup bedrock-runtime.us-gov-east-1.amazonaws.com
+dig +short bedrock-runtime.us-gov-east-1.amazonaws.com
+```
+
+### 3. Whitelist Rules
+
+**Purpose**: Allow specific outbound connections per whitelist.txt
+
+**Rule Template**:
+```bash
+iptables -A OUTPUT -d <IP> -p tcp --dport <PORT> -j ACCEPT
+```
+
+**Properties**:
+- MUST be in OUTPUT chain (client-initiated)
+- MUST specify destination IP (`-d <IP>`)
+  - IP resolved from domain at init time
+- MUST specify protocol (`-p tcp`)
+  - Currently only TCP supported
+- MUST specify destination port (`--dport <PORT>`)
+- MUST use ACCEPT target
+- MUST be added for each whitelist entry
+
+**Example**:
+```bash
+# Whitelist entry: bedrock-runtime.us-gov-east-1.amazonaws.com:443
+# DNS resolution: bedrock-runtime.us-gov-east-1.amazonaws.com → 52.46.145.72
+# Generated rule:
+iptables -A OUTPUT -d 52.46.145.72 -p tcp --dport 443 -j ACCEPT
+```
+
+**Generation Algorithm**:
+```bash
+while IFS=: read -r domain port; do
+  # Skip comments and empty lines
+  [[ "$domain" =~ ^#.*$ ]] && continue
+  [[ -z "$domain" ]] && continue
+
+  # Resolve domain to IP
+  ip=$(dig +short "$domain" A | head -1)
+
+  if [ -z "$ip" ]; then
+    echo "WARNING: DNS resolution failed for $domain" >&2
+    continue
+  fi
+
+  # Add rule
+  iptables -A OUTPUT -d "$ip" -p tcp --dport "$port" -j ACCEPT
+  echo "WHITELIST: Added rule for $domain:$port ($ip:$port)"
+done < /etc/firewall/whitelist.txt
+```
+
+**Testing**:
+```bash
+# Verify rule exists for specific IP:port
+iptables -L OUTPUT -n -v | grep "52.46.145.72.*dpt:443"
+
+# Test: Connection to whitelisted endpoint succeeds
+curl -v https://bedrock-runtime.us-gov-east-1.amazonaws.com
+
+# Verify via logs (should NOT appear as blocked)
+docker logs cui-firewall-manager | grep -q "FW-BLOCKED-OUT.*52.46.145.72" && echo "FAIL" || echo "PASS"
+```
+
+### 4. Logging Rules
+
+**Purpose**: Audit trail for blocked connection attempts
+
+**Required Rules**:
+```bash
+iptables -A INPUT -j LOG --log-prefix "FW-BLOCKED-IN: " --log-level 4
+iptables -A OUTPUT -j LOG --log-prefix "FW-BLOCKED-OUT: " --log-level 4
+iptables -A FORWARD -j LOG --log-prefix "FW-BLOCKED-FWD: " --log-level 4
+```
+
+**Properties**:
+- MUST be in all three chains (INPUT, OUTPUT, FORWARD)
+- MUST use LOG target (not ACCEPT or DROP)
+- MUST include identifying prefix (`--log-prefix`)
+  - INPUT: `"FW-BLOCKED-IN: "`
+  - OUTPUT: `"FW-BLOCKED-OUT: "`
+  - FORWARD: `"FW-BLOCKED-FWD: "`
+- MUST use log level 4 (WARNING) - `--log-level 4`
+- MUST be placed BEFORE default DROP policy
+- Prefix MUST be ≤29 characters (iptables limitation)
+
+**Log Format**:
+```
+[timestamp] FW-BLOCKED-OUT: IN= OUT=eth0 SRC=10.88.0.2 DST=93.184.216.34 PROTO=TCP SPT=54321 DPT=443
+```
+
+**Log Fields**:
+- `IN`: Input interface (empty for OUTPUT chain)
+- `OUT`: Output interface (e.g., eth0)
+- `SRC`: Source IP (container IP)
+- `DST`: Destination IP (blocked endpoint)
+- `PROTO`: Protocol (TCP, UDP, ICMP)
+- `SPT`: Source port (ephemeral)
+- `DPT`: Destination port (blocked port)
+
+**Testing**:
+```bash
+# Verify log rules exist
+iptables -L OUTPUT -n | grep "LOG.*FW-BLOCKED-OUT"
+
+# Test: Blocked connection generates log entry
+curl https://example.com &  # Start blocked connection
+sleep 2
+docker logs cui-firewall-manager 2>&1 | grep "FW-BLOCKED-OUT.*example.com"
+```
+
+### 5. Default Policies
+
+**Purpose**: Deny-by-default security posture
+
+**Required Policies**:
+```bash
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+```
+
+**Properties**:
+- MUST set default policy to DROP for all chains
+- MUST be applied AFTER all ACCEPT rules
+- MUST be applied AFTER logging rules
+- DROP policy applies to packets not matching any rule
+
+**Rationale**:
+- Security best practice: deny-by-default, allow-by-exception
+- Prevents accidental exposure if rules incomplete
+- CMMC Level 2 requirement (SC.L2-3.13.6)
+
+**Testing**:
+```bash
+# Verify policies
+iptables -L -n | grep "Chain OUTPUT (policy DROP)"
+
+# Test: Non-whitelisted connection blocked
+curl https://example.com  # Should timeout or fail
+```
+
+## Rule Validation
+
+### Initialization Validation
+
+```bash
+#!/bin/bash
+# validate-iptables.sh - Run after init-firewall.sh
+
+# Test 1: Default policies set to DROP
+for chain in INPUT OUTPUT FORWARD; do
+  if iptables -L "$chain" -n | grep -q "policy DROP"; then
+    echo "PASS: $chain policy is DROP"
+  else
+    echo "FAIL: $chain policy is not DROP"
+  fi
+done
+
+# Test 2: Stateful rules present
+if iptables -L OUTPUT -n | grep -q "state ESTABLISHED,RELATED"; then
+  echo "PASS: Stateful rules present"
+else
+  echo "FAIL: Stateful rules missing"
+fi
+
+# Test 3: DNS rules present
+if iptables -L OUTPUT -n | grep -q "dpt:53" | wc -l | grep -q 2; then
+  echo "PASS: DNS rules present (UDP and TCP)"
+else
+  echo "FAIL: DNS rules incomplete"
+fi
+
+# Test 4: Logging rules present
+for chain in INPUT OUTPUT FORWARD; do
+  if iptables -L "$chain" -n | grep -q "LOG"; then
+    echo "PASS: $chain has logging rule"
+  else
+    echo "FAIL: $chain missing logging rule"
+  fi
+done
+
+# Test 5: Whitelist rules count matches entries
+whitelist_entries=$(grep -v '^#' /firewall/whitelist.txt | grep -v '^$' | wc -l)
+iptables_rules=$(iptables -L OUTPUT -n | grep -c "dpt:443.*ACCEPT")
+if [ "$whitelist_entries" -eq "$iptables_rules" ]; then
+  echo "PASS: Whitelist rule count matches ($whitelist_entries rules)"
+else
+  echo "WARN: Rule count mismatch (whitelist: $whitelist_entries, iptables: $iptables_rules)"
+fi
+```
+
+### Runtime Validation
+
+```bash
+# Health check command (used in docker-compose.yml)
+iptables -L OUTPUT | grep -q 'policy DROP'
+
+# Detailed validation (for troubleshooting)
+iptables -L -n -v  # List all rules with packet counters
+```
+
+## Error Scenarios
+
+### Scenario 1: Rules Applied in Wrong Order
+
+**Problem**: Logging rules before whitelist rules (logs all traffic)
+
+**Detection**: Excessive logging, allowed connections appear in logs
+
+**Resolution**: Ensure rule order follows contract specification
+
+### Scenario 2: Missing Stateful Rules
+
+**Problem**: Response packets blocked (connections fail after first packet)
+
+**Detection**:
+- Connections timeout even to whitelisted endpoints
+- `iptables -L -n -v` shows zero packets on whitelist rules
+
+**Resolution**: Add stateful rules as first rules in OUTPUT/INPUT chains
+
+### Scenario 3: DNS Rules Missing
+
+**Problem**: Applications cannot resolve domain names
+
+**Detection**:
+- DNS queries fail (nslookup, dig return errors)
+- Applications report "Name or service not known"
+
+**Resolution**: Add DNS rules (UDP and TCP port 53)
+
+### Scenario 4: Whitelist Rule for Wrong IP
+
+**Problem**: DNS resolved to different IP than expected
+
+**Detection**:
+- Whitelist entry present but connections fail
+- `dig` shows different IP than iptables rule
+
+**Resolution**: Restart containers to re-resolve DNS
+
+## Performance Considerations
+
+### Rule Evaluation Performance
+
+- **Stateful rules first**: Most packets match early (short-circuit)
+- **Whitelist rules**: Linear scan (~10 rules, negligible impact)
+- **Logging rules**: Only evaluated for blocked traffic (low volume)
+
+**Packet Processing Path (Whitelisted Connection)**:
+1. Check stateful rule (match on response packets) → ACCEPT (fast path)
+2. Check DNS rules (no match)
+3. Check whitelist rules (match on initial packet) → ACCEPT
+4. Total rules evaluated: ~3 rules per packet
+
+**Packet Processing Path (Blocked Connection)**:
+1. Check all rules sequentially (~15 rules)
+2. Match logging rule → LOG
+3. Default policy → DROP
+
+### Optimization Opportunities
+
+**Current**:
+```bash
+# Each whitelist entry = one rule
+iptables -A OUTPUT -d 52.46.145.72 -p tcp --dport 443 -j ACCEPT
+iptables -A OUTPUT -d 52.222.147.69 -p tcp --dport 443 -j ACCEPT
+```
+
+**Future Optimization (ipset)**:
+```bash
+# Create ipset with all whitelisted IPs
+ipset create whitelist-ips hash:ip,port
+ipset add whitelist-ips 52.46.145.72,tcp:443
+ipset add whitelist-ips 52.222.147.69,tcp:443
+
+# Single rule matches entire set
+iptables -A OUTPUT -m set --match-set whitelist-ips dst,dst -j ACCEPT
+```
+
+**Trade-off**: ipset adds complexity for marginal performance gain at current scale (~10 entries)
+
+## Compliance Verification
+
+### CMMC Level 2 Requirements
+
+**SC.L2-3.13.6: Deny by default, allow by exception**
+- Verification: `iptables -L -n | grep "policy DROP"`
+- Expected: DROP policy on all chains
+
+**SC.L2-3.13.1: Boundary protection**
+- Verification: Firewall rules applied, monitored (logs)
+- Expected: Logging rules present, logs accessible
+
+**AC.L2-3.1.20: Least privilege**
+- Verification: Only necessary traffic allowed
+- Expected: Whitelist rules minimal, no wildcard rules
+
+## Versioning
+
+### Current Version: 1.0.0
+
+### Breaking Changes (MAJOR)
+- Changing default policy from DROP to REJECT
+- Removing required rule categories (e.g., stateful rules)
+- Changing log prefix format
+
+### Non-Breaking Changes (MINOR)
+- Adding UDP whitelist rule support
+- Adding IPv6 rule support (ip6tables)
+- Adding ipset optimization
+
+### Patch Changes
+- Improving DNS timeout handling
+- Optimizing rule order within category
+- Enhancing log format
+
+## References
+
+- iptables man page: https://linux.die.net/man/8/iptables
+- Netfilter packet flow diagram: https://www.netfilter.org/documentation/
+- CMMC Level 2 requirements: https://www.acq.osd.mil/cmmc/

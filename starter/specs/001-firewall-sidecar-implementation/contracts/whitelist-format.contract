@@ -1,0 +1,238 @@
+# Contract: Whitelist File Format
+
+**Version**: 1.0.0
+**Last Updated**: 2025-10-15
+**Parties**: Firewall initialization script (producer), Security reviewers (consumers)
+
+## Purpose
+
+Defines the structure and syntax of the `whitelist.txt` file that controls allowed network destinations.
+
+## Format Specification
+
+### File Structure
+- **Encoding**: UTF-8
+- **Line Ending**: Unix (LF) or Windows (CRLF) - both accepted
+- **Format**: Plain text, one entry per line
+
+### Entry Syntax
+
+```ebnf
+entry          = domain ":" port
+domain         = label ("." label)*
+label          = (alphanumeric | hyphen)+
+                 /* but not starting or ending with hyphen */
+port           = digit{1,5}  /* range: 1-65535 */
+alphanumeric   = [a-zA-Z0-9]
+hyphen         = "-"
+digit          = [0-9]
+```
+
+### Line Types
+
+1. **Whitelist Entry**: `domain:port`
+   - Example: `bedrock-runtime.us-gov-east-1.amazonaws.com:443`
+
+2. **Comment**: Line starting with `#`
+   - Example: `# AWS Bedrock endpoints`
+
+3. **Empty Line**: Whitespace only or zero-length
+   - Ignored during parsing
+
+### Validation Rules
+
+#### MUST Requirements
+- Each domain MUST be a valid FQDN (RFC 1035)
+- Each port MUST be integer in range 1-65535
+- Domain and port MUST be separated by exactly one colon (`:`)
+- No spaces allowed in entry (before domain, after domain, before port, after port)
+- File MUST be readable by firewall container user
+
+#### MUST NOT Requirements
+- MUST NOT contain IP addresses (only domain names)
+- MUST NOT contain wildcards (*, ?, [])
+- MUST NOT contain URL schemes (http://, https://)
+- MUST NOT contain paths (/api/v1)
+- MUST NOT contain query strings (?key=value)
+
+#### SHOULD Requirements
+- Comments SHOULD precede related entries
+- Comments SHOULD explain why endpoint is whitelisted
+- Entries SHOULD be grouped by service/purpose
+- File SHOULD end with newline
+
+### Examples
+
+#### Valid Whitelist
+```
+# AWS Bedrock API endpoints for CUI-compliant AI
+bedrock-runtime.us-gov-east-1.amazonaws.com:443
+bedrock.us-gov-east-1.amazonaws.com:443
+
+# Approved third-party service (PR #123)
+api.approved-service.com:8443
+```
+
+#### Invalid Entries
+```
+example.com                          # ERROR: Missing port
+example.com:                         # ERROR: Empty port
+example.com:abc                      # ERROR: Non-numeric port
+example.com:99999                   # ERROR: Port out of range
+example.com: 443                    # ERROR: Space before port
+example.com :443                    # ERROR: Space after domain
+192.168.1.1:443                     # ERROR: IP address not allowed
+*.example.com:443                   # ERROR: Wildcard not allowed
+https://example.com:443             # ERROR: Scheme not allowed
+example.com:443/api                 # ERROR: Path not allowed
+-example.com:443                    # ERROR: Domain starts with hyphen
+example.com-:443                    # ERROR: Domain ends with hyphen
+```
+
+## Processing Requirements
+
+### Initialization Script Behavior
+
+1. **File Reading**:
+   - Read file line by line
+   - Trim leading/trailing whitespace from each line
+   - Skip empty lines
+   - Skip comment lines (start with `#`)
+
+2. **Entry Parsing**:
+   - Split entry on `:` (colon)
+   - Extract domain (left of colon)
+   - Extract port (right of colon)
+   - Validate domain format (FQDN regex)
+   - Validate port range (1-65535)
+
+3. **Error Handling**:
+   - Log warning for invalid entries
+   - Skip invalid entries (continue processing remaining entries)
+   - Exit with error if zero valid entries found
+   - Exit with error if file not found or not readable
+
+4. **DNS Resolution**:
+   - Resolve each domain to IP address(es)
+   - Use first IP if multiple returned (A record)
+   - Log warning if DNS resolution fails
+   - Skip entry if DNS resolution fails (continue with others)
+   - Timeout: 5 seconds per domain
+
+5. **Rule Generation**:
+   - Create iptables rule for each resolved IP:port pair
+   - Format: `iptables -A OUTPUT -d <IP> -p tcp --dport <PORT> -j ACCEPT`
+
+### Example Processing
+
+**Input**:
+```
+# Production endpoints
+api.example.com:443
+db.example.com:5432
+```
+
+**Processing Steps**:
+1. Line 1: Comment → Skip
+2. Line 2: Parse → domain="api.example.com", port=443
+   - Validate domain: ✓
+   - Validate port: ✓
+   - Resolve DNS: api.example.com → 93.184.216.34
+   - Generate rule: `iptables -A OUTPUT -d 93.184.216.34 -p tcp --dport 443 -j ACCEPT`
+3. Line 3: Parse → domain="db.example.com", port=5432
+   - Validate domain: ✓
+   - Validate port: ✓
+   - Resolve DNS: db.example.com → 192.0.2.100
+   - Generate rule: `iptables -A OUTPUT -d 192.0.2.100 -p tcp --dport 5432 -j ACCEPT`
+
+## Testing Contract Compliance
+
+### Contract Tests (test-whitelist.sh)
+
+```bash
+# Test 1: Valid entry accepted
+echo "api.example.com:443" > test-whitelist.txt
+if validate_whitelist test-whitelist.txt; then
+  echo "PASS: Valid entry accepted"
+else
+  echo "FAIL: Valid entry rejected"
+fi
+
+# Test 2: Invalid port rejected
+echo "api.example.com:99999" > test-whitelist.txt
+if ! validate_whitelist test-whitelist.txt; then
+  echo "PASS: Invalid port rejected"
+else
+  echo "FAIL: Invalid port accepted"
+fi
+
+# Test 3: Comments ignored
+cat > test-whitelist.txt <<EOF
+# This is a comment
+api.example.com:443
+EOF
+count=$(parse_whitelist test-whitelist.txt | wc -l)
+if [ "$count" -eq 1 ]; then
+  echo "PASS: Comments ignored"
+else
+  echo "FAIL: Comment counted as entry"
+fi
+```
+
+## Versioning
+
+### Current Version: 1.0.0
+
+### Breaking Changes
+Changes that require MAJOR version bump:
+- Changing entry delimiter (`:` to something else)
+- Requiring IP addresses instead of domains
+- Adding mandatory fields (e.g., protocol)
+- Changing comment syntax (`#` to `//`)
+
+### Non-Breaking Changes
+Changes that require MINOR version bump:
+- Adding optional fields (e.g., `domain:port:protocol` where protocol defaults to TCP)
+- Supporting additional comment styles (e.g., `//` in addition to `#`)
+- Relaxing validation (e.g., allowing IPv6 addresses)
+
+### Patch Changes
+Changes that require PATCH version bump:
+- Improving error messages
+- Performance optimizations
+- Bug fixes in validation logic
+
+## Migration Guide
+
+### From Manual iptables to Whitelist File
+
+**Before**:
+```bash
+iptables -A OUTPUT -d 93.184.216.34 -p tcp --dport 443 -j ACCEPT
+```
+
+**After**:
+```
+# Create whitelist.txt
+api.example.com:443
+```
+
+### Future: If Protocol Field Added (v2.0.0)
+
+**v1.0.0**:
+```
+api.example.com:443
+```
+
+**v2.0.0** (hypothetical):
+```
+api.example.com:443:tcp
+api.example.com:53:udp
+```
+
+**Migration**: v2.0.0 would accept v1.0.0 format with protocol defaulting to TCP for backward compatibility.
+
+## References
+
+- RFC 1035: Domain Names - Implementation and Specification
+- IANA Port Number Registry: https://www.iana.org/assignments/service-names-port-numbers/

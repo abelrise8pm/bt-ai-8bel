@@ -1,9 +1,5 @@
 {
-  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:e96ac32d8ee22051ea535848703271c48ba55360451ada9996418e54bf816522",
-  "postCreateCommand": "echo 'Container ready for CUI projects with AI assistants pre-installed'",
-  "runArgs": [
-    "--env-file",".env.bedrock",
-    "--env-file",".env.claude"
-  ],
+  "dockerComposeFile": "docker-compose.firewall.yml",
+  "service": "ai-assistant",
   "remoteUser": "aiAssistant"
 }

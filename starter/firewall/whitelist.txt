@@ -1,0 +1,11 @@
+# Firewall Whitelist Configuration
+# Format: domain:port (one entry per line)
+# Comments start with #, empty lines ignored
+
+# AWS Bedrock Endpoints (us-gov-east-1)
+bedrock-runtime.us-gov-east-1.amazonaws.com:443
+bedrock.us-gov-east-1.amazonaws.com:443
+
+# AWS Bedrock Endpoints (us-gov-west-1)
+bedrock-runtime.us-gov-west-1.amazonaws.com:443
+bedrock.us-gov-west-1.amazonaws.com:443
