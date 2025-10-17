@@ -15,6 +15,7 @@ EXCLUDE_ITEMS=(
     "specs"
     "tests"
     "DEVELOPMENT.md"
+    "publish-to-external-repo.sh"
 )
 
 echo "=== Publishing ai-assistant-container-starter-repo to external repository ==="
