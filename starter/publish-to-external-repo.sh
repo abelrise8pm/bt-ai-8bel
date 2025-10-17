@@ -79,11 +79,16 @@ done
 echo "Committing exclusions..."
 git commit -m "Temporary commit: Remove files for external publishing" --allow-empty
 
-# Push using git subtree
+# Push using git subtree with force flag
+# Since the external repo is read-only (destination only), force push is safe
 echo ""
 echo "Pushing to external repository..."
 echo "This may take a while..."
-git subtree push --prefix="${SOURCE_PREFIX}" "${EXTERNAL_REPO}" "${EXTERNAL_BRANCH}"
+echo "Note: Using force push since external repo is destination-only"
+
+# git subtree doesn't support --force directly, so we use split + push
+SUBTREE_COMMIT=$(git subtree split --prefix="${SOURCE_PREFIX}")
+git push --force "${EXTERNAL_REPO}" "${SUBTREE_COMMIT}:${EXTERNAL_BRANCH}"
 
 echo ""
 echo "=== Successfully published to external repository ==="
