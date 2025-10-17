@@ -15,11 +15,11 @@ services:
       - ../firewall/init-firewall.sh:/firewall/init-firewall.sh:ro
     command: /bin/sh -c "apk add --no-cache iptables bind-tools && /firewall/init-firewall.sh && sleep infinity"
     healthcheck:
-      test: ["CMD", "sh", "-c", "iptables -L OUTPUT -n | grep -q 'policy DROP' && iptables -L OUTPUT -n | grep -q 'dpt:53'"]
+      test: ["CMD-SHELL", "iptables -L OUTPUT -n | grep -q 'policy DROP' && iptables -L OUTPUT -n | grep -q 'dpt:53'"]
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 45s
     restart: unless-stopped
 
   # AI Assistant Container

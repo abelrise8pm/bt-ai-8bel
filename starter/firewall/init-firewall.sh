@@ -73,12 +73,17 @@ main() {
     iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
     iptables -A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 
-    # Step 2: Add DNS rules (UDP and TCP port 53)
+    # Step 2: Allow localhost/loopback connections (required for VS Code Server)
+    log_rules "Adding loopback rules (localhost connections)..."
+    iptables -A INPUT -i lo -j ACCEPT
+    iptables -A OUTPUT -o lo -j ACCEPT
+
+    # Step 3: Add DNS rules (UDP and TCP port 53)
     log_rules "Adding DNS rules (port 53)..."
     iptables -A OUTPUT -p udp --dport 53 -j ACCEPT
     iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT
 
-    # Step 3: Parse whitelist and add rules for each entry
+    # Step 4: Parse whitelist and add rules for each entry
     log_whitelist "Parsing whitelist entries..."
     while IFS= read -r line || [ -n "$line" ]; do
         # Skip empty lines
@@ -122,13 +127,13 @@ main() {
 
     done < "$WHITELIST_FILE"
 
-    # Step 4: Add logging rules (before DROP policy)
+    # Step 5: Add logging rules (before DROP policy)
     log_rules "Adding logging rules for blocked traffic..."
     iptables -A INPUT -j LOG --log-prefix "$LOG_PREFIX_IN" --log-level 4
     iptables -A OUTPUT -j LOG --log-prefix "$LOG_PREFIX_OUT" --log-level 4
     iptables -A FORWARD -j LOG --log-prefix "$LOG_PREFIX_FWD" --log-level 4
 
-    # Step 5: Set default DROP policy (deny by default)
+    # Step 6: Set default DROP policy (deny by default)
     log_rules "Setting default DROP policy (deny by default)..."
     iptables -P INPUT DROP
     iptables -P OUTPUT DROP
