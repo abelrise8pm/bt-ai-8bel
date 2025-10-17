@@ -406,6 +406,122 @@ test_iptables_rules() {
     fi
 }
 
+# Test 5b: Loopback interface rules
+test_loopback_rules() {
+    test_info "Test 5b: iptables allows loopback (localhost) traffic"
+
+    if ! check_container_runtime; then
+        test_skip "Container runtime not available"
+        return 0
+    fi
+
+    local runtime=$(get_runtime)
+
+    if [ -z "$runtime" ]; then
+        test_skip "Container runtime not available"
+        return 0
+    fi
+
+    if "$runtime" ps | grep -q "$FIREWALL_CONTAINER"; then
+        : # Container found, continue
+    else
+        test_skip "Firewall container not running"
+        return 0
+    fi
+
+    # Check for loopback INPUT rule (format: ACCEPT all -- lo *)
+    if "$runtime" exec $FIREWALL_CONTAINER iptables -L INPUT -n -v 2>/dev/null | grep -E "ACCEPT.*all.*lo\s+\*"; then
+        test_pass "iptables INPUT chain allows loopback interface (lo)"
+    else
+        test_fail "iptables INPUT chain missing loopback interface (lo) rule"
+    fi
+
+    # Check for loopback OUTPUT rule (format: ACCEPT all -- * lo)
+    if "$runtime" exec $FIREWALL_CONTAINER iptables -L OUTPUT -n -v 2>/dev/null | grep -E "ACCEPT.*all.*\*\s+lo"; then
+        test_pass "iptables OUTPUT chain allows loopback interface (lo)"
+    else
+        test_fail "iptables OUTPUT chain missing loopback interface (lo) rule"
+    fi
+}
+
+# Test 5c: Loopback connectivity functional test
+test_loopback_connectivity() {
+    test_info "Test 5c: Loopback connections actually work (functional test)"
+
+    if ! check_container_runtime; then
+        test_skip "Container runtime not available"
+        return 0
+    fi
+
+    local runtime=$(get_runtime)
+
+    if [ -z "$runtime" ]; then
+        test_skip "Container runtime not available"
+        return 0
+    fi
+
+    if "$runtime" ps | grep -q "$AI_CONTAINER"; then
+        : # Container found, continue
+    else
+        test_skip "AI assistant container not running"
+        return 0
+    fi
+
+    # Start a simple HTTP server and connect to it via localhost
+    # This tests that localhost TCP connections work (critical for VS Code Server)
+    # Note: We don't test ICMP ping because cap_drop: ALL blocks it (expected behavior)
+
+    # Check if python3 or nc is available for testing
+    local test_method=""
+    if "$runtime" exec $AI_CONTAINER which python3 >/dev/null 2>&1; then
+        test_method="python"
+    elif "$runtime" exec $AI_CONTAINER which nc >/dev/null 2>&1; then
+        test_method="nc"
+    fi
+
+    if [ -z "$test_method" ]; then
+        test_skip "No tools available (python3/nc) to test TCP loopback connections"
+        return 0
+    fi
+
+    if [ "$test_method" = "python" ]; then
+        # Start a simple HTTP server on localhost port 18888 in background
+        "$runtime" exec -d $AI_CONTAINER sh -c "python3 -m http.server 18888 --bind 127.0.0.1 >/dev/null 2>&1" || true
+
+        # Wait a moment for server to start
+        sleep 2
+
+        # Try to connect to it via localhost
+        if "$runtime" exec $AI_CONTAINER timeout 5 curl -s http://127.0.0.1:18888 >/dev/null 2>&1 || \
+           "$runtime" exec $AI_CONTAINER timeout 5 wget -q -O /dev/null http://127.0.0.1:18888 >/dev/null 2>&1 || \
+           "$runtime" exec $AI_CONTAINER timeout 5 nc -zv 127.0.0.1 18888 >/dev/null 2>&1; then
+            test_pass "Can connect to localhost TCP port via loopback (127.0.0.1:18888)"
+        else
+            test_fail "Cannot connect to localhost TCP port - loopback may be blocked"
+        fi
+
+        # Cleanup: kill the HTTP server
+        "$runtime" exec $AI_CONTAINER sh -c "pkill -f 'python3 -m http.server 18888'" >/dev/null 2>&1 || true
+
+    elif [ "$test_method" = "nc" ]; then
+        # Use netcat to listen and test connection
+        "$runtime" exec -d $AI_CONTAINER sh -c "nc -l 127.0.0.1 18888 >/dev/null 2>&1" || true
+
+        # Wait a moment for listener to start
+        sleep 1
+
+        # Try to connect to it
+        if "$runtime" exec $AI_CONTAINER timeout 3 sh -c "echo test | nc -w 2 127.0.0.1 18888" >/dev/null 2>&1; then
+            test_pass "Can connect to localhost TCP port via loopback (127.0.0.1:18888)"
+        else
+            test_fail "Cannot connect to localhost TCP port - loopback may be blocked"
+        fi
+
+        # Cleanup: kill nc listener
+        "$runtime" exec $AI_CONTAINER sh -c "pkill -f 'nc -l'" >/dev/null 2>&1 || true
+    fi
+}
+
 # Test 6: Network namespace sharing
 test_network_namespace_sharing() {
     test_info "Test 6: AI container shares firewall's network namespace"
@@ -664,6 +780,8 @@ test_ai_container_exists
 test_ai_container_capabilities
 test_firewall_capabilities
 test_iptables_rules
+test_loopback_rules
+test_loopback_connectivity
 test_network_namespace_sharing
 test_firewall_logs
 test_whitelisted_domains

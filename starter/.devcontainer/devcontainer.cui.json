@@ -3,6 +3,8 @@
   "service": "ai-assistant",
   "workspaceFolder": "/workspace",
   "remoteUser": "aiAssistant",
+  "runServices": ["firewall-manager", "ai-assistant"],
+  "overrideCommand": false,
   "customizations": {
     "vscode": {
       "settings": {
