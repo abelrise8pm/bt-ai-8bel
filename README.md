@@ -7,6 +7,42 @@ A monorepo containing the AI assistant base container and starter template for p
 - [`image/`](image/) - Base container with pre-configured AI tools (Claude Code, Gemini CLI, Goose)
 - [`starter/`](starter/) - Starter template for project teams
 
+## Why a Standalone Repository?
+
+This AI Assistant container is maintained as a standalone repository (separate from the main XPai repository) to support **CMMC Level 2 compliance** requirements. This architectural decision provides several key benefits:
+
+### Security Boundary Definition
+- **Reduced Scope**: Creates a well-defined security boundary for systems that process Controlled Unclassified Information (CUI), separate from R&D and experimental projects
+- **Simplified Asset Inventory**: Makes it clear which components are in-scope for CMMC assessment vs. experimental tooling
+- **Easier C3PAO Assessment**: Third-party assessors can focus on a single, bounded system rather than determining which parts of a larger monorepo require evaluation
+
+### Access Control (AC Family Controls)
+- **Principle of Least Privilege**: Enables stricter access controls on production CUI-handling code while allowing more open collaboration on R&D projects
+- **Role-Based Access Control**: Different teams can have appropriate permission levels without compromising CUI security
+
+### Configuration & Change Management (CM Family Controls)
+- **Baseline Configuration**: Easier to establish and maintain security baselines for a self-contained system
+- **Configuration Change Control**: Simpler change management without interference from unrelated R&D changes
+- **Least Functionality**: Can be deployed with only necessary dependencies, not an entire monorepo toolchain
+
+### Supply Chain Risk Management (SR Family Controls)
+- **Isolated Dependencies**: Clear separation of production dependencies from experimental tooling
+- **Software Bill of Materials (SBOM)**: More accurate SBOM generation for compliance reporting
+- **Vulnerability Tracking**: Focused security scanning on production components that handle CUI
+- **Third-Party Component Tracking**: Clear understanding of which open-source components are in the CUI boundary
+
+### System Security Plan Simplification
+- **Architecture Documentation**: Self-contained documentation of data flows and security controls
+- **CUI Data Flow Mapping**: Clear documentation of where CUI enters, flows through, and exits the system
+- **Control Implementation**: Each NIST SP 800-171 control can reference specific components without confusion
+
+### Compliance Evidence Collection
+- **Cleaner Evidence**: Documentation, logs, scan reports, and test results are all relevant to the assessed system
+- **Reduced Noise**: Assessors can focus on production system evolution without filtering experimental code
+- **Version Control History**: Git history clearly shows the production system's security-relevant changes
+
+This separation transforms the compliance story from *"Somewhere in this large repository is the AI Assistant that handles CUI"* to *"This is the AI Assistant repository—everything here is in-scope for CMMC L2, with clear security boundaries and targeted controls for CUI protection."*
+
 ## Architecture
 
 ```
