@@ -1,11 +1,11 @@
 # AI Assistant Container Project Starter Repository
 
-**NOTE: This repository is automatically synchronized from the [`ai-assistant-container-starter-repo/` directory of the main XPai](https://github.com/rise8-us/XPai/tree/main/ai-assistant-container-starter-repo) repository using Git subtree push.**
+**NOTE: This repository is automatically synchronized from the [xpai-ai-assistant-container monorepo](https://github.com/rise8-us/xpai-ai-assistant-container/tree/main/starter) repository using Git subtree push.**
 
 ## Important Notes
 
 - **This repository is READ-ONLY**
-- All changes should be made in the XPai `ai-assistant-container-starter-repo/` directory
+- All changes should be made in the [xpai-ai-assistant-container monorepo](https://github.com/rise8-us/xpai-ai-assistant-container)
 - This repo is automatically updated when changes are pushed from the source
 
 ## Prerequisites
@@ -16,7 +16,7 @@
 
 This starter repository provides everything you need to quickly set up an AI assistant development environment using containers.
 
-For more details about the AI assistant base container itself, check out https://github.com/rise8-us/XPai/tree/main/ai-assistant-container.
+For more details about the AI assistant base container itself, check out [image](../image) in this repository.
 
 For details about using a customized project container for project specific tools, see [that readme](project-container/README.md).
 
@@ -208,7 +208,7 @@ Then rebuild the devcontainer.
 
 ## Example advanced uses
 
-- [XPai](https://github.com/rise8-us/XPai/tree/main)
+- [XPai monorepo](https://github.com/rise8-us/XPai/tree/main) - Advanced multi-project setup
 
 ## Assistance
 
