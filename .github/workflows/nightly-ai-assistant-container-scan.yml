@@ -33,7 +33,7 @@ jobs:
         uses: ./.github/actions/trivy-scan
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          trivyignores-path: 'ai-assistant-container/.trivyignore'
+          trivyignores-path: 'image/.trivyignore'
 
 
       - name: Record scan result

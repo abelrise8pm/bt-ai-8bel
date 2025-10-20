@@ -37,9 +37,9 @@ jobs:
             set -e
             echo "Starting Claude Code software version update process..."
             echo "Working directory: $(pwd)"
-            echo "Target: ai-assistant-container/Dockerfile"
-            echo "Running /update-software-versions command for ai-assistant-container/Dockerfile"
-            claude -p "/update-software-versions ai-assistant-container/Dockerfile" --dangerously-skip-permissions
+            echo "Target: image/Dockerfile"
+            echo "Running /update-software-versions command for image/Dockerfile"
+            claude -p "/update-software-versions image/Dockerfile" --dangerously-skip-permissions
             echo "Claude Code software version update completed successfully"
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -65,7 +65,7 @@ jobs:
             Update AI assistant container software versions via Claude Code
 
             Automated software version updates performed using /update-software-versions command.
-            Target: ai-assistant-container/Dockerfile
+            Target: image/Dockerfile
 
             🤖 Generated with [Claude Code](https://claude.ai/code)
 
