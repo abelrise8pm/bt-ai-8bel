@@ -1,0 +1,149 @@
+name: Update Project Container Base On New Version
+
+# This workflow monitors the AI assistant base container for new versions
+# and automatically updates the project-container/Dockerfile when changes are detected.
+#
+# When a new version is published:
+# - Detects the new SHA digest from the container registry
+# - Updates project-container/Dockerfile with the new base image reference
+# - Creates an automated PR with the changes
+
+on:
+  schedule:
+    # Check for new versions once daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Allow manual triggering
+
+# Security: Restrict workflow permissions to minimum required
+permissions:
+  contents: write      # To commit changes
+  packages: read       # To query container registry
+  pull-requests: write # To create PRs
+
+jobs:
+  check-and-update:
+    name: Check for New Base Container and Update
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Generate GitHub App Token
+        id: pr-bot-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.AI_ASSISTANT_PR_BOT_APP_ID }}
+          private-key: ${{ secrets.AI_ASSISTANT_PR_BOT_PRIVATE_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.pr-bot-token.outputs.token }}
+
+      - name: Get current latest container SHA
+        id: current-sha
+        env:
+          GITHUB_TOKEN: ${{ steps.pr-bot-token.outputs.token }}
+        run: |
+          # Get the SHA digest for the base container tagged with 'latest'
+          # This monitors the ai-assistant-home base image that this project builds upon
+          LATEST_SHA=$(gh api "orgs/rise8-us/packages/container/xpai%2Fai-assistant-home/versions" \
+            --jq '.[] | select(.metadata.container.tags[]? == "latest") | .name' \
+            | head -n1)
+
+          if [ -z "$LATEST_SHA" ]; then
+            echo "❌ Failed to get SHA for 'latest' tag"
+            exit 1
+          fi
+
+          echo "latest_sha=$LATEST_SHA" >> $GITHUB_OUTPUT
+          echo "Found latest base container SHA: $LATEST_SHA"
+
+      - name: Check if SHA has changed
+        id: sha-check
+        run: |
+          LATEST_SHA="${{ steps.current-sha.outputs.latest_sha }}"
+
+          # Check if we have a previous SHA stored
+          PREVIOUS_SHA_FILE=".github/.last-project-container-base-sha"
+
+          if [ -f "$PREVIOUS_SHA_FILE" ]; then
+            PREVIOUS_SHA=$(cat "$PREVIOUS_SHA_FILE")
+            echo "Previous SHA: $PREVIOUS_SHA"
+            echo "Current SHA: $LATEST_SHA"
+
+            if [ "$PREVIOUS_SHA" != "$LATEST_SHA" ]; then
+              echo "sha_changed=true" >> $GITHUB_OUTPUT
+              echo "Base container SHA has changed from $PREVIOUS_SHA to $LATEST_SHA"
+            else
+              echo "sha_changed=false" >> $GITHUB_OUTPUT
+              echo "Base container SHA has not changed"
+            fi
+          else
+            echo "sha_changed=true" >> $GITHUB_OUTPUT
+            echo "No previous SHA found, treating as changed"
+          fi
+
+          echo "previous_sha_file=$PREVIOUS_SHA_FILE" >> $GITHUB_OUTPUT
+
+      - name: Update SHA tracking file
+        if: steps.sha-check.outputs.sha_changed == 'true'
+        run: |
+          mkdir -p .github
+          echo "${{ steps.current-sha.outputs.latest_sha }}" > ${{ steps.sha-check.outputs.previous_sha_file }}
+
+      - name: Update project-container Dockerfile
+        if: steps.sha-check.outputs.sha_changed == 'true'
+        id: update_dockerfile
+        run: |
+          NEW_SHA="${{ steps.current-sha.outputs.latest_sha }}"
+
+          # Ensure SHA has sha256: prefix
+          if [[ "$NEW_SHA" == sha256:* ]]; then
+            FORMATTED_SHA="$NEW_SHA"
+          else
+            FORMATTED_SHA="sha256:$NEW_SHA"
+          fi
+
+          echo "Running update script with SHA: $FORMATTED_SHA"
+          ./.github/scripts/update-ai-assistant-base-image.sh "$FORMATTED_SHA"
+
+      - name: Prepare branch name
+        if: steps.sha-check.outputs.sha_changed == 'true'
+        id: branch-name
+        run: |
+          BRANCH_NAME="project-base-sha-$(echo ${{ steps.current-sha.outputs.latest_sha }} | cut -d: -f2 | cut -c1-12)"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "Branch name: $BRANCH_NAME"
+
+      - name: Create automated PR
+        if: steps.sha-check.outputs.sha_changed == 'true'
+        uses: ./.github/actions/create-automated-pr
+        with:
+          github-token: ${{ steps.pr-bot-token.outputs.token }}
+          pr-title: "Auto-update: Project container base SHA ${{ steps.current-sha.outputs.latest_sha }}"
+          pr-body: |
+            ## Summary
+
+            Automated update triggered by base container SHA change to `${{ steps.current-sha.outputs.latest_sha }}`.
+
+            ## Changes Made
+
+            The following files were automatically updated with the new base image SHA:
+            - `project-container/Dockerfile` - Base image reference updated
+
+            ## Verification
+
+            - [ ] Review the SHA digest matches the latest published version
+            - [ ] Test the project container with the new base image
+            - [ ] Verify all development tools still work correctly
+            - [ ] Ensure project-specific tooling is compatible with new base
+
+            🤖 Automated by GitHub Actions
+          commit-message: |
+            Auto-update: project container base SHA changed to ${{ steps.current-sha.outputs.latest_sha }}
+
+            Updated base image SHA reference in project-container/Dockerfile.
+
+            🤖 Automated by GitHub Actions
+          branch-name: ${{ steps.branch-name.outputs.branch_name }}
