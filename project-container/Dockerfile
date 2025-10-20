@@ -18,6 +18,9 @@ FROM ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:4cf0f4b73d5a0262d90ac27e7ba8
 # curl https://github.com/google/go-containerregistry/releases to get latest version
 ARG CRANE_VERSION=0.20.6
 
+# curl https://github.com/cli/cli/releases to get latest version
+ARG GH_VERSION=2.82.0
+
 USER root
 # Fix /tmp permissions after USER switch - required even though base image has this fix
 # When switching USER contexts, /tmp permissions can be reset due to runc v1.1.8 and crun v1.11+ bugs
@@ -39,13 +42,23 @@ RUN chmod 1777 /tmp && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install crane (container image inspection tool)
-# This is useful for working with container registries and inspecting images
-RUN curl -fsSL -o /tmp/go-containerregistry.tar.gz \
-        "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_x86_64.tar.gz" && \
+# Install additional tools:
+# - crane: Container image inspection tool for working with registries
+# - gh: GitHub CLI for interacting with GitHub issues, PRs, and repositories
+RUN ARCH=$(dpkg --print-architecture) && \
+    # Install crane
+    curl -fsSL -o /tmp/go-containerregistry.tar.gz \
+        "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_${ARCH}.tar.gz" && \
     tar -xzf /tmp/go-containerregistry.tar.gz -C /usr/local/bin/ crane && \
     chmod +x /usr/local/bin/crane && \
-    rm /tmp/go-containerregistry.tar.gz
+    # Install GitHub CLI
+    curl -fsSL -o /tmp/gh.tar.gz \
+        "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz" && \
+    tar -xzf /tmp/gh.tar.gz -C /tmp && \
+    mv /tmp/gh_${GH_VERSION}_linux_${ARCH}/bin/gh /usr/local/bin/gh && \
+    chmod +x /usr/local/bin/gh && \
+    # Cleanup
+    rm -rf /tmp/*
 
 # Switch back to non-root user to increase security.
 USER aiAssistant
