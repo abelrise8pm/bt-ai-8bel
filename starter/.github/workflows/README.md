@@ -73,7 +73,7 @@ The `update-base-container-on-new-version.yml` workflow requires a GitHub App fo
    - Choose "All repositories" OR "Only select repositories"
    - Click Install
 
-**Note:** If using "Only select repositories", newly created repos will need to be added to the app's repository access list for the workflow to function.
+**IMPORTANT:** The GitHub App MUST be installed on your repository for the workflow to function. If using "Only select repositories", you must explicitly add each repository that needs automated updates. See the "Update Workflow Fails with 'Not Found' (404) Error" troubleshooting section below if you encounter issues.
 
 #### Add Organization Secrets
 
@@ -148,11 +148,37 @@ gh auth token | podman login ghcr.io -u $(gh api user --jq .login) --password-st
 Check: Repository Settings → Actions → General → Workflow permissions
 - Must be "Read and write permissions"
 
-### Update Workflow Fails
+### Update Workflow Fails with "Not Found" (404) Error
 
-Requires GitHub App secrets (see setup above):
-- `AI_ASSISTANT_PR_BOT_APP_ID`
-- `AI_ASSISTANT_PR_BOT_PRIVATE_KEY`
+**Error message:**
+```
+Failed to create token for "your-repo" (attempt 4): Not Found - https://docs.github.com/rest/apps/apps#get-a-repository-installation-for-the-authenticated-app
+RequestError [HttpError]: Not Found
+```
+
+**Root cause:** The GitHub App is not installed on your repository.
+
+**Solution:**
+
+1. **Verify GitHub App secrets exist:**
+   - Check that `AI_ASSISTANT_PR_BOT_APP_ID` and `AI_ASSISTANT_PR_BOT_PRIVATE_KEY` are configured
+   - Navigate to: Organization Settings → Secrets and variables → Actions
+   - Confirm your repository has access to these secrets
+
+2. **Install the GitHub App on your repository:**
+   - Go to: `https://github.com/organizations/YOUR-ORG/settings/installations`
+   - Click on the AI Assistant PR Bot app
+   - Click "Configure"
+   - Under "Repository access":
+     - Either select "All repositories"
+     - Or add your specific repository to "Only select repositories"
+   - Click "Save"
+
+3. **Verify the installation:**
+   - Re-run the workflow: Actions tab → "Update Base Container For New Version" → Run workflow
+   - The workflow should now complete successfully
+
+**Note:** If you don't see the GitHub App in your organization's installations, you need to create it first. See "Configure GitHub App for Automated Updates" section above.
 
 ## Resources
 
