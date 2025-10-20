@@ -1,6 +1,7 @@
 {
   "mcpServers": {
     "dev-commands": {
+      "type": "stdio",
       "command": "node",
       "args": ["/home/aiAssistant/.npm-global/lib/node_modules/@rise8-us/dev-commands-mcp-server/dist/index.js"]
     }

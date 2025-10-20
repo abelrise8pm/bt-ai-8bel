@@ -51,5 +51,17 @@ WGET_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "wget --versi
 }
 echo "✅ wget: $WGET_VERSION"
 
+# ==================================================================
+# EXAMPLE: Test GitHub CLI (gh)
+# ==================================================================
+# Uncomment the lines below if you added the GitHub CLI to your Dockerfile
+#
+# echo "Testing gh CLI..."
+# GH_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "gh version" 2>&1) || {
+#     echo "❌ ERROR: gh not installed or not working: $GH_VERSION"
+#     exit 1
+# }
+# echo "✅ gh: $GH_VERSION"
+
 echo "🎉 All tests passed! Project container is ready."
 exit 0

@@ -15,16 +15,9 @@ FROM ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:e96ac32d8ee22051ea5358487032
 # Instructions are included of where to find the latest versions.
 # This helps both humans and AI assistants maintain the file.
 
+# NOTE: This is an example of how to pin a version for to make it easy for a AI to update later
 # curl https://github.com/cli/cli/releases to get latest version
-ARG GH_CLI_VERSION=2.81.0
-# curl https://www.npmjs.com/package/@mermaid-js/mermaid-cli to get latest version
-ARG MERMAID_CLI_VERSION=11.12.0
-# curl https://github.com/google/go-containerregistry/releases to get latest version
-ARG CRANE_VERSION=0.20.6
-# curl https://pypi.org/project/llm/ to get latest version
-ARG LLM_VERSION=0.27.1
-# curl https://pypi.org/project/yamllint/ to get latest version
-ARG YAMLLINT_VERSION=1.37.1
+# ARG GH_CLI_VERSION=2.81.0
 
 USER root
 # Fix /tmp permissions after USER switch - required even though base image has this fix
@@ -41,7 +34,24 @@ USER root
 RUN chmod 1777 /tmp && \
     apt-get update && \
     apt-get install -y --no-install-recommends wget && \
-    apt-get clean
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# ==================================================================
+# EXAMPLE: Install GitHub CLI (gh)
+# ==================================================================
+# Uncomment the lines below to add the GitHub CLI to your container.
+# This example shows proper architecture detection and version pinning.
+# Also uncomment the ARG GH_CLI_VERSION above.
+#
+# RUN ARCH=$(dpkg --print-architecture) && \
+#     if [ "$ARCH" = "arm64" ]; then GH_ARCH="arm64"; else GH_ARCH="amd64"; fi && \
+#     wget -O /tmp/gh.tar.gz "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_${GH_ARCH}.tar.gz" && \
+#     tar -xzf /tmp/gh.tar.gz -C /tmp && \
+#     mv /tmp/gh_${GH_CLI_VERSION}_linux_${GH_ARCH}/bin/gh /usr/local/bin/ && \
+#     chmod +x /usr/local/bin/gh && \
+#     rm -rf /tmp/gh*
+# ==================================================================
 
 # Switch back to non-root user to increase security.
 USER aiAssistant

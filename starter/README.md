@@ -18,7 +18,20 @@ This starter repository provides everything you need to quickly set up an AI ass
 
 For more details about the AI assistant base container itself, check out [image](../image) in this repository.
 
-For details about using a customized project container for project specific tools, see [that readme](project-container/README.md).
+### Customizing Your Container with Project-Specific Tools
+
+Most projects need additional tools beyond what's in the base image (e.g., language runtimes, CLIs, build tools). To add these securely:
+
+**Use a Project Container**: Build a custom container image that extends the base image with your project-specific tools. See the [project-container example](../project-container) in this monorepo for a complete reference implementation.
+
+This approach:
+- Ensures all team members use the same vetted, scanned image
+- Uses GitHub workflows for automated builds and security scanning
+- Prevents unauthorized or unvetted tool installations
+- Enables compliance and audit trails
+- Works seamlessly with CI/CD pipelines
+
+**Pro Tip:** Use Claude Code to help customize your project container! Ask Claude to read the [project-container README](../project-container/README.md) and ask you questions to get what you need installed.
 
 ## GitHub Workflows
 

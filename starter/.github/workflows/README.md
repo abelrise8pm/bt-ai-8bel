@@ -17,6 +17,20 @@ Automated workflows for building, testing, and securing your project container.
 **Scripts:**
 - `.github/scripts/update-ai-assistant-base-image.sh` - Updates base image SHA references
 
+## Quick Start
+
+To use these workflows in your project, copy the following from the starter template:
+
+```bash
+# From your project root, copy workflows, actions, and scripts
+cp -r starter/.github/workflows/*.yml .github/workflows/
+cp -r starter/.github/actions/* .github/actions/
+cp -r starter/.github/scripts .github/
+chmod +x .github/scripts/*.sh
+```
+
+**Important:** The `update-base-container-on-new-version.yml` workflow requires the script at `.github/scripts/update-ai-assistant-base-image.sh`. Make sure to copy both the workflows AND the scripts directory.
+
 ## Setup Requirements
 
 ### 1. Enable GitHub Container Registry
