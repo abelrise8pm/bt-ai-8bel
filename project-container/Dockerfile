@@ -45,13 +45,22 @@ RUN chmod 1777 /tmp && \
 # Install additional tools:
 # - crane: Container image inspection tool for working with registries
 # - gh: GitHub CLI for interacting with GitHub issues, PRs, and repositories
+#
+# NOTE: Architecture naming differs between tools:
+# - dpkg returns "amd64" for x86_64 systems
+# - crane releases use "x86_64" naming
+# - gh CLI releases use "amd64" naming
+# We map the architecture names accordingly below.
 RUN ARCH=$(dpkg --print-architecture) && \
+    # Map Debian arch names to Go arch names for crane
+    CRANE_ARCH=${ARCH} && \
+    if [ "${ARCH}" = "amd64" ]; then CRANE_ARCH="x86_64"; fi && \
     # Install crane
     curl -fsSL -o /tmp/go-containerregistry.tar.gz \
-        "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_${ARCH}.tar.gz" && \
+        "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_${CRANE_ARCH}.tar.gz" && \
     tar -xzf /tmp/go-containerregistry.tar.gz -C /usr/local/bin/ crane && \
     chmod +x /usr/local/bin/crane && \
-    # Install GitHub CLI
+    # Install GitHub CLI (uses dpkg arch naming)
     curl -fsSL -o /tmp/gh.tar.gz \
         "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz" && \
     tar -xzf /tmp/gh.tar.gz -C /tmp && \
