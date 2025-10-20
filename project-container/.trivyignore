@@ -22,5 +22,25 @@
 
 # ############################## End of example ##################################
 
+# CVE-2025-47907 - Go stdlib database/sql Postgres Scan Race Condition
+# Affects: crane binary (go-containerregistry v0.20.6 built with Go 1.24.0)
+# Issue: Race condition in database/sql Postgres scanning
+# Risk: LOW - crane is a container registry tool, does not use database/sql for Postgres
+# Status: Waiting for upstream crane release built with Go 1.24.6+
+# Tracking: PR https://github.com/google/go-containerregistry/pull/2128 (open, not merged)
+# Monitor: https://github.com/google/go-containerregistry/releases for v0.21.0+
+# Action: Update crane when new release is available with Go 1.24.6+ build
+CVE-2025-47907
+
+# CVE-2025-22874 - Go crypto/x509 ExtKeyUsageAny policy validation bypass
+# Affects: crane binary (go-containerregistry v0.20.6 built with Go 1.24.0)
+# Issue: Usage of ExtKeyUsageAny disables policy validation in crypto/x509
+# Risk: LOW - Only affects uncommon certificate chains with policy graphs
+# Status: Waiting for upstream crane release built with Go 1.24.4+
+# Tracking: PR https://github.com/google/go-containerregistry/pull/2128 (open, not merged)
+# Monitor: https://github.com/google/go-containerregistry/releases for v0.21.0+
+# Action: Update crane when new release is available with Go 1.24.4+ build
+CVE-2025-22874
+
 # Note: This ignore file should be reviewed every time an update to this container is made.
 # Last reviewed: 2025-10-20
