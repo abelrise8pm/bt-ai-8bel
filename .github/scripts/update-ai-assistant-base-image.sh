@@ -36,8 +36,9 @@ IMAGE_WITH_SHA="${BASE_IMAGE}@${NEW_SHA}"
 FILES_UPDATED=0
 FILES_SKIPPED=0
 
-# Function to update a Dockerfile
-update_dockerfile() {
+# Function to update any file containing the base image reference
+# Works for Dockerfiles, devcontainer JSON files, and docker-compose YAML files
+update_image_reference() {
     local file="$1"
     local temp_file="${file}.tmp"
 
@@ -50,9 +51,9 @@ update_dockerfile() {
         return
     fi
 
-    # Update FROM lines in Dockerfile
-    # Pattern matches: FROM ghcr.io/rise8-us/xpai/ai-assistant-home[@sha256:...]
-    sed -E "s|FROM ${BASE_IMAGE}(@sha256:[a-f0-9]{64})?|FROM ${IMAGE_WITH_SHA}|g" "$file" > "$temp_file"
+    # Update base image reference regardless of context (FROM, "image":, image:, etc.)
+    # Pattern matches: ghcr.io/rise8-us/xpai/ai-assistant-home[@sha256:...]
+    sed -E "s|${BASE_IMAGE}(@sha256:[a-f0-9]{64})?|${IMAGE_WITH_SHA}|g" "$file" > "$temp_file"
 
     # Check if the file actually changed
     if cmp -s "$file" "$temp_file"; then
@@ -66,49 +67,38 @@ update_dockerfile() {
     fi
 }
 
-# Function to update a devcontainer JSON file
-update_devcontainer_json() {
-    local file="$1"
-    local temp_file="${file}.tmp"
-
-    if [ ! -f "$file" ]; then
-        return
-    fi
-
-    # Check if file contains the base image reference
-    if ! grep -q "$BASE_IMAGE" "$file"; then
-        return
-    fi
-
-    # Update "image" field in JSON
-    # Pattern matches: "image": "ghcr.io/rise8-us/xpai/ai-assistant-home[@sha256:...]"
-    sed -E "s|\"image\"[[:space:]]*:[[:space:]]*\"${BASE_IMAGE}(@sha256:[a-f0-9]{64})?\"|\"image\": \"${IMAGE_WITH_SHA}\"|g" "$file" > "$temp_file"
-
-    # Check if the file actually changed
-    if cmp -s "$file" "$temp_file"; then
-        echo "⏭️  Skipping $file (already up to date)"
-        rm "$temp_file"
-        FILES_SKIPPED=$((FILES_SKIPPED + 1))
-    else
-        mv "$temp_file" "$file"
-        echo "✅ Updated $file"
-        FILES_UPDATED=$((FILES_UPDATED + 1))
-    fi
-}
-
-# Update Dockerfiles
-echo "📦 Checking Dockerfiles..."
-if [ -f "project-container/Dockerfile" ]; then
-    update_dockerfile "project-container/Dockerfile"
-fi
+# Find all files that need updating
+echo "🔍 Searching for files containing base image reference..."
 echo ""
 
-# Update devcontainer.json files
-echo "🐳 Checking devcontainer files..."
-for devcontainer_file in .devcontainer/devcontainer*.json; do
-    if [ -f "$devcontainer_file" ]; then
-        update_devcontainer_json "$devcontainer_file"
-    fi
+# Find all relevant config files (Dockerfiles, devcontainer JSONs, docker-compose YAMLs)
+# Exclude documentation, test fixtures, and git directories
+mapfile -t FILES_TO_UPDATE < <(find . -type f \
+    \( -name "Dockerfile" -o -name "devcontainer*.json" -o -name "docker-compose*.yml" -o -name "docker-compose*.yaml" \) \
+    ! -path "*/image/thoughts/*" \
+    ! -path "*/image/notes/*" \
+    ! -path "*/image/stories/*" \
+    ! -path "*/docs/*" \
+    ! -path "*/.git/*" \
+    ! -path "*/specs/*" \
+    -exec grep -l "$BASE_IMAGE" {} \; 2>/dev/null | sort)
+
+if [ ${#FILES_TO_UPDATE[@]} -eq 0 ]; then
+    echo "⚠️  No files found containing the base image reference"
+    echo "   Looking for: $BASE_IMAGE"
+    exit 0
+fi
+
+echo "📋 Found ${#FILES_TO_UPDATE[@]} file(s) to check:"
+for file in "${FILES_TO_UPDATE[@]}"; do
+    echo "   • $file"
+done
+echo ""
+
+# Update each file
+echo "🔄 Updating files..."
+for file in "${FILES_TO_UPDATE[@]}"; do
+    update_image_reference "$file"
 done
 echo ""
 
