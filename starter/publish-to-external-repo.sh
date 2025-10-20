@@ -7,7 +7,7 @@ set -e
 
 EXTERNAL_REPO="git@github.com:rise8-us/xpai-ai-assistant-container-starter.git"
 EXTERNAL_BRANCH="main"
-SOURCE_PREFIX="ai-assistant-container-starter-repo"
+SOURCE_PREFIX="starter"
 TEMP_BRANCH="temp-publish-$(date +%s)"
 
 # Files and directories to exclude from publishing
@@ -18,7 +18,7 @@ EXCLUDE_ITEMS=(
     "publish-to-external-repo.sh"
 )
 
-echo "=== Publishing ai-assistant-container-starter-repo to external repository ==="
+echo "=== Publishing starter to external repository ==="
 echo "External repo: ${EXTERNAL_REPO}"
 echo "Excluding: ${EXCLUDE_ITEMS[*]}"
 echo ""
