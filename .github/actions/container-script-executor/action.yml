@@ -13,7 +13,7 @@ inputs:
   container-image:
     description: 'Container image to use for execution'
     required: false
-    default: 'ghcr.io/${{ github.repository_owner }}/xpai/dev-container:latest'
+    default: 'ghcr.io/${{ github.repository_owner }}/xpai/ai-assistant-home:latest'
   workspace-path:
     description: 'Workspace mount path inside container'
     required: false
