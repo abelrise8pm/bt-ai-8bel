@@ -2,8 +2,8 @@
 set -e
 
 # publish-to-external-repo.sh
-# Publishes the starter directory to the external repository
-# while excluding specified files and directories
+# Publishes the starter directory to the external repository as a single commit
+# This gives project teams a clean slate without inheriting development history
 
 EXTERNAL_REPO="git@github.com:rise8-us/xpai-ai-assistant-container-starter.git"
 EXTERNAL_BRANCH="main"
@@ -74,24 +74,26 @@ done
 
 # Initialize git repo in temp directory
 cd "${TEMP_DIR}"
-git init
+git init -b main
 git add .
 
-# Get the latest commit message from the source repository for context
-LATEST_COMMIT_MSG=$(cd - > /dev/null && git log -1 --pretty=%B)
+# Create a single clean commit for the starter template
+COMMIT_MSG="Initial commit: AI Assistant Container Starter Template
 
-# Create commit with the original commit message
-echo "Creating commit..."
-git commit -m "${LATEST_COMMIT_MSG}"
+This is a starter template for project teams using the AI Assistant Container.
+For development history, see: https://github.com/rise8-us/xpai-ai-assistant-container"
+
+echo "Creating single commit..."
+git commit -m "${COMMIT_MSG}"
 
 # Push to external repository
 echo ""
 echo "Pushing to external repository..."
-echo "This may take a while..."
-echo "Note: Using force push since external repo is destination-only"
+echo "Note: Using force push to maintain single commit"
 
 git push --force "${EXTERNAL_REPO}" "HEAD:${EXTERNAL_BRANCH}"
 
 echo ""
 echo "=== Successfully published to external repository ==="
+echo "External repo now has a single clean commit."
 echo "Temporary directory will be cleaned up automatically."
