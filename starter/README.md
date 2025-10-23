@@ -33,6 +33,18 @@ This approach:
 
 **Pro Tip:** Use Claude Code to help customize your project container! Ask Claude to read the [project-container README](../project-container/README.md) and ask you questions to get what you need installed.
 
+### Integrating a spec driven development workflow
+
+Spec driven development is a powerful alternative to ad hoc prompting for getting better results out of AI assistants. Instead of providing informal instructions, you create structured specifications that guide the AI through your development process.
+
+**Recommended Solution: https://github.com/rise8-us/solutions**
+
+### Recruiting specialized agents for your team
+
+Instead of relying on a single generalist AI, you can delegate specialized work to domain experts by recruiting agents from Rise8's curated library. Each agent is a specialist in their discipline—software engineering, platform engineering, cybersecurity, SRE, and more.
+
+[8gents](https://github.com/rise8-us/8gents) provides tactical agents for hands-on implementation (TDD, infrastructure automation, security controls) and strategic agents for architecture and planning. Copy the agents you need to your project's `.claude/agents/` directory, update your `CLAUDE.md` with delegation guidance, and let Claude Code route specialized work to the right expert.
+
 ## GitHub Workflows
 
 This starter includes automated CI/CD workflows for building, testing, and securing your project container:
