@@ -67,5 +67,13 @@ GH_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "gh --version |
 }
 echo "✅ gh: $GH_VERSION"
 
+# Test UV Python package manager
+echo "Testing UV (Python package manager)..."
+UV_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "uv --version" 2>&1) || {
+    echo "❌ ERROR: UV not installed or not working: $UV_VERSION"
+    exit 1
+}
+echo "✅ UV: $UV_VERSION"
+
 echo "🎉 All tests passed! Project container is ready."
 exit 0

@@ -69,5 +69,10 @@ RUN ARCH=$(dpkg --print-architecture) && \
     # Cleanup
     rm -rf /tmp/*
 
+# Use `crane digest ghcr.io/astral-sh/uv:latest` to get the sha256 digest for the latest version.
+# Version 0.9.2 (Update this with the `org.opencontainers.image.version` annotation from `crane manifest ghcr.io/astral-sh/uv@sha256:<latest digest>`)
+# Can not use ARG here because of variable expansion problems.
+COPY --from=ghcr.io/astral-sh/uv@sha256:6dbd7c42a9088083fa79e41431a579196a189bcee3ae68ba904ac2bf77765867 /uv /uvx /bin/
+
 # Switch back to non-root user to increase security.
 USER aiAssistant
