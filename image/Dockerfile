@@ -6,13 +6,13 @@ FROM ubuntu:24.04@sha256:66460d557b25769b102175144d538d88219c077c678a49af4afca6f
 # Version definitions
 # curl https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
 # curl https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md for changelog information.
-ARG CLAUDE_CODE_VERSION=2.0.22
+ARG CLAUDE_CODE_VERSION=2.0.28
 # curl https://www.npmjs.com/package/@google/gemini-cli for latest version
 # curl https://github.com/google-gemini/gemini-cli/releases for changelog information
-ARG GEMINI_CLI_VERSION=0.9.0
+ARG GEMINI_CLI_VERSION=0.10.0
 # curl https://github.com/block/goose/releases for latest version
 # curl https://github.com/block/goose/releases for changelog information
-ARG GOOSE_VERSION=1.11.1
+ARG GOOSE_VERSION=1.12.1
 # Changed manually when new version published.
 ARG MCP_DEV_COMMANDS_VERSION=1.0.1
 
