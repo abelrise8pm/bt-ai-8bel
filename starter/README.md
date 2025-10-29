@@ -37,7 +37,10 @@ This approach:
 
 Spec driven development is a powerful alternative to ad hoc prompting for getting better results out of AI assistants. Instead of providing informal instructions, you create structured specifications that guide the AI through your development process.
 
-**Recommended Solution: https://github.com/rise8-us/solutions**
+**Recommended Solutions:**
+
+- **[Rise8 Solutions](https://github.com/rise8-us/solutions)** - Rise8's curated collection of spec-driven development patterns and practices
+- **[GitHub spec-kit](https://github.com/github/spec-kit)** - Open-source toolkit for spec-driven development that works with Claude Code and other AI assistants. Provides a structured workflow from constitution and specification creation through technical planning and execution. Particularly useful for greenfield projects, exploring multiple technology approaches, or modernizing existing systems.
 
 ### Recruiting specialized agents for your team
 
