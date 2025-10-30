@@ -62,14 +62,54 @@ Before responding to user, main agent must verify:
 
 **POLICY**: Main agent delegates ALL tasks to specialized subagents to ensure expert-level quality, maintain context efficiency, and leverage domain expertise.
 
-## 2. SYSTEM STRUCTURE
+## 2. USER COMMUNICATION PROTOCOLS
+
+### Sequential Question Pattern
+
+**MANDATORY**: When gathering information from the user, ask questions ONE AT A TIME.
+
+**Rationale**: User answers to early questions often affect the relevance and framing of later questions. Sequential questioning enables adaptive conversation flow.
+
+**Protocol**:
+1. Ask a single, focused question
+2. Wait for user response
+3. Process the answer and determine next question based on response
+4. Repeat until sufficient information is gathered
+
+**Examples**:
+
+❌ **WRONG - Batched Questions**:
+```
+What should the agent do?
+What tools are you using?
+What deliverables do you need?
+What are the scope boundaries?
+```
+
+✅ **CORRECT - Sequential Questions**:
+```
+First interaction: "What is the primary responsibility of this agent?"
+[Wait for response]
+
+Second interaction: "Based on [user's answer], what tools or systems will it interact with?"
+[Wait for response]
+
+Third interaction: "Given that it handles [previous context], what deliverables should it produce?"
+```
+
+**Exceptions**:
+- User explicitly requests: "Ask me all your questions at once"
+- Simple binary clarifications during task execution
+- Confirming understanding of previously stated information
+
+## 3. SYSTEM STRUCTURE
 
 **Expected Folder Layout:**
 - `.claude/` = Claude Agent System folder (contains agents, templates, hooks, tasks, docs, commands)
 - `CLAUDE.md` = This file - memory/instructions (must be in project root for auto-loading)
 - `.vscode/` = Workspace color configuration (created by `/setup-workspace` command)
 
-## 3. AGENT SELECTION & INVOCATION
+## 4. AGENT SELECTION & INVOCATION
 
 ### Decision Framework
 
@@ -162,7 +202,7 @@ Success Criteria: [How to measure completion]
 
 **Reference**: See `.claude/docs/agent-invocation-examples.md` for detailed templates and examples.
 
-## 4. TASK MANAGEMENT PROTOCOL
+## 5. TASK MANAGEMENT PROTOCOL
 
 ### Mandatory Task File Workflow
 
@@ -230,7 +270,7 @@ Before creating or assigning tasks:
 
 **Reference**: See `.claude/docs/task-management-examples.md` for detailed examples.
 
-## 5. CONTEXT & SESSION MANAGEMENT
+## 6. CONTEXT & SESSION MANAGEMENT
 
 ### Context Capacity Model
 
@@ -434,7 +474,7 @@ Before creating handoff files, validate:
 - Status of current PRD implementation (if applicable)
 - Next tasks in priority order
 
-## 6. PLAN ADHERENCE PROTOCOL
+## 7. PLAN ADHERENCE PROTOCOL
 
 **ZERO DEVIATION POLICY**: Claude must NEVER deviate from specified technology stacks, architectures, or implementation approaches without explicit user confirmation.
 
@@ -475,7 +515,7 @@ C) Alternative approach - explain why: [justification]
 Please respond with A, B, or C to proceed.
 ```
 
-## 7. ERROR HANDLING & ESCALATION
+## 8. ERROR HANDLING & ESCALATION
 
 ### Agent Failure Scenarios
 
@@ -510,7 +550,7 @@ Please respond with A, B, or C to proceed.
 
 **POLICY**: Never "handle directly" - always escalate to user when agent work cannot proceed as planned.
 
-## 8. QUALITY ASSURANCE & MAINTENANCE
+## 9. QUALITY ASSURANCE & MAINTENANCE
 
 ### Pre-Delivery Validation
 
@@ -567,7 +607,7 @@ Please respond with A, B, or C to proceed.
 - Agent prompt updates
 - Process optimization
 
-## 9. ADVANCED WORKFLOWS
+## 10. ADVANCED WORKFLOWS
 
 ### PRD (Product Requirements Document) Workflow
 
@@ -657,7 +697,7 @@ For PRDs that won't be implemented:
 
 **Never create PROJECT_CONTEXT.md or invoke solutions-guide agent for setup without first gathering this essential project information through direct questioning.**
 
-## 10. PROJECT CONTEXT INTEGRATION
+## 11. PROJECT CONTEXT INTEGRATION
 
 ### Automatic Context Loading
 
@@ -707,7 +747,7 @@ When invoking specialized agents, include:
 - Content: Task summary, decisions made, files created/modified, recommendations
 ```
 
-## 11. DEVELOPMENT BEST PRACTICES
+## 12. DEVELOPMENT BEST PRACTICES
 
 ### Task Management
 
