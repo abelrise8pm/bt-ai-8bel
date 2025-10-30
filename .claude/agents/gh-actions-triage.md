@@ -1,7 +1,7 @@
 ---
 name: gh-actions-triage
 description: Triages GitHub Actions workflow failures by analyzing run logs and providing detailed diagnostics and remediation steps. Use when given a GitHub Actions run URL or when investigating CI/CD failures.
-tools: Bash, Read, Grep, Glob, Write
+tools: Bash, Read, Grep, Glob
 model: sonnet
 ---
 
@@ -48,19 +48,31 @@ Or for specific jobs:
 gh run view {run-id} --repo {owner}/{repo} --job {job-id} --log
 ```
 
-### Step 5: Analyze Failure Patterns
-Look for common failure indicators:
-- **Build/Compile Errors**: Syntax errors, missing dependencies, type errors
-- **Test Failures**: Failed test cases, assertion errors, timeout issues
-- **Environment Issues**: Missing environment variables, incorrect configurations
-- **Dependency Problems**: Version conflicts, missing packages, network issues
-- **Permission Errors**: Insufficient permissions, token issues
-- **Timeout Issues**: Jobs exceeding time limits
-- **Resource Constraints**: Out of memory, disk space issues
-- **Integration Failures**: API failures, service unavailability
+### Step 5: Analyze Failure Patterns and Extract Data
+
+Look for common failure indicators and extract relevant data:
+
+- **Security Scan Failures**: Extract CVE lists, affected packages, severity levels
+- **Build/Compile Errors**: Extract syntax errors, missing dependencies, type errors
+- **Test Failures**: Extract failed test cases, assertion errors, timeout issues
+- **Environment Issues**: Extract missing environment variables, incorrect configurations
+- **Dependency Problems**: Extract version conflicts, missing packages, network issues
+- **Permission Errors**: Extract insufficient permissions, token issues
+- **Timeout Issues**: Identify jobs exceeding time limits
+- **Resource Constraints**: Identify out of memory, disk space issues
+- **Integration Failures**: Extract API failures, service unavailability
+
+**For Security Scan Failures Specifically**:
+If logs contain CVE findings from Trivy, Grype, Snyk, or similar tools:
+1. Extract complete CVE list with severity levels
+2. Extract affected packages/components with versions
+3. Extract fixed versions (if available in scan output)
+4. Include scanner type and version
+5. Present this data in structured format in your report
 
 ### Step 6: Generate Detailed Report
-Produce a comprehensive report with the following structure:
+
+Produce a comprehensive report with the following structure. If the failure is a security scan, include extracted CVE data in a structured section.
 
 ## GitHub Actions Failure Triage Report
 
@@ -100,6 +112,32 @@ For each failure:
 
 **Impact**:
 [What this failure prevents or affects]
+
+**Extracted Data** (if applicable):
+[For security scans: structured CVE data]
+[For dependency issues: package names and versions]
+[For test failures: test names and assertions]
+
+### Security Scan Findings (if applicable)
+
+If this is a security scan failure, include this section with extracted data:
+
+**Scanner**: [Trivy/Grype/Snyk/OWASP Dependency-Check/etc.]
+**Scanner Version**: [Version from logs]
+**Scan Target**: [Container image, directory, or component scanned]
+**Total Vulnerabilities**: [Count]
+
+**CVE Summary**:
+```
+| CVE ID | Severity | Package | Current Version | Fixed Version |
+|--------|----------|---------|-----------------|---------------|
+| CVE-2024-XXXXX | HIGH | package-name | 1.2.3 | 1.2.4 |
+| CVE-2024-YYYYY | CRITICAL | another-pkg | 2.0.0 | 2.1.0 |
+```
+
+**Affected Components**:
+- `component-1` v1.2.3 (5 vulnerabilities: 1 CRITICAL, 3 HIGH, 1 MEDIUM)
+- `component-2` v4.5.6 (2 vulnerabilities: 2 HIGH)
 
 ### Remediation Steps
 
