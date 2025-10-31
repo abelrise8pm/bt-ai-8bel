@@ -29,7 +29,11 @@ rm -f .devcontainer/docker-compose.firewall.yml
 Copy the non-CUI devcontainer template:
 
 ```bash
+# If you are developing on your laptop.
 mv .devcontainer/devcontainer.no-cui.json .devcontainer/devcontainer.json
+
+# If you are using codespaces.
+rm .devcontainer/devcontainer.no-cui.json
 ```
 
 ### 3. Set Up Environment Variables

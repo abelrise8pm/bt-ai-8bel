@@ -74,6 +74,9 @@ Your project does not give the container access to CUI data.
 
 Refer to the detailed setup guides above for complete instructions.
 
+NOTE: If you are running in Codespaces, you will need to [start your
+Codespace](https://github.com/rise8-us/xpai-ai-assistant-container-starter?tab=readme-ov-file#option-c-github-codespaces) before performing these instructions.
+
 ### **CUI Data**
 Your project gives the container access to CUI data.
 
