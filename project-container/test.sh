@@ -51,13 +51,13 @@ CURL_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "curl --versi
 }
 echo "✅ curl: $CURL_VERSION"
 
-# Test crane
-echo "Testing crane..."
-CRANE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "crane version" 2>&1) || {
-    echo "❌ ERROR: crane not installed or not working: $CRANE_VERSION"
+# Test skopeo
+echo "Testing skopeo..."
+SKOPEO_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "skopeo --version" 2>&1) || {
+    echo "❌ ERROR: skopeo not installed or not working: $SKOPEO_VERSION"
     exit 1
 }
-echo "✅ crane: $CRANE_VERSION"
+echo "✅ skopeo: $SKOPEO_VERSION"
 
 # Test GitHub CLI
 echo "Testing gh..."

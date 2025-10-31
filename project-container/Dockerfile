@@ -15,11 +15,8 @@ FROM ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:4cf0f4b73d5a0262d90ac27e7ba8
 # Instructions are included of where to find the latest versions.
 # This helps both humans and AI assistants maintain the file.
 
-# curl https://github.com/google/go-containerregistry/releases to get latest version
-ARG CRANE_VERSION=0.20.6
-
 # curl https://github.com/cli/cli/releases to get latest version
-ARG GH_VERSION=2.82.0
+ARG GH_VERSION=2.82.1
 
 USER root
 # Fix /tmp permissions after USER switch - required even though base image has this fix
@@ -38,29 +35,18 @@ RUN chmod 1777 /tmp && \
     apt-get install -y --no-install-recommends \
         curl \
         ca-certificates \
+        skopeo \
         && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 # Install additional tools:
-# - crane: Container image inspection tool for working with registries
 # - gh: GitHub CLI for interacting with GitHub issues, PRs, and repositories
 #
-# NOTE: Architecture naming differs between tools:
-# - dpkg returns "amd64" for x86_64 systems
-# - crane releases use "x86_64" naming
-# - gh CLI releases use "amd64" naming
-# We map the architecture names accordingly below.
+# NOTE: skopeo is installed via apt above from Ubuntu repos (actively maintained by Red Hat/Canonical)
+# NOTE: gh CLI uses dpkg architecture naming (amd64/arm64)
 RUN ARCH=$(dpkg --print-architecture) && \
-    # Map Debian arch names to Go arch names for crane
-    CRANE_ARCH=${ARCH} && \
-    if [ "${ARCH}" = "amd64" ]; then CRANE_ARCH="x86_64"; fi && \
-    # Install crane
-    curl -fsSL -o /tmp/go-containerregistry.tar.gz \
-        "https://github.com/google/go-containerregistry/releases/download/v${CRANE_VERSION}/go-containerregistry_Linux_${CRANE_ARCH}.tar.gz" && \
-    tar -xzf /tmp/go-containerregistry.tar.gz -C /usr/local/bin/ crane && \
-    chmod +x /usr/local/bin/crane && \
-    # Install GitHub CLI (uses dpkg arch naming)
+    # Install GitHub CLI
     curl -fsSL -o /tmp/gh.tar.gz \
         "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz" && \
     tar -xzf /tmp/gh.tar.gz -C /tmp && \
@@ -69,10 +55,10 @@ RUN ARCH=$(dpkg --print-architecture) && \
     # Cleanup
     rm -rf /tmp/*
 
-# Use `crane digest ghcr.io/astral-sh/uv:latest` to get the sha256 digest for the latest version.
-# Version 0.9.2 (Update this with the `org.opencontainers.image.version` annotation from `crane manifest ghcr.io/astral-sh/uv@sha256:<latest digest>`)
+# Use `skopeo inspect docker://ghcr.io/astral-sh/uv:latest | jq -r .Digest` to get the sha256 digest for the latest version.
+# Version 0.9.7 (Update this with the `org.opencontainers.image.version` annotation from `skopeo inspect docker://ghcr.io/astral-sh/uv@sha256:<latest digest>`)
 # Can not use ARG here because of variable expansion problems.
-COPY --from=ghcr.io/astral-sh/uv@sha256:6dbd7c42a9088083fa79e41431a579196a189bcee3ae68ba904ac2bf77765867 /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv@sha256:ba4857bf2a068e9bc0e64eed8563b065908a4cd6bfb66b531a9c424c8e25e142 /uv /uvx /bin/
 
 # Switch back to non-root user to increase security.
 USER aiAssistant
