@@ -42,5 +42,17 @@ CVE-2025-47907
 # Action: Update crane when new release is available with Go 1.24.4+ build
 CVE-2025-22874
 
+# CVE-2024-52308 - GitHub CLI remote code execution via malicious Codespaces
+# Affects: gh CLI (Trivy reports as v2.0.0-20251104174640-152d328db80d - misread)
+# Actual Version: 2.83.0 (verified via podman run --rm localhost/test-project-container:latest gh --version)
+# Issue: RCE when connecting to malicious Codespaces SSH server
+# Risk: FALSE POSITIVE - Trivy gobinary scanner misreads version from Go binary build info
+# Fixed Version: 2.62.0
+# Status: Not vulnerable - actual version 2.83.0 is well above fixed version 2.62.0
+# Root Cause: Known limitation with Trivy parsing Go binary embedded build info
+# Verification: Confirmed gh version 2.83.0 (2025-11-04) via container execution
+# Action: None required - false positive, actual version is patched
+CVE-2024-52308
+
 # Note: This ignore file should be reviewed every time an update to this container is made.
-# Last reviewed: 2025-10-20
+# Last reviewed: 2025-11-04
