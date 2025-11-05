@@ -147,3 +147,4 @@ jobs:
 
             🤖 Automated by GitHub Actions
           branch-name: ${{ steps.branch-name.outputs.branch_name }}
+          force-push: 'true'

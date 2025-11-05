@@ -21,6 +21,10 @@ inputs:
     description: 'Base branch for PR'
     required: false
     default: 'main'
+  force-push:
+    description: 'Use force push to update existing branches. Enable for workflows with deterministic branch names (default: false)'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -31,36 +35,82 @@ runs:
         git config --global user.name 'xpai-housekeeping-bot[bot]'
         git config --global user.email 'xpai-housekeeping-bot[bot]@users.noreply.github.com'
 
-    - name: Check for changes
-      id: changes
-      shell: bash
-      run: |
-        if git diff --quiet && git diff --cached --quiet; then
-          echo "No changes detected - skipping PR creation"
-          exit 0
-        fi
-        echo "Changes detected - proceeding with PR creation"
-
-    - name: Create branch and commit
-      shell: bash
-      run: |
-        echo "Creating branch: ${{ inputs.branch-name }}"
-        git checkout -b "${{ inputs.branch-name }}"
-        git add -A
-        git commit -m "${{ inputs.commit-message }}"
-        git push origin "${{ inputs.branch-name }}"
-
-    - name: Create pull request
+    - name: Push branch and create PR
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
-        PR_TITLE: ${{ inputs.pr-title }}
-        PR_BODY: ${{ inputs.pr-body }}
-        BASE_BRANCH: ${{ inputs.base-branch }}
-        HEAD_BRANCH: ${{ inputs.branch-name }}
       run: |
-        gh pr create \
-          --title "$PR_TITLE" \
-          --body "$PR_BODY" \
-          --base "$BASE_BRANCH" \
-          --head "$HEAD_BRANCH"
+        # Check if branch exists remotely
+        BRANCH_EXISTS=false
+        if git ls-remote --heads origin "${{ inputs.branch-name }}" | grep -q "${{ inputs.branch-name }}"; then
+          BRANCH_EXISTS=true
+          echo "Branch ${{ inputs.branch-name }} exists - fetching and updating"
+          git fetch origin "${{ inputs.branch-name }}"
+          git checkout -b "${{ inputs.branch-name }}" origin/"${{ inputs.branch-name }}"
+        else
+          echo "Creating new branch: ${{ inputs.branch-name }}"
+          git checkout -b "${{ inputs.branch-name }}"
+        fi
+
+        # Stage all changes
+        git add -A
+
+        # Commit if there are changes
+        if ! git diff --staged --quiet; then
+          git commit -m "${{ inputs.commit-message }}"
+          echo "Changes committed"
+        else
+          echo "No changes to commit"
+        fi
+
+        # Determine push strategy based on force-push input
+        if [ "${{ inputs.force-push }}" = "true" ]; then
+          # Force push enabled - use --force-with-lease for safety
+          echo "Force pushing with --force-with-lease"
+          git push --force-with-lease origin "${{ inputs.branch-name }}"
+          echo "Branch pushed successfully"
+        else
+          # Force push disabled - check if push is safe
+          if [ "$BRANCH_EXISTS" = "true" ]; then
+            # Check if local is ahead of remote
+            LOCAL_COMMIT=$(git rev-parse HEAD)
+            REMOTE_COMMIT=$(git rev-parse origin/"${{ inputs.branch-name }}")
+
+            if [ "$LOCAL_COMMIT" = "$REMOTE_COMMIT" ]; then
+              echo "No new commits - branch is up to date"
+            else
+              # Check if we can fast-forward
+              git merge-base --is-ancestor "$REMOTE_COMMIT" "$LOCAL_COMMIT"
+              if [ $? -eq 0 ]; then
+                # Fast-forward is possible
+                echo "Pushing branch (fast-forward)"
+                git push origin "${{ inputs.branch-name }}"
+                echo "Branch pushed successfully"
+              else
+                # Cannot fast-forward - would need force push
+                echo "❌ ERROR: Branch ${{ inputs.branch-name }} exists and cannot be fast-forwarded."
+                echo "Local branch has diverged from remote. Enable force-push input to overwrite."
+                exit 1
+              fi
+            fi
+          else
+            # New branch - push normally
+            echo "Pushing new branch"
+            git push origin "${{ inputs.branch-name }}"
+            echo "Branch pushed successfully"
+          fi
+        fi
+
+        # Create PR if it doesn't exist
+        EXISTING_PR=$(gh pr list --head "${{ inputs.branch-name }}" --json number --jq '.[0].number // empty')
+
+        if [ -z "$EXISTING_PR" ]; then
+          echo "Creating new PR"
+          gh pr create \
+            --title "${{ inputs.pr-title }}" \
+            --body "${{ inputs.pr-body }}" \
+            --head "${{ inputs.branch-name }}" \
+            --base "${{ inputs.base-branch }}"
+        else
+          echo "✅ PR #$EXISTING_PR already exists and has been updated"
+        fi
