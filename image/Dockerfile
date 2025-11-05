@@ -6,10 +6,10 @@ FROM ubuntu:24.04@sha256:66460d557b25769b102175144d538d88219c077c678a49af4afca6f
 # Version definitions
 # curl https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
 # curl https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md for changelog information.
-ARG CLAUDE_CODE_VERSION=2.0.28
+ARG CLAUDE_CODE_VERSION=2.0.33
 # curl https://www.npmjs.com/package/@google/gemini-cli for latest version
 # curl https://github.com/google-gemini/gemini-cli/releases for changelog information
-ARG GEMINI_CLI_VERSION=0.10.0
+ARG GEMINI_CLI_VERSION=0.12.0
 # curl https://github.com/block/goose/releases for latest version
 # curl https://github.com/block/goose/releases for changelog information
 ARG GOOSE_VERSION=1.12.1
@@ -69,7 +69,8 @@ RUN apt-get update && \
 # libxcb1: X11 client library required by Goose (Goose GUI framework dependency)
 
 # Install Node.js v22.20.0 (pinned version for Claude Code and Gemini CLI)
-# To update: Check https://nodejs.org/download/release/ for latest v22.x
+# To update: Check NodeSource repo for latest 22.20.x patch before bumping minor version
+# Verify availability: curl -s https://deb.nodesource.com/node_22.x/dists/nodistro/main/binary-amd64/Packages | grep "Version: 22.20"
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
     apt-get install -y nodejs=22.20.0* && \
     rm -f /etc/apt/sources.list.d/nodesource.list && \
