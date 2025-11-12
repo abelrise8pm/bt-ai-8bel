@@ -1,9 +1,6 @@
 name: AI Assistant Container Software Update
 
 on:
-  schedule:
-    # Run every Monday at 1 AM Eastern Time (6 AM UTC)
-    - cron: '0 6 * * 1'
   workflow_dispatch:  # Allow manual triggering
 
 # Security: Restrict workflow permissions to minimum required
