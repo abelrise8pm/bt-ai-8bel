@@ -16,6 +16,7 @@ EXCLUDE_ITEMS=(
     "tests"
     "DEVELOPMENT.md"
     "publish-to-external-repo.sh"
+    "docs/PRD-AUTOMATED-ONBOARDING.md"
 )
 
 echo "=== Publishing starter to external repository ==="
@@ -25,7 +26,7 @@ echo ""
 
 # Verify we're in the XPai repository root
 if [ ! -d "${SOURCE_PREFIX}" ]; then
-    echo "Error: Must run this script from the XPai repository root"
+    echo "Error: Must run this script from the repository root"
     exit 1
 fi
 
@@ -58,8 +59,9 @@ trap cleanup EXIT
 echo "Creating temporary directory: ${TEMP_DIR}"
 mkdir -p "${TEMP_DIR}"
 
-echo "Copying starter content..."
-cp -r "${SOURCE_PREFIX}/." "${TEMP_DIR}/"
+echo "Copying starter content (git-tracked files only)..."
+# Use git archive to copy only files tracked in git
+git archive --format=tar HEAD:"${SOURCE_PREFIX}" | tar -x -C "${TEMP_DIR}"
 
 # Remove excluded items from temp directory
 echo "Removing excluded items..."
