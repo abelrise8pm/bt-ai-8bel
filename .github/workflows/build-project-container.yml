@@ -28,8 +28,9 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
+      pull-requests: write
       security-events: write
 
     steps:
@@ -99,3 +100,48 @@ jobs:
           echo "✅ Successfully promoted image to latest"
           echo "📦 Image digest: ${{ steps.build.outputs.digest }}"
           echo "🏷️  Tags: latest, sha-${{ github.sha }}"
+
+      # Update devcontainer.json with new digest and create PR
+      - name: Update devcontainer.json with new digest
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          NEW_DIGEST="${{ steps.build.outputs.digest }}"
+          echo "Updating devcontainer.json with digest: $NEW_DIGEST"
+
+          # Update the image reference in devcontainer.json
+          sed -i "s|ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@sha256:[a-f0-9]*|ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@${NEW_DIGEST}|g" \
+            .devcontainer/devcontainer.json
+
+          # Check if file changed
+          if git diff --quiet .devcontainer/devcontainer.json; then
+            echo "✅ devcontainer.json already up to date"
+            echo "CHANGES_MADE=false" >> $GITHUB_ENV
+          else
+            echo "📝 devcontainer.json updated with new digest"
+            echo "CHANGES_MADE=true" >> $GITHUB_ENV
+          fi
+
+      - name: Create PR for devcontainer update
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.CHANGES_MADE == 'true'
+        uses: ./.github/actions/create-automated-pr
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          branch-name: auto-update-devcontainer-${{ github.sha }}
+          commit-message: |
+            chore: update devcontainer.json to latest project container
+
+            Automated update of devcontainer.json to use the latest project container
+            image built in workflow run #${{ github.run_number }}.
+
+            - Project container digest: ${{ steps.build.outputs.digest }}
+            - Workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          pr-title: "chore: update devcontainer.json to latest project container"
+          pr-body: |
+            ## Summary
+            Automated update of `.devcontainer/devcontainer.json` to use the latest project container image.
+
+            ## Changes
+            - Updated project container digest to: `${{ steps.build.outputs.digest }}`
+            - Workflow run: [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            🤖 Automated PR created by GitHub Actions
