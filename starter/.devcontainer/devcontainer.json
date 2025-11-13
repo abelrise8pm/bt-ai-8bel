@@ -9,5 +9,12 @@
     "GEMINI_API_KEY": "${localEnv:GEMINI_API_KEY}",
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
   },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code"
+      ]
+    }
+  },
   "remoteUser": "aiAssistant"
 }

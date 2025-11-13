@@ -179,13 +179,23 @@ If you are running VSCode for the first time, it will prompt you to install the 
 
 Once VSCode reopens in the container:
 
-1. **Open a terminal in VSCode:**
-   - **Terminal** menu → **New Terminal** (or press `` Ctrl + Shift+ ` ``)
+1. **Open the Claude Code plugin:**
 
-2. **Start the AI assistant:**
-   ```bash
-   claude
-   ```
+   The Claude Code extension is automatically installed in the container. You can access it in two ways:
+
+   **Option A: Using the Activity Bar (Sidebar)**
+   - Look for the Claude Code icon in the left sidebar (Activity Bar)
+   - Click the icon to open the Claude Code panel
+
+   **Option B: Using the Command Palette**
+   - Press `Cmd + Shift + P`
+   - Type "Claude Code" and select **"Claude Code: Open"**
+
+2. **Alternative: Use the terminal command:**
+
+   You can also interact with Claude via terminal:
+   - **Terminal** menu → **New Terminal** (or press `` Ctrl + Shift + ` ``)
+   - Type `claude` and press Enter
 
 That's it! You're ready to develop with AI assistance. 🎉
 

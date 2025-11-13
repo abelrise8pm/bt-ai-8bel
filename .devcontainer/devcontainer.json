@@ -4,5 +4,12 @@
   "runArgs": [
     "--env-file",".env"
   ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code"
+      ]
+    }
+  },
   "remoteUser": "aiAssistant"
 }
