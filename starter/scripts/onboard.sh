@@ -847,6 +847,173 @@ install_podman() {
     fi
 }
 
+# Configure Podman machine to auto-start on macOS login
+configure_podman_auto_start() {
+    echo ""
+    print_info "Configuring Podman machine to auto-start on login..."
+    echo ""
+    echo "${EMOJI_QUESTION} Why auto-start Podman machine?"
+    echo "   After macOS reboots, the Podman machine needs to be started manually."
+    echo "   This LaunchAgent will automatically start Podman when you login,"
+    echo "   ensuring your development environment is always ready."
+    echo ""
+    log_info "Configuring Podman auto-start LaunchAgent"
+
+    # Define LaunchAgent paths
+    local launch_agents_dir="${HOME}/Library/LaunchAgents"
+    local plist_file="${launch_agents_dir}/com.podman.machine.plist"
+    local label="com.podman.machine"
+
+    # Ensure LaunchAgents directory exists
+    if [[ ! -d "${launch_agents_dir}" ]]; then
+        print_info "Creating LaunchAgents directory..."
+        if mkdir -p "${launch_agents_dir}"; then
+            print_success "LaunchAgents directory created"
+            log_info "Created LaunchAgents directory: ${launch_agents_dir}"
+        else
+            print_error "Failed to create LaunchAgents directory"
+            echo "   This is non-critical - you can manually start Podman after reboots"
+            log_error "Could not create LaunchAgents directory (non-critical)"
+            return 0
+        fi
+    fi
+
+    # Check if LaunchAgent already exists
+    if [[ -f "${plist_file}" ]]; then
+        print_success "Podman auto-start already configured"
+        log_info "LaunchAgent plist already exists: ${plist_file}"
+
+        # Verify if LaunchAgent is loaded
+        if launchctl list | grep -q "${label}"; then
+            print_success "LaunchAgent is active"
+            log_info "LaunchAgent ${label} is loaded and active"
+        else
+            print_info "LaunchAgent exists but not loaded - loading now..."
+            if launchctl load -w "${plist_file}" 2>/dev/null; then
+                print_success "LaunchAgent loaded successfully"
+                log_info "Loaded existing LaunchAgent: ${label}"
+            else
+                print_info "LaunchAgent load skipped (may already be running)"
+                log_warn "LaunchAgent load command returned non-zero (may be benign)"
+            fi
+        fi
+
+        echo ""
+        print_success "Podman machine will automatically start after reboots"
+        return 0
+    fi
+
+    # Determine podman binary path
+    local podman_path
+    podman_path=$(command -v podman)
+
+    if [[ -z "${podman_path}" ]]; then
+        print_error "Cannot locate podman binary"
+        echo "   This is non-critical - you can manually start Podman after reboots"
+        log_error "podman command not found in PATH for LaunchAgent configuration (non-critical)"
+        return 0
+    fi
+
+    print_info "Podman location: ${podman_path}"
+    log_info "Using podman binary: ${podman_path}"
+
+    # Create LaunchAgent plist file
+    print_info "Creating LaunchAgent configuration..."
+    log_info "Creating plist file: ${plist_file}"
+
+    # Write plist content
+    # NOTE: Using heredoc for clean multi-line XML
+    # NOTE: AbandonProcessGroup=true prevents launchd from killing the VM when start command exits
+    cat > "${plist_file}" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>${label}</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${podman_path}</string>
+        <string>machine</string>
+        <string>start</string>
+        <string>podman-machine-default</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>${HOME}/Library/Logs/podman-machine-start.log</string>
+    <key>StandardErrorPath</key>
+    <string>${HOME}/Library/Logs/podman-machine-start-error.log</string>
+    <key>AbandonProcessGroup</key>
+    <true/>
+</dict>
+</plist>
+EOF
+
+    local plist_exit_code=$?
+
+    if [[ ${plist_exit_code} -ne 0 ]] || [[ ! -f "${plist_file}" ]]; then
+        print_error "Failed to create LaunchAgent plist file"
+        echo "   This is non-critical - you can manually start Podman after reboots"
+        log_error "Could not create plist file (non-critical)"
+        return 0
+    fi
+
+    print_success "LaunchAgent plist file created"
+    log_info "Successfully created plist file: ${plist_file}"
+
+    # Set correct permissions (644 - owner read/write, group/others read)
+    print_info "Setting file permissions..."
+    if chmod 644 "${plist_file}"; then
+        print_success "Permissions set to 644"
+        log_info "Set plist permissions to 644"
+    else
+        print_info "Could not set permissions (non-critical)"
+        log_warn "chmod 644 failed on plist file (non-critical)"
+    fi
+
+    # Load LaunchAgent
+    print_info "Loading LaunchAgent..."
+    log_info "Attempting to load LaunchAgent: ${label}"
+
+    if launchctl load -w "${plist_file}" 2>/dev/null; then
+        print_success "LaunchAgent loaded successfully"
+        log_info "Successfully loaded LaunchAgent: ${label}"
+    else
+        local launchctl_exit_code=$?
+        print_info "LaunchAgent installation completed (load status unclear)"
+        echo "   The LaunchAgent will activate on next login"
+        log_warn "launchctl load returned exit code ${launchctl_exit_code} (may be benign)"
+    fi
+
+    # Verify LaunchAgent is loaded
+    echo ""
+    print_info "Verifying LaunchAgent status..."
+    if launchctl list | grep -q "${label}"; then
+        print_success "LaunchAgent is active and will run at login"
+        log_info "LaunchAgent verification successful: ${label} is loaded"
+    else
+        print_info "LaunchAgent installed - will activate on next login"
+        log_info "LaunchAgent not immediately visible in launchctl list (will activate on next login)"
+    fi
+
+    echo ""
+    echo "---"
+    print_info "Auto-Start Configuration Summary:"
+    echo ""
+    echo "   LaunchAgent: ${label}"
+    echo "   Location: ${plist_file}"
+    echo "   Command: ${podman_path} machine start"
+    echo "   Logs: ${HOME}/Library/Logs/podman-machine-start*.log"
+    echo ""
+    echo "   ${EMOJI_CHECK} Podman machine will automatically start after reboots"
+    echo "   ${EMOJI_INFO} Logs available if troubleshooting needed"
+    echo ""
+
+    log_info "Podman auto-start configuration completed successfully"
+    return 0
+}
+
 # Install GitHub CLI
 install_gh_cli() {
     install_tool_via_brew "GitHub CLI" "gh" "gh" "GitHub authentication and container registry access" false
@@ -989,6 +1156,9 @@ install_tools() {
     if ! install_podman; then
         failed_tools+=("Podman")
     fi
+
+    # Configure Podman auto-start (non-critical - always returns 0)
+    configure_podman_auto_start
 
     # Install GitHub CLI
     if ! install_gh_cli; then
@@ -2324,6 +2494,7 @@ main() {
     echo "   ${EMOJI_CHECK} Prerequisites verified (Xcode CLI Tools, git)"
     echo "   ${EMOJI_CHECK} Homebrew installed and configured"
     echo "   ${EMOJI_CHECK} Podman installed and machine initialized"
+    echo "   ${EMOJI_CHECK} Podman auto-start configured (starts on login)"
     echo "   ${EMOJI_CHECK} Docker symlink created (docker -> podman)"
     echo "   ${EMOJI_CHECK} Zscaler certificates configured (if Zscaler detected)"
     echo "   ${EMOJI_CHECK} GitHub CLI installed"
