@@ -69,6 +69,11 @@ The AI assistant requires an Anthropic API key to access Claude.
 
 **⏱️ Expected Time: 10-20 minutes** (mostly automated, you'll respond to a few prompts)
 
+**⚠️ BEFORE YOU START: You will need your Anthropic API key during this process.**
+- If you don't have your API key yet, wait for it to arrive before running the script
+- The script will prompt you to enter your API key (format: `sk-ant-api03-...`)
+- Your key will be stored securely in a local `.env` file
+
 **What This Script Does:**
 - Installs required software (Homebrew, Podman, VSCode, GitHub CLI)
 - Configures your development environment
@@ -287,9 +292,19 @@ This section covers common issues and their solutions. For CUI project-specific 
 **If the onboarding script fails:**
 
 1. **Check the log file** for detailed error information:
+
+   **Option A: View in Terminal** (if you're comfortable with command line)
    ```bash
    cat ./ai-assistant-onboard.log
    ```
+   This displays the log file contents in your terminal window.
+
+   **Option B: Open in a Text Editor** (easier for most users)
+   - Open Finder
+   - Navigate to your project folder (where you cloned the repository)
+   - Find the file named `ai-assistant-onboard.log`
+   - Double-click to open it in TextEdit or your preferred text editor
+   - Or right-click → Open With → TextEdit
 
 2. **Common issues and solutions:**
    - **Xcode CLI Tools installation dialog** - Click 'Install' when prompted; script will wait for completion automatically
