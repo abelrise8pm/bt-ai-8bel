@@ -1819,46 +1819,15 @@ remove_cui_sections_from_env() {
 configure_environment() {
     print_step "Phase 5: Environment Configuration"
 
-    print_info "Configuring environment variables..."
-    echo ""
-    echo "${EMOJI_QUESTION} What is the .env file?"
-    echo "   The .env file stores environment-specific configuration like your"
-    echo "   API credentials. This file is never committed to git for security reasons."
-    echo ""
-    echo "${EMOJI_INFO} This process will:"
-    echo "   • Create .env from .env.example template"
-    echo "   • Securely prompt for your Anthropic API key (input will be hidden)"
-    echo "   • Remove CUI-related configuration (not needed for non-CUI projects)"
-    echo "   • Set restrictive permissions (600 - owner read/write only)"
-    echo ""
-
     log_info "Phase 5: Environment configuration started"
 
     # Define source and target paths
     local source_file=".env.example"
     local target_file=".env"
 
-    # Check if source file exists
-    if [[ ! -f "${source_file}" ]]; then
-        print_error "Source file not found: ${source_file}"
-        echo ""
-        echo "ERROR: Cannot configure environment - template file missing"
-        echo ""
-        echo "Expected file: ${source_file}"
-        echo ""
-        print_helpdesk_instructions
-        log_error "Environment configuration source file not found: ${source_file}"
-        log_error "Current directory: $(pwd)"
-        log_error "Directory contents: $(ls -la . 2>&1 || echo 'cannot list')"
-        return 1
-    fi
-
-    print_success "Template file found: ${source_file}"
-    log_info "Source file verified: ${source_file}"
-
-    # Check if .env already exists
+    # Check if .env already exists FIRST (before any messaging about API key prompts)
     if [[ -f "${target_file}" ]]; then
-        print_success "Existing .env file found - skipping configuration"
+        print_info "Existing .env file found - validating configuration..."
         log_info "Existing .env file detected - skipping configuration (idempotent)"
 
         # Verify permissions are secure
@@ -1884,6 +1853,38 @@ configure_environment() {
         log_info "Phase 5: Environment configuration completed (existing file kept)"
         return 0
     fi
+
+    # Only show these messages if we need to create .env
+    print_info "Configuring environment variables..."
+    echo ""
+    echo "${EMOJI_QUESTION} What is the .env file?"
+    echo "   The .env file stores environment-specific configuration like your"
+    echo "   API credentials. This file is never committed to git for security reasons."
+    echo ""
+    echo "${EMOJI_INFO} This process will:"
+    echo "   • Create .env from .env.example template"
+    echo "   • Securely prompt for your Anthropic API key (input will be hidden)"
+    echo "   • Remove CUI-related configuration (not needed for non-CUI projects)"
+    echo "   • Set restrictive permissions (600 - owner read/write only)"
+    echo ""
+
+    # Check if source file exists
+    if [[ ! -f "${source_file}" ]]; then
+        print_error "Source file not found: ${source_file}"
+        echo ""
+        echo "ERROR: Cannot configure environment - template file missing"
+        echo ""
+        echo "Expected file: ${source_file}"
+        echo ""
+        print_helpdesk_instructions
+        log_error "Environment configuration source file not found: ${source_file}"
+        log_error "Current directory: $(pwd)"
+        log_error "Directory contents: $(ls -la . 2>&1 || echo 'cannot list')"
+        return 1
+    fi
+
+    print_success "Template file found: ${source_file}"
+    log_info "Source file verified: ${source_file}"
 
     # Copy template to .env
     print_info "Creating .env from template..."
