@@ -7,6 +7,31 @@ A monorepo containing the AI assistant base container and starter template for p
 - [`image/`](image/) - Base container with pre-configured AI tools (Claude Code, Gemini CLI, Goose)
 - [`starter/`](starter/) - Starter template for project teams
 
+## Integrating AI Assistant into an Existing Repository
+
+If you have an existing repository and want to add AI Assistant capabilities to it, use our integration script:
+
+**Prerequisites:**
+1. Clone this repository locally:
+   ```bash
+   git clone https://github.com/rise8-us/xpai-ai-assistant-container.git
+   cd xpai-ai-assistant-container
+   ```
+
+2. Run the integration script with your target repository path:
+   ```bash
+   ./scripts/integrate-ai-assistant-no-cui.sh <path-to-your-repo>
+   ```
+
+**What the script does:**
+- Copies necessary DevContainer configuration files
+- Adds CLAUDE.md.example for reference (teams can create their own CLAUDE.md when ready)
+- Sets up MCP configuration
+- Optionally adds GitHub workflows for container CI/CD
+- Updates .gitignore with AI Assistant files
+
+**Note:** The script preserves existing files and creates backups where needed. Teams maintain full control over configuration customization.
+
 ## Why a Standalone Repository?
 
 This AI Assistant container is maintained as a standalone repository (separate from the main XPai repository) to support **CMMC Level 2 compliance** requirements. This architectural decision provides several key benefits:
