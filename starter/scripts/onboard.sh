@@ -1339,35 +1339,7 @@ configure_devcontainer() {
     local source_file=".devcontainer/devcontainer.no-cui.json"
     local target_file=".devcontainer/devcontainer.json"
 
-    # Check if target file already exists (check this FIRST before looking for source)
-    if [[ -f "${target_file}" ]]; then
-        print_success "DevContainer already configured: ${target_file}"
-        echo ""
-        echo "${EMOJI_INFO} The devcontainer.json file already exists."
-        echo "   Skipping devcontainer configuration - using existing file."
-        echo ""
-        log_info "DevContainer configuration already exists - skipping (idempotent)"
-        log_info "Existing file: ${target_file}"
-
-        # Remove the source file if it exists (cleanup)
-        if [[ -f "${source_file}" ]]; then
-            print_info "Cleaning up template file..."
-            if rm -f "${source_file}"; then
-                print_success "Template file removed: ${source_file}"
-                log_info "Successfully removed source template file"
-            else
-                print_info "Template file cleanup skipped (non-critical)"
-                log_warn "Failed to remove source file (non-critical): ${source_file}"
-            fi
-        fi
-
-        echo ""
-        print_success "DevContainer configuration validated!"
-        log_info "Phase 4: DevContainer configuration completed (already configured)"
-        return 0
-    fi
-
-    # Check if source file exists (only if target doesn't exist)
+    # Check if source file exists
     if [[ ! -f "${source_file}" ]]; then
         print_error "Source file not found: ${source_file}"
         echo ""
