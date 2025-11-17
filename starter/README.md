@@ -183,11 +183,6 @@ Once VSCode reopens in the container:
 
    The Claude Code extension is automatically installed in the container. You can access it in two ways:
 
-   **Option A: Using the Activity Bar (Sidebar)**
-   - Look for the Claude Code icon in the left sidebar (Activity Bar)
-   - Click the icon to open the Claude Code panel
-
-   **Option B: Using the Command Palette**
    - Press `Cmd + Shift + P`
    - Type "Claude Code" and select **"Claude Code: Open"**
 
