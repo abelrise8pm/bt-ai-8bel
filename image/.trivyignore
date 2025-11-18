@@ -2,4 +2,17 @@
 # This file contains vulnerabilities that are being intentionally ignored
 # Each entry should include a comment explaining why it's safe to ignore
 
-# Last reviewed: 2025-09-19
+# Last reviewed: 2025-11-18
+
+# CVE-2025-64756 - glob CLI command injection
+# Affects: glob package (transitive dependency of Claude Code/Gemini CLI)
+# Issue: Command injection via -c/--cmd flag with shell:true
+# Risk: LOW - Requires explicit use of glob CLI with -c flag, which is rare in dev workflows
+# Status: Waiting for upstream packages to update to glob@11.1.0+
+# Tracking:
+#   - Claude Code: Monitor https://www.npmjs.com/package/@anthropic-ai/claude-code
+#   - Gemini CLI: Monitor https://www.npmjs.com/package/@google/gemini-cli
+# Review: Check weekly for package updates
+# Temporary: Will remove once upstream packages update their dependencies
+# Added: 2025-11-18
+CVE-2025-64756
