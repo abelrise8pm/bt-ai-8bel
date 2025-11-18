@@ -4,6 +4,11 @@
 
 set -e  # Exit on any error
 
+# Determine script directory and project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+IMAGE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$IMAGE_DIR/.." && pwd)"
+
 # Check for required environment variables
 check_env_vars() {
     local missing_vars=()
@@ -19,19 +24,26 @@ check_env_vars() {
         missing_vars+=("GEMINI_API_KEY")
     fi
 
-    if [[ -z "${GITHUB_PACKAGE_READ_TOKEN:-}" ]]; then
-        missing_vars+=("GITHUB_PACKAGE_READ_TOKEN")
-    fi
-
     # If variables are missing, try to load from .env file
     if [[ ${#missing_vars[@]} -gt 0 ]]; then
         echo "⚠️  Some environment variables not found. Attempting to load from .env file..."
 
-        if [[ -f ".env" ]]; then
-            echo "📁 Found .env file. Loading environment variables..."
+        # Look for .env in multiple locations (in order of precedence)
+        ENV_FILE=""
+        if [[ -f "$REPO_ROOT/.env" ]]; then
+            ENV_FILE="$REPO_ROOT/.env"
+        elif [[ -f "$IMAGE_DIR/.env" ]]; then
+            ENV_FILE="$IMAGE_DIR/.env"
+        elif [[ -f ".env" ]]; then
+            ENV_FILE=".env"
+        fi
+
+        if [[ -n "$ENV_FILE" ]]; then
+            echo "📁 Found .env file at: $ENV_FILE"
+            echo "📁 Loading environment variables..."
             # Source the .env file to load variables
             set -a  # automatically export all variables
-            source .env
+            source "$ENV_FILE"
             set +a  # turn off automatic export
 
             # Re-check if variables are now set
@@ -42,10 +54,6 @@ check_env_vars() {
 
             if [[ -z "${GEMINI_API_KEY:-}" ]]; then
                 missing_vars+=("GEMINI_API_KEY")
-            fi
-
-            if [[ -z "${GITHUB_PACKAGE_READ_TOKEN:-}" ]]; then
-                missing_vars+=("GITHUB_PACKAGE_READ_TOKEN")
             fi
         fi
 
@@ -60,14 +68,9 @@ check_env_vars() {
             echo "  1. Set environment variables directly:"
             echo "     export ANTHROPIC_API_KEY=your_anthropic_key_here"
             echo "     export GEMINI_API_KEY=your_gemini_key_here"
-            echo "     export GITHUB_PACKAGE_READ_TOKEN=your_github_token_here"
             echo "  2. Or create a .env file with these variables"
             echo ""
             echo "These are required for testing Claude Code, Goose, and Gemini CLI functionality."
-            echo ""
-            echo "For GITHUB_PACKAGE_READ_TOKEN: This token needs 'read:packages' permission"
-            echo "to access @rise8-us/dev-commands-mcp-server from GitHub Packages."
-            echo "See: /workspaces/XPai/mcp/dev-commands/README.md#authentication-for-github-packages"
             exit 1
         fi
     fi
@@ -77,6 +80,9 @@ check_env_vars() {
 
 # Check environment variables before proceeding
 check_env_vars
+
+# Change to image directory for builds (after checking env vars)
+cd "$IMAGE_DIR"
 
 # Auto-detect container runtime or use environment variable
 CONTAINER_RUNTIME=${CONTAINER_RUNTIME:-$(command -v podman > /dev/null && echo "podman" || echo "docker")}
@@ -103,19 +109,12 @@ if [[ "$IMAGE_TAG" =~ ^[^/]+\.[^/]+/.* ]]; then
 else
     echo "🔨 Building $IMAGE_TAG container locally with $CONTAINER_RUNTIME..."
 
-    # Create a temporary file for the GitHub token (more compatible with both Docker and Podman)
-    TOKEN_FILE=$(mktemp)
-    echo "$GITHUB_PACKAGE_READ_TOKEN" > "$TOKEN_FILE"
-
-    # Use BuildKit secrets to pass the GitHub token securely
-    if ! $CONTAINER_RUNTIME build --no-cache --secret id=github_token,src="$TOKEN_FILE" -t $IMAGE_TAG . 2>&1; then
-        rm -f "$TOKEN_FILE"
+    # Build the container image
+    if ! $CONTAINER_RUNTIME build --no-cache -t $IMAGE_TAG . 2>&1; then
         echo "❌ ERROR: Container build failed"
         exit 1
     fi
 
-    # Clean up the temporary file
-    rm -f "$TOKEN_FILE"
     echo "✅ Container build successful"
 fi
 
@@ -250,9 +249,9 @@ fi
 echo "Testing security: .npmrc credentials not persisted..."
 NPMRC_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.npmrc 2>/dev/null || echo 'file not found'" 2>&1)
 if [[ "$NPMRC_CHECK" != "file not found" ]]; then
-    echo "❌ ERROR: Security issue - .npmrc file with GitHub token still present in container:"
+    echo "❌ ERROR: Security issue - .npmrc file still present in container:"
     echo "$NPMRC_CHECK"
-    echo "This could leak the GITHUB_PACKAGE_READ_TOKEN. The Dockerfile should remove .npmrc after npm install."
+    echo "The Dockerfile should remove .npmrc after npm install to prevent credential leakage."
     exit 1
 fi
 echo "✅ Security: .npmrc credentials properly cleaned up"
@@ -265,13 +264,13 @@ if [[ $? -ne 0 ]]; then
 fi
 echo "✅ Claude init script present"
 
-echo "Testing MCP dev-commands server installation..."
-MCP_SERVER_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.npm-global/lib/node_modules/@rise8-us/dev-commands-mcp-server/dist/index.js" 2>&1)
+echo "Testing Claude Code slash commands..."
+COMMAND_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.claude/commands/commit.md" 2>&1)
 if [[ $? -ne 0 ]]; then
-    echo "❌ ERROR: MCP dev-commands server not found at expected path: $MCP_SERVER_CHECK"
+    echo "❌ ERROR: Slash command file not found at expected path: $COMMAND_CHECK"
     exit 1
 fi
-echo "✅ MCP dev-commands server installed"
+echo "✅ Claude Code slash commands installed"
 
 echo "🎉 All tests passed! Container is ready."
 exit 0

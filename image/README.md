@@ -21,11 +21,19 @@ The container comes pre-installed with:
 
 > Currently Claude Code is the industry leading AI coding assistant but you are free to try others.
 
-## Available MCP servers
+## Available Claude Code Slash Commands
 
-### [Dev Commands](https://github.com/rise8-us/XPai/blob/main/mcp/dev-commands/README.md)
+The container includes helpful slash commands for structured development workflows:
 
-Installed in `/home/aiAssistant/.npm-global/lib/node_modules/@rise8-us/dev-commands-mcp-server/dist/index.js`.
+### `/commit`
+Creates conventional commits based on staged files. Located in `/home/aiAssistant/.claude/commands/commit.md`.
+
+Usage:
+1. Stage your changes: `git add <files>`
+2. In Claude Code, type: `/commit`
+3. Claude will analyze changes and create a proper commit message
+
+Projects can override this command by creating their own `.claude/commands/commit.md` file.
 
 ## Known Issues
 

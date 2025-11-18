@@ -279,14 +279,56 @@ This starter includes automated CI/CD workflows for building, testing, and secur
 
 ---
 
+## Using Claude Code Commands
 
-## Getting started with the dev-commands flow
+The base container includes helpful slash commands available in Claude Code. These commands provide structured workflows for common development tasks.
 
-1. Type `claude` in a terminal window.
+### Available Commands
 
-2. Type `/dev-commands:help`.
+- **`/commit`** - Creates a conventional commit based on your staged files
+  - Automatically analyzes staged changes
+  - Generates commit messages following Conventional Commit standard
+  - Asks for context if needed to explain the "why" and "what"
 
-3. Follow the online instructions.
+### Using the Commit Command
+
+1. Stage your changes: `git add <files>`
+2. In Claude Code, type: `/commit`
+3. Claude will analyze your changes and create a proper commit message
+4. If needed, Claude will ask you for additional context
+
+### Customizing Commands for Your Project
+
+You can override any base command or create new project-specific commands:
+
+1. **Create the commands directory** in your project root:
+   ```bash
+   mkdir -p .claude/commands
+   ```
+
+2. **Create or override a command** by adding a markdown file:
+   ```bash
+   # Override the commit command
+   echo "Your custom commit instructions here" > .claude/commands/commit.md
+
+   # Or create a new command
+   echo "Your custom command instructions" > .claude/commands/my-command.md
+   ```
+
+3. **Use your command** in Claude Code:
+   ```
+   /commit          # Uses your custom version if it exists
+   /my-command      # Your custom command
+   ```
+
+**Command Resolution Priority:**
+1. Project-level `.claude/commands/` (highest priority)
+2. Base container commands at `~/.claude/commands/`
+
+This allows teams to:
+- Standardize workflows across the team (commit via base image)
+- Customize for specific project needs (project-level overrides)
+- Share and version control custom commands (in project repo)
 
 ## Troubleshooting
 

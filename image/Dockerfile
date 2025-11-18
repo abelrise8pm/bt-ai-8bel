@@ -13,8 +13,6 @@ ARG GEMINI_CLI_VERSION=0.15.4
 # curl https://github.com/block/goose/releases for latest version
 # curl https://github.com/block/goose/releases for changelog information
 ARG GOOSE_VERSION=1.14.0
-# Changed manually when new version published.
-ARG MCP_DEV_COMMANDS_VERSION=1.0.1
 
 # Copy certificate and install in single layer
 COPY src/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
@@ -81,8 +79,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
 RUN useradd -m -s /bin/bash aiAssistant && \
     mkdir -p /home/aiAssistant/.claude /home/aiAssistant/.npm-global
 
-# Setup Claude Code initialization
+# Setup Claude Code initialization and commands
 COPY src/claude_code_init.sh /home/aiAssistant/.claude/claude_code_init.sh
+COPY src/commands/ /home/aiAssistant/.claude/commands/
 RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
     chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude /home/aiAssistant/.npm-global && \
     echo 'export PATH=/home/aiAssistant/.npm-global/bin:$PATH' >> /home/aiAssistant/.bashrc
@@ -108,22 +107,15 @@ RUN ARCH=$(dpkg --print-architecture) && \
 RUN mkdir -p /home/aiAssistant/.config/goose
 COPY src/goose-config.yaml /home/aiAssistant/.config/goose/config.yaml
 
-# Install AI development tools via npm using BuildKit secrets (as root to access secrets)
+# Install AI development tools via npm
 # @anthropic-ai/claude-code: Official Anthropic CLI for Claude AI assistant
 # @google/gemini-cli: Google's CLI for Gemini AI models
-# @rise8-us/dev-commands-mcp-server: MCP server for structured development workflows
-RUN --mount=type=secret,id=github_token \
-    echo "@rise8-us:registry=https://npm.pkg.github.com" > /tmp/.npmrc && \
-    echo "//npm.pkg.github.com/:_authToken=$(cat /run/secrets/github_token)" >> /tmp/.npmrc && \
-    # Install packages globally to /home/aiAssistant/.npm-global
-    npm --userconfig=/tmp/.npmrc config set prefix /home/aiAssistant/.npm-global && \
-    npm --userconfig=/tmp/.npmrc install -g \
+RUN npm config set prefix /home/aiAssistant/.npm-global && \
+    npm install -g \
         @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} \
-        @google/gemini-cli@${GEMINI_CLI_VERSION} \
-        @rise8-us/dev-commands-mcp-server@${MCP_DEV_COMMANDS_VERSION} && \
-    # Clean up npm cache and credentials
+        @google/gemini-cli@${GEMINI_CLI_VERSION} && \
+    # Clean up npm cache
     rm -rf /root/.npm && \
-    rm -f /tmp/.npmrc && \
     rm -rf /tmp/* /var/tmp/*
 
 # Set proper ownership and switch to aiAssistant user
