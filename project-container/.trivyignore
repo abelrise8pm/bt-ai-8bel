@@ -54,5 +54,21 @@ CVE-2025-22874
 # Action: None required - false positive, actual version is patched
 CVE-2024-52308
 
+# CVE-2025-64756 - glob CLI command injection
+# Affects: glob package (transitive dependency of Claude Code/Gemini CLI from base image)
+# Issue: Command injection via -c/--cmd flag with shell:true
+# Risk: LOW - Requires explicit use of glob CLI with -c flag, which is rare in dev workflows
+# Status: Waiting for upstream packages to update to glob@11.1.0+
+# Context: Base image was updated to Claude Code 2.0.44 and Gemini CLI 0.15.4 in PR #35
+#          but transitive dependency still shows glob@10.5.0 in container scan
+# Tracking:
+#   - Claude Code: Monitor https://www.npmjs.com/package/@anthropic-ai/claude-code
+#   - Gemini CLI: Monitor https://www.npmjs.com/package/@google/gemini-cli
+#   - Base image fix: https://github.com/rise8-us/xpai-ai-assistant-container/pull/35
+# Review: Check weekly for package updates
+# Temporary: Will remove once upstream packages update their dependencies
+# Added: 2025-11-19
+CVE-2025-64756
+
 # Note: This ignore file should be reviewed every time an update to this container is made.
-# Last reviewed: 2025-11-04
+# Last reviewed: 2025-11-19
