@@ -38,6 +38,18 @@ confirm() {
     [[ "$response" =~ ^[Yy]$ ]]
 }
 
+# Function to check if files are different
+files_differ() {
+    local file1="$1"
+    local file2="$2"
+
+    # If either file doesn't exist, they differ
+    [ ! -f "$file1" ] || [ ! -f "$file2" ] && return 0
+
+    # Compare files
+    ! cmp -s "$file1" "$file2"
+}
+
 # Get the script's directory and the starter directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # The starter directory is at the root level, parallel to scripts
@@ -69,27 +81,10 @@ print_info "AI Assistant Container Integration Script"
 print_info "========================================="
 print_info "Starter repository: $STARTER_DIR"
 print_info "Target repository: $TARGET_DIR"
+print_info ""
+print_info "This script is idempotent - safe to run multiple times."
+print_info "Only changed files will be updated (backups created automatically)."
 echo ""
-
-# Check for existing files and warn user
-print_info "Checking for existing files in target repository..."
-
-CONFLICTS=()
-[ -d "$TARGET_DIR/.devcontainer" ] && CONFLICTS+=(".devcontainer")
-[ -f "$TARGET_DIR/CLAUDE.md" ] && CONFLICTS+=("CLAUDE.md")
-[ -f "$TARGET_DIR/.mcp.json" ] && CONFLICTS+=(".mcp.json")
-
-if [ ${#CONFLICTS[@]} -gt 0 ]; then
-    print_warning "The following files/directories already exist in target:"
-    for conflict in "${CONFLICTS[@]}"; do
-        echo "  - $conflict"
-    done
-    echo ""
-    if ! confirm "Do you want to proceed? Existing files will be backed up"; then
-        print_info "Integration cancelled"
-        exit 0
-    fi
-fi
 
 # Start integration
 print_info "Starting integration process..."
@@ -97,46 +92,62 @@ echo ""
 
 # Track what was integrated
 INTEGRATED=()
+UPDATED=()
+UNCHANGED=()
 
 # 1. Copy .devcontainer directory (only essential files)
 print_info "Integrating DevContainer configuration..."
-if [ -d "$TARGET_DIR/.devcontainer" ]; then
-    print_warning "Backing up existing .devcontainer to .devcontainer.backup"
-    mv "$TARGET_DIR/.devcontainer" "$TARGET_DIR/.devcontainer.backup"
+
+mkdir -p "$TARGET_DIR/.devcontainer"
+TARGET_DEVCONTAINER="$TARGET_DIR/.devcontainer/devcontainer.json"
+SOURCE_DEVCONTAINER="$STARTER_DIR/.devcontainer/devcontainer.no-cui.json"
+
+if files_differ "$SOURCE_DEVCONTAINER" "$TARGET_DEVCONTAINER"; then
+    if [ -f "$TARGET_DEVCONTAINER" ]; then
+        print_warning "Updating existing devcontainer.json (backup created)"
+        cp "$TARGET_DEVCONTAINER" "$TARGET_DEVCONTAINER.backup"
+    fi
+    cp "$SOURCE_DEVCONTAINER" "$TARGET_DEVCONTAINER"
+    print_success "DevContainer configuration updated (no-cui version)"
+    INTEGRATED+=(".devcontainer")
+    UPDATED+=(".devcontainer/devcontainer.json")
+else
+    print_info "DevContainer configuration already up-to-date"
+    UNCHANGED+=(".devcontainer/devcontainer.json")
 fi
 
-# Create .devcontainer directory and copy only the no-cui version as default
-mkdir -p "$TARGET_DIR/.devcontainer"
-cp "$STARTER_DIR/.devcontainer/devcontainer.no-cui.json" "$TARGET_DIR/.devcontainer/devcontainer.json"
-
-print_success "DevContainer configuration copied (no-cui version)"
-INTEGRATED+=(".devcontainer")
-
-# 2. Copy CLAUDE.md.example only
+# 2. Copy CLAUDE.md as example
 print_info "Integrating CLAUDE.md configuration..."
 
-# Copy the example file for reference
-cp "$STARTER_DIR/CLAUDE.md.example" "$TARGET_DIR/CLAUDE.md.example"
-print_success "CLAUDE.md.example copied for reference"
-print_info "Teams can create CLAUDE.md from the example when ready"
-INTEGRATED+=("CLAUDE.md.example")
+if [ -f "$STARTER_DIR/CLAUDE.md" ]; then
+    TARGET_CLAUDE="$TARGET_DIR/CLAUDE.md.example"
+    SOURCE_CLAUDE="$STARTER_DIR/CLAUDE.md"
 
-# 3. Copy .mcp.json if it doesn't exist
-print_info "Integrating MCP configuration..."
-if [ -f "$TARGET_DIR/.mcp.json" ]; then
-    print_warning "Backing up existing .mcp.json to .mcp.json.backup"
-    mv "$TARGET_DIR/.mcp.json" "$TARGET_DIR/.mcp.json.backup"
+    if files_differ "$SOURCE_CLAUDE" "$TARGET_CLAUDE"; then
+        if [ -f "$TARGET_CLAUDE" ]; then
+            print_warning "Updating existing CLAUDE.md.example (backup created)"
+            cp "$TARGET_CLAUDE" "$TARGET_CLAUDE.backup"
+        fi
+        cp "$SOURCE_CLAUDE" "$TARGET_CLAUDE"
+        print_success "CLAUDE.md.example updated"
+        print_info "Teams can create CLAUDE.md from the example when ready"
+        INTEGRATED+=("CLAUDE.md.example")
+        UPDATED+=("CLAUDE.md.example")
+    else
+        print_info "CLAUDE.md.example already up-to-date"
+        UNCHANGED+=("CLAUDE.md.example")
+    fi
+else
+    print_warning "CLAUDE.md not found in starter directory, skipping"
 fi
-cp "$STARTER_DIR/.mcp.json" "$TARGET_DIR/"
-print_success "MCP configuration copied"
-INTEGRATED+=(".mcp.json")
 
-# 4. Handle .env.example
+# 3. Handle .env.example
 print_info "Checking .env configuration..."
 if [ ! -f "$TARGET_DIR/.env.example" ]; then
     cp "$STARTER_DIR/.env.example" "$TARGET_DIR/.env.example"
-    print_success ".env.example copied"
+    print_success ".env.example created"
     INTEGRATED+=(".env.example")
+    UPDATED+=(".env.example")
 else
     # Check if it has ANTHROPIC_API_KEY
     if ! grep -q "ANTHROPIC_API_KEY" "$TARGET_DIR/.env.example"; then
@@ -144,9 +155,11 @@ else
         echo "" >> "$TARGET_DIR/.env.example"
         echo "# AI Assistant Configuration" >> "$TARGET_DIR/.env.example"
         grep "ANTHROPIC_API_KEY" "$STARTER_DIR/.env.example" >> "$TARGET_DIR/.env.example"
-        INTEGRATED+=(".env.example (updated)")
+        INTEGRATED+=(".env.example")
+        UPDATED+=(".env.example (added ANTHROPIC_API_KEY)")
     else
         print_info ".env.example already has ANTHROPIC_API_KEY configuration"
+        UNCHANGED+=(".env.example")
     fi
 fi
 
@@ -240,34 +253,65 @@ fi
 echo ""
 print_success "Integration complete!"
 echo ""
-print_info "Files/directories integrated:"
-for item in "${INTEGRATED[@]}"; do
-    echo "  ✓ $item"
-done
 
-echo ""
+if [ ${#UPDATED[@]} -gt 0 ]; then
+    print_info "Files updated:"
+    for item in "${UPDATED[@]}"; do
+        echo "  ✓ $item"
+    done
+    echo ""
+fi
+
+if [ ${#UNCHANGED[@]} -gt 0 ]; then
+    print_info "Files already up-to-date:"
+    for item in "${UNCHANGED[@]}"; do
+        echo "  ✓ $item"
+    done
+    echo ""
+fi
+
+if [ ${#UPDATED[@]} -eq 0 ] && [ ${#UNCHANGED[@]} -eq 0 ]; then
+    print_info "No files were integrated (possible configuration issue)"
+    echo ""
+fi
+
 print_info "Next steps:"
 echo "  1. Navigate to your repository: cd $TARGET_DIR"
-echo "  2. Review and commit the changes:"
-echo "     git add ."
-echo "     git status"
-echo "     git commit -m \"Add AI Assistant container integration\""
-echo ""
-echo "  3. Set up your environment:"
-echo "     - Copy .env.example to .env"
+
+if [ ${#UPDATED[@]} -gt 0 ]; then
+    echo "  2. Review and commit the changes:"
+    echo "     git add ."
+    echo "     git status"
+    echo "     git commit -m \"Update AI Assistant container integration\""
+    echo ""
+    echo "  3. Set up your environment (if not already done):"
+else
+    echo "  2. Set up your environment (if not already done):"
+fi
+
+echo "     - Copy .env.example to .env (if not exists)"
 echo "     - Add your ANTHROPIC_API_KEY to .env"
 echo ""
-echo "  4. Open in VS Code and reopen in container:"
+
+if [ ${#UPDATED[@]} -gt 0 ]; then
+    echo "  4. Open in VS Code and reopen in container:"
+else
+    echo "  3. Open in VS Code and reopen in container:"
+fi
+
 echo "     code ."
 echo "     Then use 'Reopen in Container' when prompted"
 echo ""
 
-if [ ${#CONFLICTS[@]} -gt 0 ]; then
-    print_warning "Backup files were created:"
-    for conflict in "${CONFLICTS[@]}"; do
-        echo "  - $conflict.backup"
+# Check if any backup files were created
+BACKUP_FILES=$(find "$TARGET_DIR" -maxdepth 2 -name "*.backup" 2>/dev/null)
+if [ -n "$BACKUP_FILES" ]; then
+    print_warning "Backup files were created for files that changed:"
+    echo "$BACKUP_FILES" | while read -r backup; do
+        echo "  - $(basename "$backup")"
     done
     echo "  Review these backups and merge any necessary configurations"
+    echo ""
 fi
 
 print_success "Happy coding with AI assistance! 🚀"
