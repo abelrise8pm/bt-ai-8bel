@@ -305,6 +305,13 @@ install_xcode_cli_tools() {
         # Show progress dots every 15 seconds
         if [ $((elapsed - last_dot_time)) -ge ${check_interval} ]; then
             echo -n "."
+            # Every 60 seconds, show a status message
+            if [ $((elapsed % 60)) -eq 0 ] && [ ${elapsed} -gt 0 ]; then
+                local minutes=$((elapsed / 60))
+                echo ""
+                echo "   Still installing... ${minutes} minute(s) elapsed (this is normal)"
+                echo -n "   "
+            fi
             last_dot_time=${elapsed}
         fi
 

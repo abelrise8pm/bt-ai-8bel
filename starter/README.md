@@ -50,8 +50,10 @@ The AI assistant requires an Anthropic API key to access Claude.
 
 ### Step 2: Clone Your Project Repository to your laptop
 
+**Prerequisites Check:**
+- If you don't have GitHub Desktop installed, download it from [GitHub Desktop](https://desktop.github.com/download/) before proceeding
+
 **Option A: Using GitHub Desktop, recommended**
-   - Install [GitHub Desktop](https://desktop.github.com/download/) if you don't already have it installed from [this link](https://desktop.github.com/download/).
    - Open GitHub Desktop
    - File → Clone Repository...
    - Fill in the repo name: "rise8-us/\<your repo name\>"
@@ -71,8 +73,9 @@ The AI assistant requires an Anthropic API key to access Claude.
 
 **⚠️ BEFORE YOU START: You will need your Anthropic API key during this process.**
 - If you don't have your API key yet, wait for it to arrive before running the script
-- The script will prompt you to enter your API key (format: `sk-ant-api03-...`)
+- **The script will prompt you to enter your API key approximately halfway through the installation** (after software installation, before environment configuration)
 - Your key will be stored securely in a local `.env` file
+- Format: `sk-ant-api03-...`
 
 **What This Script Does:**
 - Installs required software (Homebrew, Podman, VSCode, GitHub CLI)
@@ -127,14 +130,19 @@ The script will prompt you for several inputs. Here's what to know:
    - Select **HTTPS** when prompted for protocol
    - Your browser will open automatically
    - Complete the GitHub login and authorization
-   - Type **yes** when the terminal asks about authentication
-   - Return to terminal after authorization
+   - **Return to your terminal - you'll see a one-time code displayed**
+   - **Enter that one-time code** when the terminal prompts you
+   - Type **yes** when the terminal asks about authentication confirmation
 
 **Progress Indicators:**
 - ✅ Green checkmarks indicate successful steps
 - Status messages show current progress
 - Some steps take several minutes (software downloads and installations)
-- Don't close the terminal until you see "Setup Complete! ✅"
+
+**⚠️ IMPORTANT: Do NOT close the terminal window until you see "Setup Complete! ✅"**
+- The script may appear idle during long operations (showing progress dots)
+- This is normal - installations can take several minutes
+- Closing early will interrupt the setup process
 
 **The script installs and configures:**
 - Homebrew (macOS package manager)
@@ -144,6 +152,10 @@ The script will prompt you for several inputs. Here's what to know:
 - All necessary configuration files
 
 ### Step 4: Open in VSCode
+
+---
+**⚠️ CRITICAL STEP: You MUST restart your terminal first**
+---
 
 **4.1 Restart Your Terminal**
 
@@ -165,7 +177,14 @@ code .
 
 **4.3 Install Devcontainers extension**
 
-If you are running VSCode for the first time, it will prompt you to install the Devcontainers extension in the lower right corner of the window.
+When you first open VSCode, you'll see a notification in the lower right corner:
+
+**ACTION REQUIRED:** Click **"Install"** when prompted to install the Dev Containers extension.
+
+If you miss this notification:
+- Press `Cmd + Shift + P`
+- Type "Extensions: Install Extensions"
+- Search for "Dev Containers" and install it
 
 **4.4 Open AI assistant container**
 
