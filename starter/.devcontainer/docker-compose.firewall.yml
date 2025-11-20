@@ -13,7 +13,9 @@ services:
       # Mount firewall configuration files as read-only
       - ../firewall/whitelist.txt:/firewall/whitelist.txt:ro
       - ../firewall/init-firewall.sh:/firewall/init-firewall.sh:ro
-    command: /bin/sh -c "apk add --no-cache iptables bind-tools && /firewall/init-firewall.sh && sleep infinity"
+      # Mount Zscaler CA certificate for SSL inspection environments
+      - ../firewall/certs/zscaler-root-ca.crt:/usr/local/share/ca-certificates/zscaler-root-ca.crt:ro
+    command: /bin/sh -c "mkdir -p /etc/ssl/certs && cp /usr/local/share/ca-certificates/zscaler-root-ca.crt /etc/ssl/certs/ && cat /usr/local/share/ca-certificates/zscaler-root-ca.crt > /etc/ssl/certs/ca-certificates.crt && apk add --no-cache ca-certificates iptables bind-tools && update-ca-certificates && /firewall/init-firewall.sh && sleep infinity"
     healthcheck:
       test: ["CMD-SHELL", "iptables -L OUTPUT -n | grep -q 'policy DROP' && iptables -L OUTPUT -n | grep -q 'dpt:53'"]
       interval: 10s
