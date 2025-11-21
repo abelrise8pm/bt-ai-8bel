@@ -95,9 +95,44 @@ If you do not get a `DOCKERFILE_TO_UPDATE`, ask the user.
    - Ensure the new value matches the fetched latest version exactly
    - Verify no unintended changes to surrounding content
 
-### Phase 5: Comprehensive Reporting
+### Phase 5: Security Ignore File Re-triage
 
-10. **Provide detailed summary**:
+8. **Locate relevant .trivyignore file(s)**:
+   - Check for .trivyignore in same directory as DOCKERFILE_TO_UPDATE
+   - Check for project-wide .trivyignore in repository root
+   - If no .trivyignore files exist, skip to Phase 6
+
+9. **Extract image-specific ignore entries**:
+   - Identify which .trivyignore entries apply to the updated image
+   - Parse any image-specific ignore patterns or comments
+   - Create list of CVEs currently being ignored for this image
+
+10. **Invoke cve-triage agent for systematic CVE analysis**:
+    - Provide the agent with:
+      - List of all CVEs from .trivyignore for this image
+      - Component version updates applied in Phase 4 (old version → new version)
+      - Request assessment of which CVEs are resolved by the updates
+    - Agent will research each CVE from authoritative sources (NVD, vendor advisories)
+    - Agent will determine fixed-in versions and compare with updated versions
+    - Agent will provide recommendations on which CVEs can be safely removed
+    - Agent will produce documentation explaining resolution status for each CVE
+
+11. **Apply agent recommendations to update .trivyignore file(s)**:
+    - Remove CVE entries that the agent confirmed are resolved by version updates
+    - Add comment documenting removal: `# Removed YYYY-MM-DD: Resolved by [component] update to v[version] (per CVE analysis)`
+    - Preserve entries for CVEs the agent identified as still applicable
+    - Maintain file structure and formatting
+    - Document agent findings in commit message
+
+12. **Verify ignore changes**:
+    - Run Trivy scan on updated Dockerfile to validate changes
+    - Confirm removed CVEs no longer appear in scan results
+    - Cross-reference Trivy results with agent recommendations
+    - Document verification results
+
+### Phase 6: Comprehensive Reporting
+
+13. **Provide detailed summary**:
     ```
     COMPONENT INVENTORY:
     - Component1: Pattern A, Line 5, Current: 1.0.0
@@ -110,10 +145,18 @@ If you do not get a `DOCKERFILE_TO_UPDATE`, ask the user.
     ALREADY CURRENT:
     - Component3: 2.0.0 (no update needed)
 
+    SECURITY IGNORE FILE UPDATES (via cve-triage agent):
+    - CVE-2023-12345: Removed (resolved by Component1 update to 1.1.0)
+    - CVE-2023-67890: Removed (resolved by Component2 update)
+    - CVE-2023-11111: Kept (still applicable per agent analysis)
+
     VALIDATION:
     ✓ All 3 components identified and processed
     ✓ All updates verified by re-reading modified lines
     ✓ No orphaned components found
+    ✓ cve-triage agent analyzed 3 CVEs from .trivyignore
+    ✓ .trivyignore re-triaged: 2 CVEs removed, 1 preserved
+    ✓ Trivy scan confirms removed CVEs no longer present
     ```
 
 ## Validation Requirements
@@ -129,6 +172,11 @@ If you do not get a `DOCKERFILE_TO_UPDATE`, ask the user.
 - [ ] Original formatting and structure preserved
 - [ ] No unintended changes to other content
 - [ ] Summary accounts for all identified components
+- [ ] .trivyignore file reviewed and updated (if exists)
+- [ ] cve-triage agent invoked for CVE analysis (if .trivyignore exists)
+- [ ] Agent recommendations applied to .trivyignore updates
+- [ ] Removed CVEs verified as resolved by Trivy scan
+- [ ] .trivyignore changes included in git commit/PR
 
 ## Error Handling
 
@@ -162,3 +210,10 @@ If you do not get a `DOCKERFILE_TO_UPDATE`, ask the user.
 - Always preserve the comment structure that documents update methods
 - Comments starting with "Use `crane digest`" indicate container image SHA updates
 - Comments starting with "curl https://" indicate where to check for new versions
+- .trivyignore files track security vulnerabilities that are intentionally ignored
+- Re-triaging .trivyignore ensures only necessary CVEs remain ignored after updates
+- The cve-triage agent provides authoritative CVE research from NVD and vendor sources
+- Agent analysis ensures accurate determination of which CVEs are resolved by version updates
+- Include .trivyignore changes in the same PR as Dockerfile updates for traceability
+- Document why CVEs were removed from .trivyignore (which version update resolved them)
+- Agent recommendations should be cross-verified with Trivy scan results
