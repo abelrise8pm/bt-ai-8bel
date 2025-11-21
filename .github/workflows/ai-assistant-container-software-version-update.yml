@@ -32,6 +32,7 @@ jobs:
         id: claude_updates
         uses: ./.github/actions/container-script-executor
         with:
+          container-image: 'ghcr.io/${{ github.repository }}/project-container:latest'
           script-content: |
             #!/bin/bash
             set -e
