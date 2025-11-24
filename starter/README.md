@@ -245,7 +245,7 @@ Projects that give the container access to CUI (Controlled Unclassified Informat
 
 **Available Models:**
 - [Haiku and Claude 3.5](https://aws.amazon.com/blogs/publicsector/accelerating-government-innovation-amazon-bedrock-models-get-fedramp-high-and-dod-il-4-5-approval-in-aws-govcloud-us/)
-- [Claude 3.7](https://aws.amazon.com/about-aws/whats-new/2025/07/anthropics-claude-3-7-sonnet-available-amazon-bedrock-aws-govcloud-us-west/)
+- [Claude Sonnet 4.5](https://www.anthropic.com/news/claude-sonnet-4-5)
 
 ### **📖 [CUI Setup Guide](docs/SETUP-CUI.md)**
 

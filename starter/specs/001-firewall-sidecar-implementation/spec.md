@@ -126,7 +126,7 @@ As a security auditor or developer troubleshooting connection issues, I need to 
 ### Measurable Outcomes
 
 - **SC-001**: Developers can start the containerized AI assistant environment in under 2 minutes from repository clone to ready state
-- **SC-002**: AI assistant successfully invokes AWS Bedrock models (Claude 3.7 Sonnet, 3.5 Sonnet, 3 Haiku) with response times within 100ms or 10% of direct API access baseline (whichever is greater), measured for first-token latency
+- **SC-002**: AI assistant successfully invokes AWS Bedrock models (Claude Sonnet 4.5, Claude 3.5 Sonnet, Claude 3 Haiku) with response times within 100ms or 10% of direct API access baseline (whichever is greater), measured for first-token latency
 - **SC-003**: 100% of connection attempts to non-whitelisted domains are blocked and logged by the firewall
 - **SC-004**: AI assistant container inspection confirms zero network capabilities (cap_drop: ALL) in 100% of deployments
 - **SC-005**: VSCode devcontainer integration allows developers to connect using "Reopen in Container" with 100% success rate
