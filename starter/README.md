@@ -401,10 +401,104 @@ This section covers common issues and their solutions. For CUI project-specific 
   3. Wait for completion (may take 10-15 minutes)
   4. Script continues automatically - do not close terminal
 
-**Issue: Zscaler certificate errors after setup**
-- **Cause:** Setup was run with Zscaler turned off
-- **Solution:** Contact #r-and-d Slack channel for certificate configuration help
-- **Prevention:** Keep Zscaler ON during setup (script auto-configures certificates)
+**Issue: Zscaler certificate errors when pulling containers**
+
+**Symptom:**
+```
+Error: unable to copy from source docker://ghcr.io/...: tls: failed to verify certificate: x509: certificate signed by unknown authority
+```
+
+**Cause:** Podman cannot verify SSL/TLS certificates because Zscaler's CA certificates are not configured or are outdated in the Podman machine. This typically happens when:
+- Setup was run with Zscaler turned off
+- Podman machine was created before Zscaler was started
+- Certificates weren't properly synced during setup
+- **It was working before but suddenly stopped:** Zscaler certificates were renewed/updated by IT (certificates in Podman VM are now stale)
+
+**Prevention:** Keep Zscaler ON during setup - the script automatically detects and configures certificates.
+
+**Solution - Manual Certificate Configuration:**
+
+> 💡 **Was working before but suddenly stopped?** This usually means your IT department renewed or updated Zscaler certificates. The certificates in your Podman machine are now outdated. Follow the steps below to extract fresh certificates from your macOS keychain and sync them to Podman. You don't need to reinstall anything - just refresh the certificates.
+
+⚠️ **Open a terminal window before proceeding** - All commands below must be run in Terminal (Applications → Utilities → Terminal, or use GitHub Desktop → Right-click repository → "Open in Terminal")
+
+**Step 1: Verify Zscaler is running**
+```bash
+# Check if Zscaler process is active
+ps aux | grep -i "[Z]scaler"
+```
+
+If Zscaler is not running, start it before proceeding.
+
+**Step 2: Verify Zscaler certificates are in macOS keychain**
+```bash
+# List Zscaler certificates
+security find-certificate -c "Zscaler" /Library/Keychains/System.keychain
+```
+
+You should see output showing Zscaler certificate(s). If not, contact your IT administrator to install Zscaler certificates.
+
+**Step 3: Extract and configure certificates for Podman**
+```bash
+# Create certificate directory for ghcr.io
+mkdir -p ~/.config/containers/certs.d/ghcr.io
+
+# Extract Zscaler certificates from macOS keychain
+security find-certificate -c "Zscaler" -a -p /Library/Keychains/System.keychain > ~/.config/containers/certs.d/ghcr.io/ca.crt
+
+# Verify certificate file was created
+ls -lh ~/.config/containers/certs.d/ghcr.io/ca.crt
+```
+
+**Step 4: Sync certificates to Podman machine**
+
+The certificates need to be inside the Podman VM. The easiest way is to recreate the machine (it will auto-sync certificates during initialization):
+
+```bash
+# Stop and remove the existing Podman machine
+podman machine stop
+podman machine rm
+
+# Recreate Podman machine (certificates will auto-sync from ~/.config/containers/certs.d/)
+podman machine init --cpus 6 --memory 16384
+podman machine start
+```
+
+**Step 5: Verify the fix**
+
+Test pulling a container image:
+```bash
+# Test connection to GitHub Container Registry
+podman pull ghcr.io/rise8-us/xpai/ai-assistant-home:latest
+```
+
+If successful, you should see download progress instead of certificate errors.
+
+**Step 6: Authenticate to GitHub Container Registry**
+
+After fixing certificates, you still need GitHub authentication (see [Authentication to pull containers](#authentication-to-pull-containers) section):
+```bash
+# Authenticate to ghcr.io
+gh auth logout
+gh auth login -s read:packages
+podman logout ghcr.io
+gh auth token | podman login ghcr.io -u $(gh api user --jq .login) --password-stdin
+```
+
+**Troubleshooting:**
+
+- **Still getting certificate errors after fix:** Verify certificates are in both locations:
+  - Host: `~/.config/containers/certs.d/ghcr.io/ca.crt`
+  - VM: Run `podman machine ssh "sudo cat /etc/containers/certs.d/ghcr.io/ca.crt"` to verify
+
+- **Certificate file is empty:** Re-run the extraction command in Step 3. Ensure Zscaler is running.
+
+- **Podman machine won't start after recreation:** Check available resources (disk space, memory). Review logs: `podman machine start`
+
+- **Need help?** Contact #r-and-d Slack channel with:
+  - Output of `security find-certificate -c "Zscaler" /Library/Keychains/System.keychain`
+  - Output of `ls -lh ~/.config/containers/certs.d/ghcr.io/`
+  - Full error message from `podman pull` command
 
 **Issue: `code` command not found after setup**
 - **Cause:** Terminal needs to be restarted to load new PATH
