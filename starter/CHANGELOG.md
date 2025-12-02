@@ -10,10 +10,30 @@ This changelog tracks all notable changes to the AI Assistant Container Starter 
 
 Projects created from this template start with a snapshot of files. To see what's changed since you created your project:
 
-1. Check the date you created your project
-2. Review changelog entries after that date
-3. Click the commit links to see detailed changes
-4. Apply relevant updates to your project as needed
+1. **Find your starting point** - Note the date you created your project from this template
+2. **Review changelog** - Look at all entries after your creation date
+3. **Identify relevant updates** - Determine which changes apply to your project
+4. **Apply updates manually** - Follow the process below
+
+### Applying Updates to Your Project
+
+Since your project doesn't share git history with this template, you'll need to manually apply updates:
+
+1. **Click the commit link** in the changelog to view the change on GitHub
+2. **Review the diff** - You'll see changes with the `starter/` path prefix
+   - Example: `starter/README.md` in the diff corresponds to `README.md` in your project
+3. **Apply changes manually**:
+   - Open the corresponding file(s) in your project
+   - Copy relevant changes from the diff
+   - Adapt as needed for your customizations
+4. **Test thoroughly** - Ensure the updates work with your project configuration
+5. **Commit your changes** - Document what you integrated from the template
+
+**Note:** You don't need to apply every update. Choose only the changes that benefit your project.
+
+**Path Translation:**
+- Diff shows: `starter/scripts/setup.sh` → Your project: `scripts/setup.sh`
+- Diff shows: `starter/CLAUDE.md` → Your project: `CLAUDE.md`
 
 ---
 
