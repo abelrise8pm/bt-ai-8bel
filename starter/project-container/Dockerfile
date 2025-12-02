@@ -55,3 +55,17 @@ RUN chmod 1777 /tmp && \
 
 # Switch back to non-root user to increase security.
 USER aiAssistant
+
+# ==================================================================
+# PATTERN: Pre-create cache directories for volume mounts
+# ==================================================================
+# Pre-creating these directories prevents Docker/Podman from creating them as root
+# when mounting volumes. This is important for devcontainer volume mounts that
+# target user-owned directories (see .devcontainer/devcontainer.json mounts).
+#
+# Common cache locations:
+# - ~/.cache      - General purpose cache (npm, playwright, pip, etc.)
+# - ~/.local/share - User data storage (pnpm store, etc.)
+#
+# Uncomment if you're using volume mounts in devcontainer.json:
+# RUN mkdir -p ~/.cache ~/.local/share
