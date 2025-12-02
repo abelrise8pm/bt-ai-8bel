@@ -40,10 +40,13 @@ Since your project doesn't share git history with this template, you'll need to 
 ## December 2, 2025
 
 ### Added
+- Comprehensive CHANGELOG.md for template tracking with complete history ([1e9f41e](https://github.com/rise8-us/xpai-ai-assistant-container/commit/1e9f41e))
+- CHANGELOG validation and history preservation to publish workflow ([71bfd1e](https://github.com/rise8-us/xpai-ai-assistant-container/commit/71bfd1e))
 - Performance optimization templates for container setup ([2feb688](https://github.com/rise8-us/xpai-ai-assistant-container/commit/2feb688))
 - Podman macOS networking troubleshooting guide ([5bdd379](https://github.com/rise8-us/xpai-ai-assistant-container/commit/5bdd379))
 
 ### Changed
+- Enhanced CHANGELOG update instructions for template users ([bcba1ac](https://github.com/rise8-us/xpai-ai-assistant-container/commit/bcba1ac))
 - Updated container base image to latest security patches ([437ea8f](https://github.com/rise8-us/xpai-ai-assistant-container/commit/437ea8f))
 
 ### Security
