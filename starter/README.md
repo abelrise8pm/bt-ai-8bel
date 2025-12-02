@@ -445,6 +445,63 @@ If VSCode doesn't automatically detect or prompt to reopen in the container:
    ![container runtime](docs/container-runtime.png)
 3. Manually trigger: Press `Cmd+Shift+P` → "Dev Containers: Reopen in Container"
 
+### Podman networking issues on macOS (infrastructure containers)
+
+**Applies to:** Projects that run infrastructure containers (databases, auth servers, etc.) alongside the AI assistant container using docker-compose or similar orchestration.
+
+**Symptom:** Browser cannot reach services via custom hostnames (e.g., `auth.myproject.localhost`, `db.myproject.localhost`) even though `/etc/hosts` entries exist. Authentication flows hang or timeout.
+
+**Root Cause:** Podman on macOS uses user-mode networking (slirp4netns) which only forwards ports via IPv6 loopback (::1). Standard IPv4-only `/etc/hosts` entries (127.0.0.1) are insufficient for hostname resolution in browsers.
+
+**Solution:** Add both IPv4 and IPv6 loopback entries to `/etc/hosts`:
+
+```bash
+# /etc/hosts - Both IPv4 and IPv6 entries required for Podman on macOS
+127.0.0.1  myproject.localhost
+127.0.0.1  auth.myproject.localhost
+127.0.0.1  db.myproject.localhost
+
+# IPv6 entries (REQUIRED for Podman on macOS with user-mode networking)
+::1  myproject.localhost
+::1  auth.myproject.localhost
+::1  db.myproject.localhost
+```
+
+**Recommended Approach:** Create an idempotent script in your project's `infra/` or `scripts/` directory:
+
+```bash
+#!/bin/bash
+# scripts/update-hosts.sh - Idempotent hosts file configuration
+
+HOSTS_ENTRIES=(
+  "127.0.0.1 myproject.localhost"
+  "127.0.0.1 auth.myproject.localhost"
+  "127.0.0.1 db.myproject.localhost"
+  "::1 myproject.localhost"
+  "::1 auth.myproject.localhost"
+  "::1 db.myproject.localhost"
+)
+
+echo "Updating /etc/hosts with required entries..."
+for ENTRY in "${HOSTS_ENTRIES[@]}"; do
+  if ! grep -qF "$ENTRY" /etc/hosts; then
+    echo "Adding: $ENTRY"
+    echo "$ENTRY" | sudo tee -a /etc/hosts > /dev/null
+  else
+    echo "Already exists: $ENTRY"
+  fi
+done
+echo "✅ Hosts file updated successfully"
+```
+
+**Usage:**
+```bash
+chmod +x scripts/update-hosts.sh
+./scripts/update-hosts.sh
+```
+
+**Note:** Docker Desktop on macOS does not have this limitation as it uses a different networking implementation (vpnkit). This issue is specific to Podman's user-mode networking.
+
 ### File permission issues in devcontainer
 
 If you experience file permission problems inside the devcontainer (e.g., unable to create files/folders, files owned by 'root' or 'dialout' instead of 'aiAssistant', "Permission denied" errors), this is typically caused by running podman in rootful mode instead of rootless mode.
