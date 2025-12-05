@@ -23,21 +23,22 @@
 
 # ==================== ACTIVE IGNORES ====================
 
-# CVE-2024-52308 - GitHub CLI SSH command injection vulnerability (FALSE POSITIVE)
-# Affects: github.com/cli/cli/v2
-# Severity: HIGH
-# Issue: RCE via malicious Codespace SSH server when using `gh codespace ssh` or `gh codespace logs`
-#        Improper validation of remote username allows command injection via SSH arguments
-# Risk: This container installs gh CLI v2.83.0 (see Dockerfile line 19: ARG GH_VERSION=2.83.0)
-#       CVE-2024-52308 was fixed in gh CLI v2.62.0 (released 2024-11-14)
-#       Version 2.83.0 > 2.62.0, therefore not vulnerable
-# Status: Fixed in version 2.62.0 (we're running 2.83.0)
-# Reason: False positive - Trivy incorrectly identifies gh v2.83.0 as vulnerable
-#         Possible issue: Trivy's version detection for Go binaries or stale vulnerability DB
-# Review: Remove this entry when Trivy's vulnerability database is updated to correctly
-#         recognize gh v2.83.0 as not vulnerable. Check Trivy release notes and test without
-#         this ignore after Trivy updates. Next review: 2026-01-01
-CVE-2024-52308
+# CVE-2025-61729 - Golang stdlib HostnameError DoS vulnerability
+# Affects: GitHub CLI with Go stdlib 1.25.3 (embedded binary dependency)
+# Issue: Denial of Service via malicious TLS certificates with excessive SAN entries
+# Risk: LOW - Requires MITM attack or malicious server, DoS only (no data breach)
+# Status: AWAITING UPSTREAM - GitHub CLI v2.83.1 (latest) still uses Go 1.25.0
+# Fixed Versions: Go 1.25.5, 1.24.11 (waiting for gh CLI v2.84.0+ release)
+# Mitigation: Updated to latest available gh CLI version for incremental security improvements
+# Timeline:
+#   - 2025-12-05: CVE discovered in nightly Trivy scan
+#   - 2025-12-05: Added to ignore list (upstream patch not yet available)
+#   - Review: 2025-12-19 (check for gh CLI v2.84.0+ with Go 1.25.5)
+# Tracking:
+#   - Monitor: https://github.com/cli/cli/releases
+#   - Tracking issue: https://github.com/cli/cli/pull/12250
+# Review: 2025-12-19
+CVE-2025-61729
 
 # ==================== NOTES ====================
 # Current scan (2025-12-01) shows:
@@ -51,4 +52,4 @@ CVE-2024-52308
 # - CVE-2024-52308 (gh false positive) - Resolved/not present
 # - CVE-2025-64756 (glob) - Resolved/not present
 
-# Last reviewed: 2025-12-01
+# Last reviewed: 2025-12-05
