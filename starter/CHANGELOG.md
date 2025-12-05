@@ -37,6 +37,16 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 5, 2025
+
+### Changed
+- Updated devcontainer configurations and project container to use latest base image with security patches ([4a5d61d](https://github.com/rise8-us/xpai-ai-assistant-container/commit/4a5d61d))
+
+### Security
+- Fixed CVE-2025-66414 (HIGH severity DNS rebinding vulnerability) via Claude Code 2.0.57 and Gemini CLI 0.19.1 updates ([2243b07](https://github.com/rise8-us/xpai-ai-assistant-container/commit/2243b07))
+
+---
+
 ## December 2, 2025
 
 ### Added
