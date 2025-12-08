@@ -596,6 +596,61 @@ chmod +x scripts/update-hosts.sh
 
 **Note:** Docker Desktop on macOS does not have this limitation as it uses a different networking implementation (vpnkit). This issue is specific to Podman's user-mode networking.
 
+### Devcontainer fails to open or rebuild
+
+**Symptom:**
+
+When attempting to open or rebuild the devcontainer, you see an error dialog:
+
+![Devcontainer Open Error](docs/devcontainerOpenError.png)
+
+"An error occurred setting up the container."
+
+**Common Causes:**
+1. Missing `.env` file (most common)
+2. Configuration errors in `.devcontainer/devcontainer.json`
+3. Container image pull failures
+4. Podman machine issues
+
+**Solution:**
+
+**Step 1: View detailed error messages**
+
+The error dialog only shows a generic message. To see the actual error details:
+
+1. Click **"Edit devcontainer.json Locally"** or **"More Actions..."**
+2. Select **"Reopen Folder Locally"** to exit the container attempt
+3. VSCode will automatically open the error log in an editor window on the right side
+4. Review the error messages (scroll to the bottom for the most recent errors)
+5. Copy the full error output for diagnosis
+
+**Step 2: Check for missing .env file (most common issue)**
+
+The most common cause is a missing `.env` file with your Anthropic API key:
+
+```bash
+# Check if .env file exists
+ls -la .env
+
+# If missing, copy from example and add your API key
+cp .env.example .env
+
+# Edit .env and add your API key
+# ANTHROPIC_API_KEY=sk-ant-api03-...
+```
+
+After creating/updating `.env`, try reopening the container:
+- Press `Cmd + Shift + P`
+- Type "Dev Containers: Reopen in Container"
+
+**Step 3: Get AI assistance with error messages**
+
+If the issue isn't the missing `.env` file, use an AI assistant to diagnose:
+
+1. Copy all the error messages from the Dev Containers output
+2. Go to [Google Gemini](https://gemini.google.com) or similar AI tool
+3. Paste the error messages and ask: "What is causing this devcontainer error and how do I fix it?"
+
 ### File permission issues in devcontainer
 
 If you experience file permission problems inside the devcontainer (e.g., unable to create files/folders, files owned by 'root' or 'dialout' instead of 'aiAssistant', "Permission denied" errors), this is typically caused by running podman in rootful mode instead of rootless mode.
