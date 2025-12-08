@@ -37,6 +37,13 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 8, 2025
+
+### Added
+- Comprehensive troubleshooting guide for devcontainer rebuild failures with screenshot reference and step-by-step diagnostics ([1e684fc](https://github.com/rise8-us/xpai-ai-assistant-container/commit/1e684fc))
+
+---
+
 ## December 5, 2025
 
 ### Changed
