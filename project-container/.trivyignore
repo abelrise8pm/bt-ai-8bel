@@ -56,11 +56,36 @@ CVE-2024-52308
 # Review: 2025-12-19
 CVE-2025-61729
 
+# CVE-2025-66564 - Sigstore Timestamp Authority DoS vulnerability
+# Affects: github.com/sigstore/timestamp-authority v1.2.9 (embedded in GitHub CLI v2.83.1)
+# Severity: HIGH (CVSS 7.5) - Risk downgraded to LOW in deployment context
+# Issue: DoS vulnerability in timestamp-authority API server handlers
+# Risk: LOW - GitHub CLI only uses client functions, not vulnerable API server code
+#       Vulnerability requires running timestamp-authority as a service with untrusted input
+#       gh CLI uses library for attestation verification (client-side only)
+#       EPSS: 0.0004 (0.04% exploitation probability - bottom 12th percentile)
+#       DoS only - no confidentiality or integrity impact
+# Status: AWAITING UPSTREAM - Fixed in timestamp-authority v2.0.3 (commit 0cae34e1)
+#         GitHub CLI v2.83.1 includes timestamp-authority v1.2.9
+#         Waiting for gh CLI v2.84.0+ to incorporate updated dependency
+# Mitigation: Running latest available gh CLI version (v2.83.1)
+# Timeline:
+#   - 2025-12-08: CVE discovered in nightly Trivy scan
+#   - 2025-12-08: Added to ignore list (upstream patch not yet available in gh CLI)
+#   - Review: 2025-12-22 (check for gh CLI v2.84.0+ with updated dependencies)
+# Tracking:
+#   - POA&M: .claude/context/cybersecurity/poam/poam-2025-12-08-trivy-gh-timestamp-authority.md
+#   - Monitor: https://github.com/cli/cli/releases
+#   - Dependency: https://github.com/sigstore/timestamp-authority/releases
+# Review: 2025-12-22
+CVE-2025-66564
+
 # ==================== NOTES ====================
-# Current scan (2025-12-01) shows:
-# - 0 CRITICAL, 0 HIGH (✅ Pipeline passes)
-# - 26 MEDIUM (body-parser, git, gh, nodejs, python, etc.)
-# - 25 LOW (curl, gnupg, openssl, etc.)
+# Current scan (2025-12-08) shows:
+# - 0 CRITICAL, 0 HIGH (✅ Pipeline passes with ignores)
+# - Ignored HIGH: CVE-2025-66564 (awaiting upstream gh CLI update)
+# - Ignored HIGH: CVE-2025-61729 (awaiting upstream gh CLI update)
+# - MEDIUM and LOW vulnerabilities not tracked in this file
 #
 # Historical entries removed (not present in current scan):
 # - CVE-2025-47907 (crane) - Resolved/not present
@@ -68,4 +93,4 @@ CVE-2025-61729
 # - CVE-2024-52308 (gh false positive) - Resolved/not present
 # - CVE-2025-64756 (glob) - Resolved/not present
 
-# Last reviewed: 2025-12-05
+# Last reviewed: 2025-12-08
