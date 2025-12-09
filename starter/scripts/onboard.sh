@@ -709,9 +709,6 @@ install_podman() {
             fi
         fi
     else
-        # Configure Zscaler certificates BEFORE machine creation (Podman will auto-sync them)
-        configure_zscaler_certificates_for_podman
-
         # Initialize podman machine with configured resources
         print_info "Initializing Podman machine (${PODMAN_CPUS} CPUs, ${PODMAN_MEMORY}MB memory)..."
         echo "   This may take 5-10 minutes..."
@@ -750,6 +747,9 @@ install_podman() {
             return 1
         fi
     fi
+
+    # Configure Zscaler certificates in the running Podman machine
+    configure_zscaler_certificates_for_podman
 
     # Verify Podman is working
     if podman info &> /dev/null; then
@@ -1413,49 +1413,173 @@ configure_devcontainer() {
 # ZSCALER CERTIFICATE CONFIGURATION (for Podman)
 ################################################################################
 
-# Configure Zscaler certificates for Podman
-# This is called BEFORE podman machine init so certificates are auto-synced
+# Configure Zscaler certificates for Podman machine
+# This installs certificates directly into the running Podman machine's trust store
 configure_zscaler_certificates_for_podman() {
     echo ""
-    print_info "Checking for Zscaler certificates..."
+    print_info "Configuring Zscaler certificates for Podman machine..."
     log_info "Zscaler certificate configuration started"
 
-    # Check if Zscaler is running
+    # Check if Zscaler is running - CRITICAL
     if ! ps aux | grep -i "[Z]scaler" &> /dev/null; then
-        print_info "Zscaler not detected - skipping"
-        log_info "Zscaler not running - skipping certificate configuration"
-        return 0
+        print_error "Zscaler is not running"
+        echo ""
+        echo "ERROR: Zscaler must be running for Podman to access container registries"
+        echo ""
+        echo "NEXT STEPS:"
+        echo "  1. Start Zscaler application"
+        echo "  2. Wait for Zscaler to connect"
+        echo "  3. Re-run this script"
+        echo ""
+        print_helpdesk_instructions
+        log_error "Zscaler not running - cannot configure certificates"
+        exit 1
     fi
 
-    print_info "Zscaler detected - configuring certificates for Podman..."
+    print_success "Zscaler is running"
     log_info "Zscaler process detected"
 
-    # Create certificate directory
-    local cert_dir="${HOME}/.config/containers/certs.d/ghcr.io"
-    local cert_file="${cert_dir}/ca.crt"
+    # Check if certificates exist in keychain - CRITICAL
+    if ! security find-certificate -c "Zscaler" /Library/Keychains/System.keychain &> /dev/null; then
+        print_error "Zscaler certificates not found in System keychain"
+        echo ""
+        echo "ERROR: Zscaler certificates must be installed in System keychain"
+        echo ""
+        echo "NEXT STEPS:"
+        echo "  1. Contact IT to install Zscaler certificates"
+        echo "  2. Verify with: security find-certificate -c 'Zscaler' /Library/Keychains/System.keychain"
+        echo "  3. Re-run this script"
+        echo ""
+        print_helpdesk_instructions
+        log_error "Zscaler certificates not found in keychain"
+        exit 1
+    fi
+
+    print_success "Zscaler certificates found in keychain"
+    log_info "Zscaler certificates verified in System keychain"
+
+    # Create certificate directory on host
+    local cert_dir="${HOME}/.config/containers/certs.d"
+    local cert_file="${cert_dir}/zscaler-ca.crt"
 
     mkdir -p "${cert_dir}" || {
         print_error "Failed to create certificate directory"
+        echo ""
+        print_helpdesk_instructions
         log_error "Could not create ${cert_dir}"
-        return 1
+        exit 1
     }
 
-    # Always extract fresh certificates from macOS keychain (single source of truth)
-    if security find-certificate -c "Zscaler" -a -p /Library/Keychains/System.keychain > "${cert_file}" 2>/dev/null; then
-        print_success "Zscaler certificates installed from keychain"
-        echo "   ${EMOJI_INFO} Certificates will auto-sync to Podman machine during init"
-        log_info "Zscaler certificates extracted and installed to ${cert_file}"
-    else
+    # Extract certificates from keychain
+    print_info "Extracting Zscaler certificates from keychain..."
+    if ! security find-certificate -c "Zscaler" -a -p /Library/Keychains/System.keychain > "${cert_file}" 2>/dev/null; then
         print_error "Failed to extract Zscaler certificates"
         echo ""
-        echo "   TROUBLESHOOTING: Verify Zscaler certificates are in System keychain"
-        echo "   Test: security find-certificate -c 'Zscaler' /Library/Keychains/System.keychain"
+        echo "ERROR: Could not extract certificates from keychain"
         echo ""
+        echo "TROUBLESHOOTING:"
+        echo "  • Verify Zscaler certificates are in System keychain"
+        echo "  • Test: security find-certificate -c 'Zscaler' /Library/Keychains/System.keychain"
+        echo ""
+        print_helpdesk_instructions
         log_error "Failed to extract Zscaler certificates from keychain"
-        return 1
+        exit 1
     fi
 
+    print_success "Zscaler certificates extracted to host"
+    log_info "Certificates saved to ${cert_file}"
+
+    # Verify Podman machine exists and is running
+    local podman_machine_name="podman-machine-default"
+
+    if ! podman machine list 2>/dev/null | grep -q "${podman_machine_name}"; then
+        print_error "Podman machine not found"
+        echo ""
+        print_helpdesk_instructions
+        log_error "Podman machine ${podman_machine_name} does not exist"
+        exit 1
+    fi
+
+    if ! podman machine list 2>/dev/null | grep -q "Currently running"; then
+        print_error "Podman machine is not running"
+        echo ""
+        print_helpdesk_instructions
+        log_error "Podman machine must be running to install certificates"
+        exit 1
+    fi
+
+    # Check if certificates already installed in machine
+    print_info "Checking if certificates already installed in Podman machine..."
+    if podman machine ssh "${podman_machine_name}" "test -f /etc/pki/ca-trust/source/anchors/zscaler-ca.crt" 2>/dev/null; then
+        print_success "Zscaler certificates already installed in Podman machine"
+        log_info "Certificates already present in machine trust store"
+        echo ""
+        return 0
+    fi
+
+    # Install certificates in Podman machine
+    print_info "Installing certificates in Podman machine..."
+    echo "   This will restart the Podman machine..."
+    log_info "Installing certificates in ${podman_machine_name}"
+
+    # Copy certificate to machine
+    if ! podman machine cp "${cert_file}" "${podman_machine_name}:/tmp/zscaler-ca.crt" 2>/dev/null; then
+        print_error "Failed to copy certificate to Podman machine"
+        echo ""
+        echo "ERROR: Could not copy certificate file to machine"
+        echo ""
+        print_helpdesk_instructions
+        log_error "Failed to copy certificate to machine"
+        exit 1
+    fi
+
+    print_success "Certificate copied to Podman machine"
+    log_info "Certificate copied to /tmp/zscaler-ca.crt in machine"
+
+    # Install in trust store and update ca-trust
+    print_info "Installing certificate in trust store..."
+    if ! podman machine ssh "${podman_machine_name}" "sudo mv /tmp/zscaler-ca.crt /etc/pki/ca-trust/source/anchors/zscaler-ca.crt && sudo update-ca-trust extract" 2>/dev/null; then
+        print_error "Failed to install certificate in trust store"
+        echo ""
+        echo "ERROR: Could not update certificate trust store in machine"
+        echo ""
+        print_helpdesk_instructions
+        log_error "Failed to install certificate in machine trust store"
+        exit 1
+    fi
+
+    print_success "Certificate installed in trust store"
+    log_info "Certificate installed and trust store updated"
+
+    # Restart machine to apply changes
+    print_info "Restarting Podman machine to apply changes..."
+    if ! podman machine stop 2>/dev/null; then
+        print_error "Failed to stop Podman machine"
+        echo ""
+        print_helpdesk_instructions
+        log_error "Could not stop machine for restart"
+        exit 1
+    fi
+
+    if ! podman machine start 2>/dev/null; then
+        print_error "Failed to start Podman machine"
+        echo ""
+        print_helpdesk_instructions
+        log_error "Could not start machine after certificate installation"
+        exit 1
+    fi
+
+    print_success "Podman machine restarted successfully"
+    log_info "Machine restarted with new certificates"
+
     echo ""
+    echo "---"
+    print_success "Zscaler certificates configured successfully!"
+    echo "   Certificate location (host): ${cert_file}"
+    echo "   Certificate location (machine): /etc/pki/ca-trust/source/anchors/zscaler-ca.crt"
+    echo ""
+
+    log_info "Zscaler certificate configuration completed successfully"
     return 0
 }
 
