@@ -9,6 +9,8 @@ This guide is for projects that work with **sensitive or controlled data**.
 - **Firewall protection required** - CMMC Level 2 compliant network isolation mandatory for CUI data
 - **Time-limited credentials** - 8-hour session expiration for security
 
+See https://docs.google.com/document/d/1gtr62hDuvpnfzrc9Sqny4iYzHx_dBaGhpPcp4gRDUxk/edit?tab=t.0.
+
 ## Prerequisites
 
 1. **AWS Bedrock Access**: You must be assigned to the `ClaudeBedrock` permission set
