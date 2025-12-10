@@ -268,6 +268,21 @@ Projects that give the container access to CUI (Controlled Unclassified Informat
 - [Haiku and Claude 3.5](https://aws.amazon.com/blogs/publicsector/accelerating-government-innovation-amazon-bedrock-models-get-fedramp-high-and-dod-il-4-5-approval-in-aws-govcloud-us/)
 - [Claude Sonnet 4.5](https://www.anthropic.com/news/claude-sonnet-4-5)
 
+### **🏗️ [GovCloud Infrastructure Setup](https://github.com/rise8-us/XPai/tree/main/govcloud-infrastructure)**
+
+For projects requiring FedRAMP or DoD IL4/5 compliance, the GovCloud infrastructure repository provides:
+- Terraform configurations for AWS GovCloud deployment
+- Anthropic Bedrock API integration setup
+- Network architecture and security controls
+- Compliance-ready infrastructure templates
+
+**Prerequisites:**
+- AWS GovCloud account access
+- Appropriate security clearances
+- Coordination with platform engineering team
+
+**Note:** GovCloud infrastructure setup requires specialized configuration and should be coordinated with the #r-and-d team before deployment.
+
 ### **📖 [CUI Setup Guide](docs/SETUP-CUI.md)**
 
 For CUI projects, follow the comprehensive CUI Setup Guide which includes:
