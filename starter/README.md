@@ -215,23 +215,7 @@ That's it! You're ready to develop with AI assistance. 🎉
 
 **Having issues?** See the [Troubleshooting](#troubleshooting) section below for common problems and solutions.
 
-## Alternative: GitHub Codespaces Setup
-
-For no CUI projects, you can use GitHub Codespaces instead of local setup:
-
-1. **Configure environment variables** in GitHub:
-   - Go to GitHub User Profile → Settings → Codespaces → Codespace user secrets
-   - Add `ANTHROPIC_API_KEY` and grant access to your repositories
-
-2. **Launch Codespace:**
-   - Go to your repository on GitHub
-   - Click "Code" button → Codespaces tab → "+"
-
-3. **Start using Claude:**
-   - Open terminal in Codespace
-   - Type: `claude`
-
----
+**Note:** GitHub Codespaces support has been removed from this starter template. For cloud-based development, please contact #r-and-d.
 
 ## Advanced Setup: CUI Data Projects
 

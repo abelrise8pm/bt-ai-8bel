@@ -26,6 +26,27 @@
         "workbench.cloudChanges.continueOn": "off",
         "chat.detectParticipant.enabled": false
       }
+
+      // ======================================================================
+      // PERFORMANCE OPTIMIZATION: File Watcher Exclusions (Optional)
+      // ======================================================================
+      // Prevents VS Code from watching large directories. Uncomment and merge
+      // into the settings object above if you have large node_modules/build dirs.
+      // ======================================================================
+      // "settings": {
+      //   "files.watcherExclude": {
+      //     "**/node_modules/**": true,
+      //     "**/.git/objects/**": true,
+      //     "**/dist/**": true,
+      //     "**/build/**": true,
+      //     "**/__pycache__/**": true
+      //   },
+      //   "search.exclude": {
+      //     "**/node_modules": true,
+      //     "**/dist": true,
+      //     "**/build": true
+      //   }
+      // }
     }
   }
 }

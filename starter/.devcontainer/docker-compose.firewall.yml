@@ -39,6 +39,18 @@ services:
     volumes:
       # Mount workspace (adjust path as needed)
       - ../:/workspace:cached
+      # ========================================================================
+      # PERFORMANCE OPTIMIZATION: Cache Persistence (Optional)
+      # ========================================================================
+      # Uncomment to persist caches across rebuilds. Define volumes below first.
+      # Replace "YOURPROJECT" with your project name (no spaces/dashes).
+      # ========================================================================
+      # - YOURPROJECT-node-modules:/workspace/node_modules
+      # - YOURPROJECT-npm-cache:/home/aiAssistant/.npm
+      # - YOURPROJECT-pnpm-store:/home/aiAssistant/.local/share/pnpm
+      # - YOURPROJECT-playwright:/home/aiAssistant/.cache/ms-playwright
+      # - YOURPROJECT-pip-cache:/home/aiAssistant/.cache/pip
+      # - YOURPROJECT-go-cache:/home/aiAssistant/go/pkg/mod
     working_dir: /workspace
     env_file:
       - ../.env.bedrock
@@ -46,3 +58,17 @@ services:
     restart: unless-stopped
     # Keep container running
     command: sleep infinity
+
+# ============================================================================
+# PERFORMANCE OPTIMIZATION: Named Volumes (Optional)
+# ============================================================================
+# Uncomment to enable cache persistence. Replace "YOURPROJECT" with your
+# project name, then uncomment corresponding mounts in ai-assistant.volumes.
+# ============================================================================
+# volumes:
+#   YOURPROJECT-node-modules:
+#   YOURPROJECT-npm-cache:
+#   YOURPROJECT-pnpm-store:
+#   YOURPROJECT-playwright:
+#   YOURPROJECT-pip-cache:
+#   YOURPROJECT-go-cache:
