@@ -14,28 +14,28 @@ This starter repository provides everything you need to quickly set up an AI ass
 
 ---
 
-> 🚀 **First time here?** Follow [Getting Started](#getting-started-on-your-laptop-with-an-existing-project-repository) (Steps 1-5).
+## ⚠️ CUI Data Warning
+
+> **STOP: Does your project handle CUI (Controlled Unclassified Information)?**
 >
-> ❓ **Having issues?** Jump to [Quick Help](#-quick-help---common-issues) below.
+> If YES → **Do NOT follow this guide.** Use the [CUI Setup Guide](docs/SETUP-CUI.md) instead.
+>
+> If NO or UNSURE → Continue with this guide. Ask your project lead if you're unsure.
 
 ---
 
-## Table of Contents
+## 🧭 Navigation - Start Here
 
-- [Creating a New Project Repository](#creating-a-new-project-repository-from-this-template)
-- [Getting Started](#getting-started-on-your-laptop-with-an-existing-project-repository) ⭐
-  - [Step 1: Obtain API Key](#step-1-obtain-anthropic-api-key)
-  - [Step 2: Clone Repository](#step-2-clone-your-project-repository-to-your-laptop)
-  - [Step 3: Run Onboarding](#step-3-run-automated-onboarding)
-  - [Step 4: Open in VSCode](#step-4-open-in-vscode)
-  - [Step 5: Start Developing](#step-5-start-developing)
-- [🆘 Quick Help - Common Issues](#-quick-help---common-issues)
-- [Troubleshooting](#troubleshooting)
-- [Advanced Topics](#advanced-setup-cui-data-projects)
-  - [CUI Data Projects](#advanced-setup-cui-data-projects)
-  - [Custom Containers](#customizing-your-container-with-project-specific-tools)
-  - [Claude Code Commands](#using-claude-code-commands)
-  - [CI/CD Workflows](#github-workflows-for-cicd-pipelines)
+Choose your path:
+
+- **🆕 First time setup?** → Follow Steps 1-5 below
+- **✅ Already set up?** → Jump to [Step 5: Start Developing](#step-5-start-developing)
+- **🆘 Having issues?** → See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+- **👤 Non-technical user?** → See [docs/QUICK-START-BY-ROLE.md](docs/QUICK-START-BY-ROLE.md)
+- **🔧 Advanced setup?** → See [docs/ADVANCED-TOPICS.md](docs/ADVANCED-TOPICS.md)
+- **🔒 CUI project?** → See [CUI Setup Guide](docs/SETUP-CUI.md)
+
+---
 
 ## Creating a new project repository from this template
 
@@ -238,7 +238,7 @@ Once VSCode reopens in the container:
 
 That's it! You're ready to develop with AI assistance. 🎉
 
-**Having issues?** See the [Troubleshooting](#troubleshooting) section below or check [Quick Help](#-quick-help---common-issues) for common errors.
+**Having issues?** See the [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) or check [Quick Help](#-quick-help---common-issues) for common errors.
 
 **Note:** GitHub Codespaces support has been removed from this starter template. For cloud-based development, please contact #r-and-d.
 
@@ -246,486 +246,23 @@ That's it! You're ready to develop with AI assistance. 🎉
 
 | Error Message | Solution |
 |--------------|----------|
-| `x509: certificate signed by unknown authority` | [Zscaler Certificate Fix](#common-first-time-setup-issues) - scroll to "Zscaler certificate errors" |
-| `Permission denied` in container | [File Permissions Fix](#file-permission-issues-in-devcontainer) |
-| Container won't start / rebuild fails | [Devcontainer Troubleshooting](#devcontainer-fails-to-open-or-rebuild) |
-| `code` command not found | [Restart terminal](#common-first-time-setup-issues) - scroll to "code command not found" |
-| Can't pull container images | [Authentication Fix](#authentication-to-pull-containers) |
+| `x509: certificate signed by unknown authority` | [Zscaler Certificate Fix](docs/TROUBLESHOOTING.md#zscaler-certificate-errors-when-pulling-containers) |
+| `Permission denied` in container | [File Permissions Fix](docs/TROUBLESHOOTING.md#file-permission-issues-in-devcontainer) |
+| Container won't start / rebuild fails | [Devcontainer Troubleshooting](docs/TROUBLESHOOTING.md#devcontainer-fails-to-open-or-rebuild) |
+| `code` command not found | [Restart terminal](docs/TROUBLESHOOTING.md#code-command-not-found-after-setup) |
+| Can't pull container images | [Authentication Fix](docs/TROUBLESHOOTING.md#authentication-to-pull-containers) |
 
 **Still stuck?** Ask in **#r-and-d** Slack channel.
 
-## Advanced Setup: CUI Data Projects
+## 📚 Additional Resources
 
-**NOTE:** The setup instructions above cover standard (No CUI) projects. If your project handles CUI data, use the specialized setup below.
+Want to learn more or customize your setup?
 
-**IMPORTANT:** The use of the AI assistant container for CUI data is still a work in progress and should not be used on a customer project.
-
-### **CUI Data Requirements**
-
-Projects that give the container access to CUI (Controlled Unclassified Information) data must use AWS Bedrock instead of the Anthropic API.
-
-**Available Models:**
-- [Haiku and Claude 3.5](https://aws.amazon.com/blogs/publicsector/accelerating-government-innovation-amazon-bedrock-models-get-fedramp-high-and-dod-il-4-5-approval-in-aws-govcloud-us/)
-- [Claude Sonnet 4.5](https://www.anthropic.com/news/claude-sonnet-4-5)
-
-### **🏗️ [GovCloud Infrastructure Setup](https://github.com/rise8-us/XPai/tree/main/govcloud-infrastructure)**
-
-For projects requiring FedRAMP or DoD IL4/5 compliance, the GovCloud infrastructure repository provides:
-- Terraform configurations for AWS GovCloud deployment
-- Anthropic Bedrock API integration setup
-- Network architecture and security controls
-- Compliance-ready infrastructure templates
-
-**Prerequisites:**
-- AWS GovCloud account access
-- Appropriate security clearances
-- Coordination with platform engineering team
-
-**Note:** GovCloud infrastructure setup requires specialized configuration and should be coordinated with the #r-and-d team before deployment.
-
-### **📖 [CUI Setup Guide](docs/SETUP-CUI.md)**
-
-For CUI projects, follow the comprehensive CUI Setup Guide which includes:
-- AWS Bedrock configuration with FedRAMP and IL4/5 compliance
-- Local development only (no Codespaces support)
-- Enhanced security requirements
-- Required firewall protection for network isolation (CMMC Level 2)
-
-## Customizing Your Container with Project-Specific Tools
-
-Most projects need additional tools beyond what's in the base image (e.g., language runtimes, CLIs, build tools). To add these securely:
-
-**Use a Project Container**: Build a custom container image that extends the base image with your project-specific tools. See the [project-container example](../project-container) in this monorepo for a complete reference implementation.
-
-This approach:
-- Ensures all team members use the same vetted, scanned image
-- Uses GitHub workflows for automated builds and security scanning
-- Prevents unauthorized or unvetted tool installations
-- Enables compliance and audit trails
-- Works seamlessly with CI/CD pipelines
-
-**Pro Tip:** Use Claude Code to help customize your project container! Ask Claude to read the [project-container README](../project-container/README.md) and ask you questions to get what you need installed.
-
-### Integrating a spec driven development workflow
-
-Spec driven development is a powerful alternative to ad hoc prompting for getting better results out of AI assistants. Instead of providing informal instructions, you create structured specifications that guide the AI through your development process.
-
-**Recommended Solutions:**
-
-- **[Rise8 Solutions](https://github.com/rise8-us/solutions)** - Rise8's curated collection of spec-driven development patterns and practices
-- **[GitHub spec-kit](https://github.com/github/spec-kit)** - Open-source toolkit for spec-driven development that works with Claude Code and other AI assistants. Provides a structured workflow from constitution and specification creation through technical planning and execution. Particularly useful for greenfield projects, exploring multiple technology approaches, or modernizing existing systems.
-
-### Recruiting specialized agents for your team
-
-Instead of relying on a single generalist AI, you can delegate specialized work to domain experts by recruiting agents from Rise8's curated library. Each agent is a specialist in their discipline—software engineering, platform engineering, cybersecurity, SRE, and more.
-
-[8gents](https://github.com/rise8-us/8gents) provides tactical agents for hands-on implementation (TDD, infrastructure automation, security controls) and strategic agents for architecture and planning. Copy the agents you need to your project's `.claude/agents/` directory, update your `CLAUDE.md` with delegation guidance, and let Claude Code route specialized work to the right expert.
-
-
-## GitHub Workflows for CI/CD pipelines
-
-This starter includes automated CI/CD workflows for building, testing, and securing your project container:
-
-- **Build & Publish** - Automatically builds and publishes container images when changes are pushed
-- **Security Scanning** - Daily vulnerability scans with Trivy
-- **Base Container Updates** - Monitors and updates AI assistant base container references
-
-📖 **[Workflow Setup Guide](.github/workflows/README.md)** - Complete setup instructions and configuration options
+- **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Detailed troubleshooting guide for common issues
+- **[docs/ADVANCED-TOPICS.md](docs/ADVANCED-TOPICS.md)** - Advanced configuration, CUI projects, custom containers, CI/CD workflows
+- **[docs/QUICK-START-BY-ROLE.md](docs/QUICK-START-BY-ROLE.md)** - Role-specific quick start guides (coming soon)
+- **[docs/KEY-CONCEPTS.md](docs/KEY-CONCEPTS.md)** - Understanding key concepts (coming soon)
 
 ---
 
-## Using Claude Code Commands
-
-The base container includes helpful slash commands available in Claude Code. These commands provide structured workflows for common development tasks.
-
-### Available Commands
-
-- **`/commit`** - Creates a conventional commit based on your staged files
-  - Automatically analyzes staged changes
-  - Generates commit messages following Conventional Commit standard
-  - Asks for context if needed to explain the "why" and "what"
-
-### Using the Commit Command
-
-1. Stage your changes: `git add <files>`
-2. In Claude Code, type: `/commit`
-3. Claude will analyze your changes and create a proper commit message
-4. If needed, Claude will ask you for additional context
-
-### Customizing Commands for Your Project
-
-You can override any base command or create new project-specific commands:
-
-1. **Create the commands directory** in your project root:
-   ```bash
-   mkdir -p .claude/commands
-   ```
-
-2. **Create or override a command** by adding a markdown file:
-   ```bash
-   # Override the commit command
-   echo "Your custom commit instructions here" > .claude/commands/commit.md
-
-   # Or create a new command
-   echo "Your custom command instructions" > .claude/commands/my-command.md
-   ```
-
-3. **Use your command** in Claude Code:
-   ```
-   /commit          # Uses your custom version if it exists
-   /my-command      # Your custom command
-   ```
-
-**Command Resolution Priority:**
-1. Project-level `.claude/commands/` (highest priority)
-2. Base container commands at `~/.claude/commands/`
-
-This allows teams to:
-- Standardize workflows across the team (commit via base image)
-- Customize for specific project needs (project-level overrides)
-- Share and version control custom commands (in project repo)
-
-## Troubleshooting
-
-This section covers common issues and their solutions. For CUI project-specific troubleshooting, see the [CUI Setup Guide](docs/SETUP-CUI.md).
-
-### Onboarding script failures
-
-**If the onboarding script fails:**
-
-1. **Check the log file** for detailed error information:
-
-   **Option A: View in Terminal** (if you're comfortable with command line)
-   ```bash
-   cat ./ai-assistant-onboard.log
-   ```
-   This displays the log file contents in your terminal window.
-
-   **Option B: Open in a Text Editor** (easier for most users)
-   - Open Finder
-   - Navigate to your project folder (where you cloned the repository)
-   - Find the file named `ai-assistant-onboard.log`
-   - Double-click to open it in TextEdit or your preferred text editor
-   - Or right-click → Open With → TextEdit
-
-2. **Common issues and solutions:**
-   - **Xcode CLI Tools installation dialog** - Click 'Install' when prompted; script will wait for completion automatically
-   - **Admin access denied** - Enable admin privileges in Rippling (see Prerequisites)
-   - **Podman machine fails** - Check available disk space (requires ~20GB)
-   - **GitHub authentication fails** - Verify network connectivity, try manual login: `gh auth login -s read:packages`
-   - **Container registry access denied** - Contact administrator to request access to rise8-us/XPai organization
-
-3. **Re-run the script** - Safe to re-run, it will skip already-completed steps:
-   ```bash
-   ./scripts/onboard.sh
-   ```
-
-4. **Need help?** Ask in #r-and-d Slack channel for assistance
-
-### Common First-Time Setup Issues
-
-**Issue: "Password not accepted" or stuck at password prompt**
-- **Cause:** Hidden input - you can't see what you're typing
-- **Solution:** Type your password carefully (even though invisible) and press Enter
-- If you make a mistake, press Ctrl+C to cancel and re-run the script
-
-**Issue: Script seems stuck with dots appearing**
-- **Expected behavior:** This is normal during Xcode Command Line Tools installation
-- **What to do:**
-  1. Look for "Software Update" or "Install Command Line Tools" dialog
-  2. Click "Install" if prompted
-  3. Wait for completion (may take 10-15 minutes)
-  4. Script continues automatically - do not close terminal
-
-**Issue: Zscaler certificate errors when pulling containers**
-
-**Symptom:**
-```
-Error: unable to copy from source docker://ghcr.io/...: tls: failed to verify certificate: x509: certificate signed by unknown authority
-```
-
-**Cause:** Podman cannot verify SSL/TLS certificates because Zscaler's CA certificates are not configured or are outdated in the Podman machine. This typically happens when:
-- Setup was run with Zscaler turned off
-- Podman machine was created before Zscaler was started
-- Certificates weren't properly synced during setup
-- **It was working before but suddenly stopped:** Zscaler certificates were renewed/updated by IT (certificates in Podman VM are now stale)
-
-**Prevention:** Keep Zscaler ON during setup - the script automatically detects and configures certificates.
-
-**Solution - Manual Certificate Configuration:**
-
-> 💡 **Was working before but suddenly stopped?** This usually means your IT department renewed or updated Zscaler certificates. The certificates in your Podman machine are now outdated. Follow the steps below to extract fresh certificates from your macOS keychain and sync them to Podman. You don't need to reinstall anything - just refresh the certificates.
-
-⚠️ **Open a terminal window before proceeding** - All commands below must be run in Terminal (Applications → Utilities → Terminal, or use GitHub Desktop → Right-click repository → "Open in Terminal")
-
-**Step 1: Verify Zscaler is running**
-```bash
-# Check if Zscaler process is active
-ps aux | grep -i "[Z]scaler"
-```
-
-If Zscaler is not running, start it before proceeding.
-
-**Step 2: Verify Zscaler certificates are in macOS keychain**
-```bash
-# List Zscaler certificates
-security find-certificate -c "Zscaler" /Library/Keychains/System.keychain
-```
-
-You should see output showing Zscaler certificate(s). If not, contact your IT administrator to install Zscaler certificates.
-
-**Step 3: Extract and configure certificates for Podman**
-```bash
-# Create certificate directory for ghcr.io
-mkdir -p ~/.config/containers/certs.d/ghcr.io
-
-# Extract Zscaler certificates from macOS keychain
-security find-certificate -c "Zscaler" -a -p /Library/Keychains/System.keychain > ~/.config/containers/certs.d/ghcr.io/ca.crt
-
-# Verify certificate file was created
-ls -lh ~/.config/containers/certs.d/ghcr.io/ca.crt
-```
-
-**Step 4: Sync certificates to Podman machine**
-
-The certificates need to be inside the Podman VM. The easiest way is to recreate the machine (it will auto-sync certificates during initialization):
-
-```bash
-# Stop and remove the existing Podman machine
-podman machine stop
-podman machine rm
-
-# Recreate Podman machine (certificates will auto-sync from ~/.config/containers/certs.d/)
-podman machine init --cpus 6 --memory 16384
-podman machine start
-```
-
-**Step 5: Verify the fix**
-
-Test pulling a container image:
-```bash
-# Test connection to GitHub Container Registry
-podman pull ghcr.io/rise8-us/xpai/ai-assistant-home:latest
-```
-
-If successful, you should see download progress instead of certificate errors.
-
-**Step 6: Authenticate to GitHub Container Registry**
-
-After fixing certificates, you still need GitHub authentication (see [Authentication to pull containers](#authentication-to-pull-containers) section):
-```bash
-# Authenticate to ghcr.io
-gh auth logout
-gh auth login -s read:packages
-podman logout ghcr.io
-gh auth token | podman login ghcr.io -u $(gh api user --jq .login) --password-stdin
-```
-
-**Troubleshooting:**
-
-- **Still getting certificate errors after fix:** Verify certificates are in both locations:
-  - Host: `~/.config/containers/certs.d/ghcr.io/ca.crt`
-  - VM: Run `podman machine ssh "sudo cat /etc/containers/certs.d/ghcr.io/ca.crt"` to verify
-
-- **Certificate file is empty:** Re-run the extraction command in Step 3. Ensure Zscaler is running.
-
-- **Podman machine won't start after recreation:** Check available resources (disk space, memory). Review logs: `podman machine start`
-
-- **Need help?** Contact #r-and-d Slack channel with:
-  - Output of `security find-certificate -c "Zscaler" /Library/Keychains/System.keychain`
-  - Output of `ls -lh ~/.config/containers/certs.d/ghcr.io/`
-  - Full error message from `podman pull` command
-
-**Issue: `code` command not found after setup**
-- **Cause:** Terminal needs to be restarted to load new PATH
-- **Solution:**
-  1. Close terminal completely (Cmd+Q)
-  2. Open GitHub Desktop
-  3. Right-click repository → "Open in Terminal"
-  4. Try `code .` again
-
-### Authentication to pull containers
-
-If your project team encounters authentication issues with `ghcr.io`, follow these steps on your host machine:
-
-1. Log into GitHub CLI with package read permissions:
-   ```bash
-   gh auth logout
-   gh auth login -s read:packages
-   ```
-
-2. Use your GitHub CLI token to authenticate with the container registry:
-   ```bash
-   podman logout ghcr.io
-   gh auth token | podman login ghcr.io -u $(gh api user --jq .login) --password-stdin
-   ```
-
-3. Test pulling the image:
-  ```bash
-  podman pull ghcr.io/rise8-us/xpai/ai-assistant-home@sha:<digest>
-  ```
-
-### VSCode container detection issues
-
-If VSCode doesn't automatically detect or prompt to reopen in the container:
-
-1. Verify the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) is installed
-2. Check container runtime is configured in VSCode settings:
-   ![devcontainer settings](docs/devcontainer-settings.png)
-   ![container runtime](docs/container-runtime.png)
-3. Manually trigger: Press `Cmd+Shift+P` → "Dev Containers: Reopen in Container"
-
-### Podman networking issues on macOS (infrastructure containers)
-
-**Applies to:** Projects that run infrastructure containers (databases, auth servers, etc.) alongside the AI assistant container using docker-compose or similar orchestration.
-
-**Symptom:** Browser cannot reach services via custom hostnames (e.g., `auth.myproject.localhost`, `db.myproject.localhost`) even though `/etc/hosts` entries exist. Authentication flows hang or timeout.
-
-**Root Cause:** Podman on macOS uses user-mode networking (slirp4netns) which only forwards ports via IPv6 loopback (::1). Standard IPv4-only `/etc/hosts` entries (127.0.0.1) are insufficient for hostname resolution in browsers.
-
-**Solution:** Add both IPv4 and IPv6 loopback entries to `/etc/hosts`:
-
-```bash
-# /etc/hosts - Both IPv4 and IPv6 entries required for Podman on macOS
-127.0.0.1  myproject.localhost
-127.0.0.1  auth.myproject.localhost
-127.0.0.1  db.myproject.localhost
-
-# IPv6 entries (REQUIRED for Podman on macOS with user-mode networking)
-::1  myproject.localhost
-::1  auth.myproject.localhost
-::1  db.myproject.localhost
-```
-
-**Recommended Approach:** Create an idempotent script in your project's `infra/` or `scripts/` directory:
-
-```bash
-#!/bin/bash
-# scripts/update-hosts.sh - Idempotent hosts file configuration
-
-HOSTS_ENTRIES=(
-  "127.0.0.1 myproject.localhost"
-  "127.0.0.1 auth.myproject.localhost"
-  "127.0.0.1 db.myproject.localhost"
-  "::1 myproject.localhost"
-  "::1 auth.myproject.localhost"
-  "::1 db.myproject.localhost"
-)
-
-echo "Updating /etc/hosts with required entries..."
-for ENTRY in "${HOSTS_ENTRIES[@]}"; do
-  if ! grep -qF "$ENTRY" /etc/hosts; then
-    echo "Adding: $ENTRY"
-    echo "$ENTRY" | sudo tee -a /etc/hosts > /dev/null
-  else
-    echo "Already exists: $ENTRY"
-  fi
-done
-echo "✅ Hosts file updated successfully"
-```
-
-**Usage:**
-```bash
-chmod +x scripts/update-hosts.sh
-./scripts/update-hosts.sh
-```
-
-**Note:** Docker Desktop on macOS does not have this limitation as it uses a different networking implementation (vpnkit). This issue is specific to Podman's user-mode networking.
-
-### Devcontainer fails to open or rebuild
-
-**Symptom:**
-
-When attempting to open or rebuild the devcontainer, you see an error dialog:
-
-![Devcontainer Open Error](docs/devcontainerOpenError.png)
-
-"An error occurred setting up the container."
-
-**Common Causes:**
-1. Missing `.env` file (most common)
-2. Configuration errors in `.devcontainer/devcontainer.json`
-3. Container image pull failures
-4. Podman machine issues
-
-**Solution:**
-
-**Step 1: View detailed error messages**
-
-The error dialog only shows a generic message. To see the actual error details:
-
-1. Click **"Edit devcontainer.json Locally"** or **"More Actions..."**
-2. Select **"Reopen Folder Locally"** to exit the container attempt
-3. VSCode will automatically open the error log in an editor window on the right side
-4. Review the error messages (scroll to the bottom for the most recent errors)
-5. Copy the full error output for diagnosis
-
-**Step 2: Check for missing .env file (most common issue)**
-
-The most common cause is a missing `.env` file with your Anthropic API key:
-
-```bash
-# Check if .env file exists
-ls -la .env
-
-# If missing, copy from example and add your API key
-cp .env.example .env
-
-# Edit .env and add your API key
-# ANTHROPIC_API_KEY=sk-ant-api03-...
-```
-
-After creating/updating `.env`, try reopening the container:
-- Press `Cmd + Shift + P`
-- Type "Dev Containers: Reopen in Container"
-
-**Step 3: Get AI assistance with error messages**
-
-If the issue isn't the missing `.env` file, use an AI assistant to diagnose:
-
-1. Copy all the error messages from the Dev Containers output
-2. Go to [Google Gemini](https://gemini.google.com) or similar AI tool
-3. Paste the error messages and ask: "What is causing this devcontainer error and how do I fix it?"
-
-### File permission issues in devcontainer
-
-If you experience file permission problems inside the devcontainer (e.g., unable to create files/folders, files owned by 'root' or 'dialout' instead of 'aiAssistant', "Permission denied" errors), this is typically caused by running podman in rootful mode instead of rootless mode.
-
-**Diagnosis:**
-
-Check if your podman machine is running in rootless mode:
-```bash
-podman info --format '{{.Host.Security.Rootless}}'
-```
-
-This should return `true`. If it returns `false`, you are running in rootful mode.
-
-**Solution:**
-
-Rootless mode is the default for podman. If your machine is running in rootful mode, the recommended approach is to delete the podman machine and recreate it:
-
-```bash
-# Stop and delete the current machine
-podman machine stop
-podman machine rm
-
-# Create and start a new machine (will default to rootless)
-podman machine init
-podman machine start
-```
-
-After recreating the machine, rebuild your devcontainer in VSCode.
-
-**Note:** In some cases, even with rootless mode, files may still be owned by 'root'. If this occurs after recreating your podman machine, you can add the following to your `.devcontainer/devcontainer.json` `runArgs`:
-
-```json
-"runArgs": [
-  "--userns=keep-id:uid=1001,gid=1001"
-]
-```
-
-Then rebuild the devcontainer.
-
-## Assistance
-
-If you run into issues, please hit us up in the #r-and-d Slack channel.
+**Need help?** Reach out in the **#r-and-d** Slack channel.
