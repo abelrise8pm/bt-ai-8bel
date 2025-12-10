@@ -12,6 +12,31 @@
 
 This starter repository provides everything you need to quickly set up an AI assistant development environment using containers for your customer projects.
 
+---
+
+> 🚀 **First time here?** Follow [Getting Started](#getting-started-on-your-laptop-with-an-existing-project-repository) (Steps 1-5).
+>
+> ❓ **Having issues?** Jump to [Quick Help](#-quick-help---common-issues) below.
+
+---
+
+## Table of Contents
+
+- [Creating a New Project Repository](#creating-a-new-project-repository-from-this-template)
+- [Getting Started](#getting-started-on-your-laptop-with-an-existing-project-repository) ⭐
+  - [Step 1: Obtain API Key](#step-1-obtain-anthropic-api-key)
+  - [Step 2: Clone Repository](#step-2-clone-your-project-repository-to-your-laptop)
+  - [Step 3: Run Onboarding](#step-3-run-automated-onboarding)
+  - [Step 4: Open in VSCode](#step-4-open-in-vscode)
+  - [Step 5: Start Developing](#step-5-start-developing)
+- [🆘 Quick Help - Common Issues](#-quick-help---common-issues)
+- [Troubleshooting](#troubleshooting)
+- [Advanced Topics](#advanced-setup-cui-data-projects)
+  - [CUI Data Projects](#advanced-setup-cui-data-projects)
+  - [Custom Containers](#customizing-your-container-with-project-specific-tools)
+  - [Claude Code Commands](#using-claude-code-commands)
+  - [CI/CD Workflows](#github-workflows-for-cicd-pipelines)
+
 ## Creating a new project repository from this template
 
 *NOTE: If you or your team already has a project repository created from this template, skip this step.*
@@ -213,9 +238,21 @@ Once VSCode reopens in the container:
 
 That's it! You're ready to develop with AI assistance. 🎉
 
-**Having issues?** See the [Troubleshooting](#troubleshooting) section below for common problems and solutions.
+**Having issues?** See the [Troubleshooting](#troubleshooting) section below or check [Quick Help](#-quick-help---common-issues) for common errors.
 
 **Note:** GitHub Codespaces support has been removed from this starter template. For cloud-based development, please contact #r-and-d.
+
+## 🆘 Quick Help - Common Issues
+
+| Error Message | Solution |
+|--------------|----------|
+| `x509: certificate signed by unknown authority` | [Zscaler Certificate Fix](#common-first-time-setup-issues) - scroll to "Zscaler certificate errors" |
+| `Permission denied` in container | [File Permissions Fix](#file-permission-issues-in-devcontainer) |
+| Container won't start / rebuild fails | [Devcontainer Troubleshooting](#devcontainer-fails-to-open-or-rebuild) |
+| `code` command not found | [Restart terminal](#common-first-time-setup-issues) - scroll to "code command not found" |
+| Can't pull container images | [Authentication Fix](#authentication-to-pull-containers) |
+
+**Still stuck?** Ask in **#r-and-d** Slack channel.
 
 ## Advanced Setup: CUI Data Projects
 
