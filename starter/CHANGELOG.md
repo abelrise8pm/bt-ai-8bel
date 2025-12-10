@@ -37,6 +37,20 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 10, 2025
+
+### Added
+- Navigation aids, table of contents, and Quick Help section with common error messages mapped to solutions in README for non-technical users ([de4e58d](https://github.com/rise8-us/xpai-ai-assistant-container/commit/de4e58d))
+- Performance optimization comments in all devcontainer configs for cache persistence and file watcher exclusions ([c15662f](https://github.com/rise8-us/xpai-ai-assistant-container/commit/c15662f))
+
+### Changed
+- Zscaler certificate configuration now installs in Podman system trust store to support all container registries (ghcr.io, docker.io, etc.) rather than registry-specific directories ([b6e56aa](https://github.com/rise8-us/xpai-ai-assistant-container/commit/b6e56aa))
+
+### Removed
+- GitHub Codespaces support to simplify maintenance and focus on local Podman development ([c15662f](https://github.com/rise8-us/xpai-ai-assistant-container/commit/c15662f))
+
+---
+
 ## December 8, 2025
 
 ### Added
