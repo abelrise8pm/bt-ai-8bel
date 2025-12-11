@@ -6,13 +6,13 @@ FROM ubuntu:24.04@sha256:c35e29c9450151419d9448b0fd75374fec4fff364a27f176fb458d4
 # Version definitions
 # curl https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
 # curl https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md for changelog information.
-ARG CLAUDE_CODE_VERSION=2.0.59
+ARG CLAUDE_CODE_VERSION=2.0.65
 # curl https://www.npmjs.com/package/@google/gemini-cli for latest version
 # curl https://github.com/google-gemini/gemini-cli/releases for changelog information
-ARG GEMINI_CLI_VERSION=0.19.4
+ARG GEMINI_CLI_VERSION=0.20.0
 # curl https://github.com/block/goose/releases for latest version
 # curl https://github.com/block/goose/releases for changelog information
-ARG GOOSE_VERSION=1.15.0
+ARG GOOSE_VERSION=1.16.1
 
 # Copy certificate and install in single layer
 COPY src/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
