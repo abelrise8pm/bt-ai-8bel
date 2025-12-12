@@ -37,9 +37,21 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 12, 2025
+
+### Changed
+- Updated AI assistant container software with new capabilities and fixes ([2372dd1](https://github.com/rise8-us/xpai-ai-assistant-container/commit/2372dd1)):
+  - **Claude Code 2.0.59 → 2.0.65** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): Model switching during prompts (alt+p/option+p), named session support (/rename and /resume commands), background agent execution, context window info in status line, instant auto-compacting, .claude/rules/ directory support for memory management, custom file search commands via fileSuggestion setting, CLAUDE_CODE_SHELL environment variable, improved /resume screen with keyboard shortcuts, image dimension metadata for accurate coordinates
+  - **Gemini CLI 0.19.4 → 0.20.0** ([changelog](https://github.com/google-gemini/gemini-cli/releases)): Hook system integration for tool execution and LLM requests/responses, policy-driven model fallback mechanism, auto-execute simple slash commands on Enter, JIT context manager, configurable inactivity timeout for shell commands, improved session browser with empty session hiding, enhanced request token calculation
+  - **Goose 1.15.0 → 1.16.1** ([changelog](https://github.com/block/goose/releases)): Native terminal support (@goose in terminal), recipe deeplink parameters with ActionRequired functionality, automatic update installation, math/science symbology via KaTeX, SKILLS.md implementation for Claude compatibility, improved MCP-UI proxy, slash commands, configurable maximum active agents, fixed Linux SSL/TLS error, resolved Anthropic trailing whitespace errors
+
+---
+
 ## December 10, 2025
 
 ### Added
+- CUI data warning, decision tree navigation, and comprehensive troubleshooting section with 62% README size reduction (717→270 lines) ([5066936](https://github.com/rise8-us/xpai-ai-assistant-container/commit/5066936))
+- GovCloud Infrastructure Setup guide for FedRAMP and DoD IL4/5 compliant deployments in CUI section ([aeeec1e](https://github.com/rise8-us/xpai-ai-assistant-container/commit/aeeec1e))
 - Navigation aids, table of contents, and Quick Help section with common error messages mapped to solutions in README for non-technical users ([de4e58d](https://github.com/rise8-us/xpai-ai-assistant-container/commit/de4e58d))
 - Performance optimization comments in all devcontainer configs for cache persistence and file watcher exclusions ([c15662f](https://github.com/rise8-us/xpai-ai-assistant-container/commit/c15662f))
 
