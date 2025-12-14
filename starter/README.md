@@ -51,12 +51,13 @@ Before clicking "Use this template", open these instructions in a separate brows
 
 1. **Open these instructions in a new tab** (Right-click on this tab → select "Duplicate")
 2. Return to this tab
-3. Click **"Use this template"** → **"Create a new repository"** in the upper right hand corner
+3. **Cmd-click** on **"Use this template"** → **"Create a new repository"** to open in a new tab
 4. Fill in the repository details:
-   - **Owner:** "rise8-us"
-   - **Repository name:** Enter a descriptive name (e.g., "project-alpha-ai-assistant")
+   - **Owner:** Select **"rise8-us"** from the dropdown (**NOT your personal account** - personal repos can't access the container registry)
+   - **Repository name:** Enter a descriptive name (e.g., "project-alpha-ai-assistant" or "yourname-playground")
    - **Description:** Why does this repository exist? What does it do? Why should I care about it?
    - **Visibility:** **private** (required)
+   - **Repository apps:** Leave unchecked (no apps needed)
 5. Click **"Create repository"**
 6. **Switch to your instructions tab** to continue with the next section
 
@@ -111,6 +112,7 @@ The AI assistant requires an Anthropic API key to access Claude.
 **3.1 Enable Admin Privileges** (If using Rippling)
 - Enable admin access for your device using the icon in the upper right corner of the screen
 - Required for system software installation (Homebrew, Podman, etc.)
+- **Keep admin privileges active for the entire setup** (15-20 minutes). If they expire mid-setup, re-enable and re-run the script - it will continue where it left off.
 
 **3.2 Important Notes Before Starting**
 
@@ -237,6 +239,8 @@ Once VSCode reopens in the container:
    - Type `claude` and press Enter
 
 That's it! You're ready to develop with AI assistance. 🎉
+
+> **Pro Tip:** Now that Claude is running, you have an infinitely patient tutor that can teach you terminal commands, git workflows, or anything else you want to learn!
 
 **Having issues?** See the [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) or check [Quick Help](#-quick-help---common-issues) for common errors.
 

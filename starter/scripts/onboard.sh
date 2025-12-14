@@ -1346,20 +1346,42 @@ configure_devcontainer() {
     local source_file=".devcontainer/devcontainer.no-cui.json"
     local target_file=".devcontainer/devcontainer.json"
 
-    # Check if source file exists
+    # IDEMPOTENCY: Check if target file already exists (configuration already done)
+    if [[ -f "${target_file}" ]]; then
+        print_success "DevContainer already configured: ${target_file}"
+        log_info "Target file already exists - skipping configuration (idempotent)"
+
+        # Clean up source file if it still exists (in case previous run was interrupted)
+        if [[ -f "${source_file}" ]]; then
+            print_info "Cleaning up leftover source file..."
+            rm -f "${source_file}" && print_success "Source file removed" || print_info "Could not remove source file (non-critical)"
+        fi
+
+        echo ""
+        print_success "DevContainer configuration completed!"
+        log_info "Phase 4: DevContainer configuration completed (already configured)"
+        return 0
+    fi
+
+    # Check if source file exists (only if target doesn't exist)
     if [[ ! -f "${source_file}" ]]; then
         print_error "Source file not found: ${source_file}"
         echo ""
         echo "ERROR: Cannot configure devcontainer - source file missing"
         echo ""
         echo "Expected file: ${source_file}"
+        echo "Target file: ${target_file} (also not found)"
+        echo ""
+        echo "This may indicate a corrupted repository clone."
         echo ""
         echo "NEXT STEPS:"
         echo "  1. Check the log file: ${LOG_FILE}"
-        echo "  2. Verify repository integrity"
-        echo "  3. File a #helpdesk ticket if issue persists"
+        echo "  2. Try: git checkout .devcontainer/"
+        echo "  3. Or delete the repository and re-clone"
+        echo "  4. File a #helpdesk ticket if issue persists"
         echo ""
         log_error "DevContainer source file not found: ${source_file}"
+        log_error "Target file also not found: ${target_file}"
         log_error "Directory contents: $(ls -la .devcontainer/ 2>&1 || echo 'directory not accessible')"
         return 1
     fi
