@@ -12,6 +12,30 @@
 
 This starter repository provides everything you need to quickly set up an AI assistant development environment using containers for your customer projects.
 
+### Why Use This? (10-20 min setup saves hours)
+
+| Benefit | Impact |
+|---------|--------|
+| **Faster onboarding** | New team members make their first commit in hours, not days |
+| **Instant codebase knowledge** | Ask Claude about any part of the codebase without reading every file |
+| **Secure by default** | Reduces blast radius when something goes wrong; limits agent access to sensitive local files |
+| **Pre-configured environment** | No "works on my machine" issues - same setup for everyone |
+
+> *"I don't know anything about our codebase, but I was able to do a ticket pretty quick without knowing how the Helm charts are structured or anything like that."* — New team member after first day with AI assistant
+
+---
+
+## 🔒 Security: Why Use the Container?
+
+> **Do NOT run Claude Code directly on your laptop.** Always use this container.
+>
+> **Why?** A recent CVE demonstrated that compromised npm packages can exploit locally-installed AI CLI tools to execute attacks on developer machines. The container provides:
+> - **Sandboxed execution** - Claude can only access your mounted project directory
+> - **Limited attack surface** - Minimal tools installed, no access to your full filesystem
+> - **No host machine access** - Even with `--dangerously-skip-permissions`, damage is contained
+>
+> See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#why-use-the-container-instead-of-local-cli) for details.
+
 ---
 
 ## ⚠️ CUI Data Warning
@@ -21,6 +45,8 @@ This starter repository provides everything you need to quickly set up an AI ass
 > If YES → **Do NOT follow this guide.** Use the [CUI Setup Guide](docs/SETUP-CUI.md) instead.
 >
 > If NO or UNSURE → Continue with this guide. Ask your project lead if you're unsure.
+>
+> **Note:** Your Anthropic API key (`sk-ant-api03-...`) from #helpdesk only works for non-CUI projects. CUI projects require AWS Bedrock credentials instead.
 
 ---
 

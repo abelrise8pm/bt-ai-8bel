@@ -9,6 +9,17 @@ This guide is for projects that work with **sensitive or controlled data**.
 - **Firewall protection required** - CMMC Level 2 compliant network isolation mandatory for CUI data
 - **Time-limited credentials** - 8-hour session expiration for security
 
+## ❌ What Does NOT Work in CUI Containers
+
+| Tool/Credential | Works in CUI? | Why |
+|-----------------|---------------|-----|
+| **Anthropic API Key** (`sk-ant-api03-...`) | ❌ No | Firewall blocks Anthropic API endpoints |
+| **Gemini CLI** | ❌ No | Firewall blocks Google AI endpoints |
+| **AWS Bedrock credentials** | ✅ Yes | GovCloud endpoints are whitelisted |
+| **Claude Code with Bedrock** | ✅ Yes | Uses whitelisted Bedrock endpoints |
+
+> **Got an Anthropic API key from #helpdesk?** That key is for **non-CUI projects only**. For CUI projects, you need AWS Bedrock access via the `ClaudeBedrock` permission set (see Prerequisites below).
+
 See https://docs.google.com/document/d/1gtr62hDuvpnfzrc9Sqny4iYzHx_dBaGhpPcp4gRDUxk/edit?tab=t.0.
 
 ## Prerequisites

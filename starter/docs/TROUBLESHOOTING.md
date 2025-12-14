@@ -6,6 +6,7 @@ This guide covers common issues and their solutions for the AI Assistant Contain
 
 ## Table of Contents
 
+- [Why Use the Container Instead of Local CLI?](#why-use-the-container-instead-of-local-cli)
 - [Onboarding Script Failures](#onboarding-script-failures)
 - [Common First-Time Setup Issues](#common-first-time-setup-issues)
 - [Authentication to Pull Containers](#authentication-to-pull-containers)
@@ -14,6 +15,56 @@ This guide covers common issues and their solutions for the AI Assistant Contain
 - [Devcontainer Fails to Open or Rebuild](#devcontainer-fails-to-open-or-rebuild)
 - [File Permission Issues in Devcontainer](#file-permission-issues-in-devcontainer)
 - [Getting Help](#assistance)
+
+---
+
+## Why Use the Container Instead of Local CLI?
+
+**TL;DR:** Running Claude Code locally on your workstation is a security risk. Always use the container.
+
+### The Risk: Supply Chain Attacks via AI CLI Tools
+
+A documented CVE demonstrated that compromised npm packages can detect and exploit locally-installed AI CLI tools (Claude Code, Gemini CLI, etc.) to execute malicious code on developer machines. Because AI CLI tools have broad system access and often run with elevated permissions, they are attractive targets for attackers.
+
+**Attack vector:**
+1. Attacker compromises an npm package (or any dependency in your project)
+2. Malicious payload detects locally-installed AI CLI tools
+3. Payload uses the AI tool's system access to execute attacks (data exfiltration, credential theft, etc.)
+
+### How the Container Protects You
+
+| Risk | Local CLI | Container |
+|------|-----------|-----------|
+| Access to full filesystem | ✅ Yes | ❌ Only project directory |
+| Access to SSH keys, credentials | ✅ Yes | ❌ No |
+| Access to browser cookies/sessions | ✅ Yes | ❌ No |
+| Can install system packages | ✅ Yes | ❌ No |
+| Can modify system configs | ✅ Yes | ❌ No |
+| Blast radius if compromised | 🔴 Entire machine | 🟢 Project directory only |
+
+### Container Security Features
+
+The AI Assistant Container provides defense-in-depth:
+
+1. **Isolated filesystem** - Only your project directory is mounted
+2. **Minimal toolset** - Reduced attack surface compared to your full workstation
+3. **No network access to internal services** - Cannot reach your corporate VPN, local databases, etc.
+4. **Ephemeral environment** - Rebuilding the container resets to a known-good state
+5. **CUI containers add firewall** - Deny-by-default network policy blocks all non-whitelisted traffic
+
+### What About `--dangerously-skip-permissions`?
+
+Even when running Claude with `--dangerously-skip-permissions` (which bypasses confirmation prompts), the container limits what Claude can access. On your local machine, this flag gives Claude unrestricted access to everything. In the container, Claude still can't escape the sandbox.
+
+### Recommendation
+
+**Always use the container for AI-assisted development.** If you've been running Claude Code locally:
+
+1. Stop using the local installation
+2. Set up the container following the [main README](../README.md)
+3. Continue your work inside the container
+
+**Questions?** Ask in **#r-and-d** Slack channel.
 
 ---
 

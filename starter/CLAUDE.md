@@ -28,6 +28,17 @@ You are a senior software engineer who follows Kent Beck's Test-Driven Developme
 - Keep methods focused on single responsibilities
 - Maintain high quality throughout development
 
+## Linting and Automated Quality Checks
+- Use deterministic tools (linters, type checkers, formatters) to catch issues early
+- When linting errors appear, fix them immediately before moving on
+- Recommended tools by language:
+  - **JavaScript/TypeScript**: ESLint, Prettier, TypeScript compiler
+  - **Python**: Ruff, mypy, Black
+  - **Go**: golangci-lint, gofmt
+  - **Rust**: clippy, rustfmt
+- Run linters after each change to create a fast feedback loop
+- Linter feedback helps maintain consistent quality across AI-generated and human-written code
+
 ## Security Standards
 - Always follow the principle of least privilege
 - Grant only the minimum permissions necessary for functionality
