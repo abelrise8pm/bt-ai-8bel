@@ -44,6 +44,8 @@ if [ "${CURRENT_BRANCH}" != "main" ]; then
 fi
 
 # Check for uncommitted changes
+# Refresh the index to avoid race conditions with stale stat info
+git update-index --refresh -q
 if ! git diff-index --quiet HEAD --; then
     echo "Error: You have uncommitted changes. Please commit or stash them first."
     exit 1
