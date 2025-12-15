@@ -10,6 +10,7 @@ EXTERNAL_BRANCH="main"
 SOURCE_PREFIX="starter"
 SPLIT_BRANCH="starter-split-$(date +%s)"
 TEMP_DIR="/tmp/starter-publish-$(date +%s)"
+ORIGINAL_DIR="$(pwd)"
 
 # Files and directories to exclude from publishing
 EXCLUDE_ITEMS=(
@@ -125,16 +126,33 @@ echo "✅ CHANGELOG.md is current (all commits documented)"
 cleanup() {
     echo ""
     echo "Cleaning up..."
+
+    # Return to original directory to delete the split branch
+    cd "${ORIGINAL_DIR}" || true
+
     # Delete the split branch if it exists
     if git rev-parse --verify "${SPLIT_BRANCH}" >/dev/null 2>&1; then
-        echo "Deleting temporary split branch..."
-        git branch -D "${SPLIT_BRANCH}" 2>/dev/null || true
+        echo "Deleting temporary split branch: ${SPLIT_BRANCH}"
+        if git branch -D "${SPLIT_BRANCH}" 2>/dev/null; then
+            echo "✅ Split branch deleted successfully"
+        else
+            echo "⚠️  Failed to delete split branch ${SPLIT_BRANCH}"
+        fi
+    else
+        echo "Split branch ${SPLIT_BRANCH} not found (may have been deleted already)"
     fi
+
     # Remove temporary directory
     if [ -d "${TEMP_DIR}" ]; then
-        echo "Removing temporary directory..."
-        rm -rf "${TEMP_DIR}"
+        echo "Removing temporary directory: ${TEMP_DIR}"
+        if rm -rf "${TEMP_DIR}"; then
+            echo "✅ Temporary directory removed successfully"
+        else
+            echo "⚠️  Failed to remove temporary directory"
+        fi
     fi
+
+    echo "✅ Cleanup complete"
 }
 trap cleanup EXIT
 
