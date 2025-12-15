@@ -71,9 +71,10 @@ cp .env.example .env
 ```
 
 Edit `.env` and:
-1. Set `PROJECT_NAME` to your project directory name (e.g., `my-cui-project`)
-2. Uncomment the **CUI Projects** section
-3. Delete the Non-CUI section
+1. Uncomment the **CUI Projects** section
+2. Delete the Non-CUI section
+
+**Note:** If you need to run multiple CUI projects concurrently, edit `.devcontainer/docker-compose.firewall.yml` and change the `container_name` fields to unique names (e.g., `myproject-firewall-manager`, `myproject-ai-assistant`)
 
 ### 4. Daily Authentication Workflow
 

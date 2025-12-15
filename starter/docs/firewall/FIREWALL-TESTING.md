@@ -9,11 +9,11 @@ This document describes the test suites available for validating the firewall im
 To run all tests:
 
 ```bash
-# Test with default "test" project name
+# Default: Creates test-* containers
 ./tests/test-firewall.sh
 
-# Test a specific project
-./tests/test-firewall.sh my-project-name
+# Use cui-* prefix instead
+./tests/test-firewall.sh cui
 ```
 
 Expected result: All tests pass ✅
@@ -34,25 +34,26 @@ Expected result: All tests pass ✅
 ```
 
 **How it works**: The test script automatically:
-1. Starts containers using `docker-compose.firewall.yml` with specified PROJECT_NAME
-2. Runs all integration tests
-3. Cleans up containers on exit (even if tests fail)
+1. Cleans up any existing containers with the specified prefix
+2. Creates fresh test containers (default: test-firewall-manager, test-ai-assistant)
+3. Runs all integration tests
+4. Cleans up test containers on exit (even if tests fail)
 
-This ensures tests validate the exact same configuration as production deployment.
+This ensures tests validate the exact same configuration as production deployment with a clean slate each time.
 
-**Multi-Project Testing:**
+**Testing Options:**
 ```bash
-# Test default "test" project (containers: test-firewall-manager, test-ai-assistant)
+# Default: Create test-firewall-manager, test-ai-assistant containers
 ./tests/test-firewall.sh
 
-# Test specific project (containers: alpha-firewall-manager, alpha-ai-assistant)
-./tests/test-firewall.sh alpha
+# Use different prefix: cui-firewall-manager, cui-ai-assistant
+./tests/test-firewall.sh cui
+
+# Custom prefix: myproject-firewall-manager, myproject-ai-assistant
+./tests/test-firewall.sh myproject
 ```
 
-**Note**: If containers with the specified PROJECT_NAME already exist, tests will use them. To test with fresh containers:
-```bash
-cd .devcontainer && PROJECT_NAME=test podman-compose down && cd .. && ./tests/test-firewall.sh
-```
+**Note**: The script always creates fresh containers for testing. If containers with the specified prefix already exist, they are cleaned up first.
 
 **Validates**:
 - Containers are running
@@ -153,12 +154,13 @@ Integration tests can be run in CI/CD pipelines. The test script is self-contain
 ```
 
 The test script automatically:
-- Starts containers using `docker-compose.firewall.yml` with PROJECT_NAME
+- Cleans up any existing containers with the specified prefix
+- Creates fresh test containers using `docker-compose.firewall.yml`
 - Waits for firewall initialization
 - Runs all tests
-- Cleans up containers (even on failure)
+- Cleans up test containers (even on failure)
 
-**Note**: Specify PROJECT_NAME to test specific projects or use default "test" for isolated testing.
+**Note**: Specify a container prefix (e.g., `./tests/test-firewall.sh cui`) or use default "test" prefix.
 
 ### Test Exit Codes
 

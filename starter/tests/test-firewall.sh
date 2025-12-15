@@ -8,11 +8,16 @@
 # 2. No duplication of image references or container settings
 # 3. Single source of truth for container configuration
 #
-# USAGE: ./test-firewall.sh [PROJECT_NAME]
-#   PROJECT_NAME: Optional project name for container identification (default: test)
+# USAGE: ./test-firewall.sh [CONTAINER_PREFIX]
+#   CONTAINER_PREFIX: Optional prefix for container names (default: test)
 #
-# NOTE: Tests will start containers with the specified PROJECT_NAME prefix.
-# To test your dev environment: ./test-firewall.sh my-project-name
+# The script creates fresh containers with the specified prefix for testing.
+# If containers with that prefix already exist, they are cleaned up first.
+#
+# Examples:
+#   ./test-firewall.sh          # Creates test-firewall-manager, test-ai-assistant
+#   ./test-firewall.sh cui      # Creates cui-firewall-manager, cui-ai-assistant
+#   ./test-firewall.sh myproj   # Creates myproj-firewall-manager, myproj-ai-assistant
 
 set -eu
 
@@ -26,13 +31,12 @@ TESTS_PASSED=0
 TESTS_FAILED=0
 TESTS_SKIPPED=0
 
-# Project name for test containers (allow override via command line argument)
-TEST_PROJECT_NAME="${1:-test}"
+# Container name prefix (allow override via command line argument)
+CONTAINER_PREFIX="${1:-test}"
 
 # Test container names
-# Note: These match the container_name pattern in docker-compose.firewall.yml
-FIREWALL_CONTAINER="${TEST_PROJECT_NAME}-firewall-manager"
-AI_CONTAINER="${TEST_PROJECT_NAME}-ai-assistant"
+FIREWALL_CONTAINER="${CONTAINER_PREFIX}-firewall-manager"
+AI_CONTAINER="${CONTAINER_PREFIX}-ai-assistant"
 
 # Test helper functions
 test_pass() {
@@ -97,9 +101,10 @@ cleanup_test_containers() {
         local devcontainer_dir="$(cd "$script_dir/../.devcontainer" && pwd)"
         local compose_file="$devcontainer_dir/docker-compose.firewall.yml"
 
-        if [ -f "$compose_file" ]; then
-            # Use docker-compose to stop and remove containers
-            PROJECT_NAME="$TEST_PROJECT_NAME" "$compose_cmd" -f "$compose_file" down -v >/dev/null 2>&1 || true
+        if [ -f "$compose_file.${CONTAINER_PREFIX}" ]; then
+            # Cleanup containers created by this test run
+            "$compose_cmd" -f "$compose_file.${CONTAINER_PREFIX}" down -v >/dev/null 2>&1 || true
+            rm -f "$compose_file.${CONTAINER_PREFIX}" 2>/dev/null || true
         fi
     fi
 
@@ -144,18 +149,21 @@ start_test_containers() {
         return 1
     fi
 
-    # Check if containers already exist and warn user
+    # Check if containers already exist and clean them up
     if "$runtime" ps -a --format "{{.Names}}" | grep -qE "^($FIREWALL_CONTAINER|$AI_CONTAINER)$"; then
-        echo "⚠️  Note: Containers with name '$TEST_PROJECT_NAME' already exist"
-        echo "   Tests will use existing containers: $FIREWALL_CONTAINER, $AI_CONTAINER"
-        echo "   To test with fresh containers, stop them first:"
-        echo "   cd .devcontainer && PROJECT_NAME=$TEST_PROJECT_NAME podman-compose down"
-        echo ""
+        echo "  Found existing containers, cleaning up first..."
+        "$compose_cmd" -f "$compose_file.${CONTAINER_PREFIX}" down -v 2>/dev/null || \
+        "$runtime" rm -f "$FIREWALL_CONTAINER" "$AI_CONTAINER" 2>/dev/null || true
     fi
 
-    # Start containers using compose with PROJECT_NAME
-    echo "  Starting containers from docker-compose.firewall.yml with PROJECT_NAME=$TEST_PROJECT_NAME..."
-    PROJECT_NAME="$TEST_PROJECT_NAME" "$compose_cmd" -f "$compose_file" up -d 2>&1 | grep -v "^$" || true
+    echo "  Creating test containers: $FIREWALL_CONTAINER, $AI_CONTAINER..."
+    # Create temp compose file with specified container names
+    sed "s/cui-firewall-manager/${FIREWALL_CONTAINER}/g; s/cui-ai-assistant/${AI_CONTAINER}/g" \
+        "$compose_file" > "${compose_file}.${CONTAINER_PREFIX}"
+
+    # Start test containers using compose
+    echo "  Starting containers from docker-compose.firewall.yml..."
+    "$compose_cmd" -f "$compose_file.${CONTAINER_PREFIX}" up -d 2>&1 | grep -v "^$" || true
 
     # Wait for firewall to be healthy
     echo "  Waiting for firewall to initialize..."

@@ -1,12 +1,19 @@
 version: '3.8'
 
+# ============================================================================
+# Container Naming
+# ============================================================================
+# Default names: cui-firewall-manager, cui-ai-assistant
+# To rename (e.g., for multiple projects), edit the container_name fields below
+# ============================================================================
+
 services:
   # Firewall Manager Container
   # Privileged container with NET_ADMIN capability to manage iptables
   # Provides network namespace shared by ai-assistant container
   firewall-manager:
     image: alpine:latest
-    container_name: ${PROJECT_NAME:-cui}-firewall-manager
+    container_name: cui-firewall-manager
     cap_add:
       - NET_ADMIN
     volumes:
@@ -29,7 +36,7 @@ services:
   # Shares network namespace with firewall-manager
   ai-assistant:
     image: ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:1e98f8c8fcc94f0f68420370243d35d09da6559bdf3a530aea63815617e3d2f4
-    container_name: ${PROJECT_NAME:-cui}-ai-assistant
+    container_name: cui-ai-assistant
     network_mode: "service:firewall-manager"
     cap_drop:
       - ALL
