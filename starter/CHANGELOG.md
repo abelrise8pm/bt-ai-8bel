@@ -37,7 +37,31 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 15, 2025
+
+### Changed
+- Simplified CUI container configuration by hard-coding container names and removing non-functional PROJECT_NAME variable ([d32f414](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d32f414))
+
+---
+
+## December 14, 2025
+
+### Added
+- Security rationale section explaining supply chain attack risks and benefits of containerized AI assistants ([9f9277c](https://github.com/rise8-us/xpai-ai-assistant-container/commit/9f9277c))
+- Linting and quality checks guidance to CLAUDE.md for deterministic tooling alongside AI-generated code ([9f9277c](https://github.com/rise8-us/xpai-ai-assistant-container/commit/9f9277c))
+
+### Changed
+- Enhanced onboarding documentation with GitHub template tips, Rippling timeout warnings, and Claude tutor guidance ([1c2f13d](https://github.com/rise8-us/xpai-ai-assistant-container/commit/1c2f13d))
+
+### Fixed
+- Onboarding script idempotency bug that prevented re-running after interruptions like GitHub auth timeout ([1c2f13d](https://github.com/rise8-us/xpai-ai-assistant-container/commit/1c2f13d))
+
+---
+
 ## December 12, 2025
+
+### Added
+- Enhanced changelog update process with software version tracking and comprehensive feature summaries ([01683ea](https://github.com/rise8-us/xpai-ai-assistant-container/commit/01683ea))
 
 ### Changed
 - Updated AI assistant container software with new capabilities and fixes ([2372dd1](https://github.com/rise8-us/xpai-ai-assistant-container/commit/2372dd1)):
