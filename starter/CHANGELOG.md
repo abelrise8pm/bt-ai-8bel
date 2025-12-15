@@ -42,6 +42,9 @@ Since your project doesn't share git history with this template, you'll need to 
 ### Changed
 - Simplified CUI container configuration by hard-coding container names and removing non-functional PROJECT_NAME variable ([d32f414](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d32f414))
 
+### Fixed
+- Publish script now properly cleans up temporary split branches after execution by returning to original directory before deletion ([8d50d6b](https://github.com/rise8-us/xpai-ai-assistant-container/commit/8d50d6b))
+
 ---
 
 ## December 14, 2025
