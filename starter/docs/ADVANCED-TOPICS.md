@@ -9,6 +9,7 @@ This guide covers advanced configuration and customization options for the AI As
 - [CUI Data Projects](#cui-data-projects)
 - [GovCloud Infrastructure Setup](#govcloud-infrastructure-setup)
 - [Customizing Your Container with Project-Specific Tools](#customizing-your-container-with-project-specific-tools)
+- [Working with Multiple Git Repositories](#working-with-multiple-git-repositories)
 - [Integrating Spec Driven Development Workflow](#integrating-spec-driven-development-workflow)
 - [Recruiting Specialized Agents](#recruiting-specialized-agents-for-your-team)
 - [GitHub Workflows for CI/CD Pipelines](#github-workflows-for-cicd-pipelines)
@@ -73,6 +74,58 @@ This approach:
 - Works seamlessly with CI/CD pipelines
 
 **Pro Tip:** Use Claude Code to help customize your project container! Ask Claude to read the [project-container README](../project-container/README.md) and ask you questions to get what you need installed.
+
+---
+
+## Working with Multiple Git Repositories
+
+The container is designed to work with a single git repository by default. However, you can mount additional repositories into the same container to enable the AI assistant to work across multiple codebases simultaneously.
+
+**Use Case Example:** You might want to:
+- Migrate code from one repository to another
+- Reference shared libraries or utilities from another project
+- Work on dependent services that live in separate repositories
+- Access documentation or configuration from a related repository
+
+### How to Mount Additional Repositories
+
+Add additional mount points to your `.devcontainer/devcontainer.json` file:
+
+```json
+{
+  "name": "AI Assistant Container",
+  // ... other configuration ...
+  "mounts": [
+    "source=/Users/your-username/workspace/other-repo,target=/workspaces/other-repo,type=bind"
+  ]
+}
+```
+
+**Configuration Details:**
+- `source`: Absolute path to the repository on your host machine
+- `target`: Path where the repository will appear inside the container (typically under `/workspaces/`)
+- `type`: Use `bind` for direct filesystem mounting
+
+**Example - Multiple Mounts:**
+
+```json
+"mounts": [
+  "source=/Users/mike/workspace/tracer,target=/workspaces/tracer,type=bind",
+  "source=/Users/mike/workspace/shared-lib,target=/workspaces/shared-lib,type=bind"
+]
+```
+
+**Access Pattern:**
+
+Once configured, you can reference the additional repositories in Claude Code:
+- Primary repository: `/workspaces/xpai-ai-assistant-container` (your main project)
+- Additional repositories: `/workspaces/tracer`, `/workspaces/shared-lib`, etc.
+
+**Important Notes:**
+- Changes made in mounted repositories will affect the actual repository on your host machine
+- The AI assistant will have access to all mounted repositories
+- Each repository maintains its own git state and history
+- You can use standard git commands in each repository independently
 
 ---
 
