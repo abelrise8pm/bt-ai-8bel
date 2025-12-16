@@ -37,6 +37,16 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 16, 2025
+
+### Added
+- Multi-repository mounting guide to Advanced Topics documentation, enabling teams to work across multiple codebases simultaneously in the same container ([149052c](https://github.com/rise8-us/xpai-ai-assistant-container/commit/149052c))
+  - Use cases for code migration, shared libraries, and dependent services
+  - Step-by-step devcontainer.json configuration with bind mounts
+  - Real-world examples and access patterns
+
+---
+
 ## December 15, 2025
 
 ### Changed
@@ -44,6 +54,7 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ### Fixed
 - Publish script now properly cleans up temporary split branches after execution by returning to original directory before deletion ([8d50d6b](https://github.com/rise8-us/xpai-ai-assistant-container/commit/8d50d6b))
+- Resolved git diff-index race condition in publish script that could cause stale CHANGELOG validation warnings ([665ba77](https://github.com/rise8-us/xpai-ai-assistant-container/commit/665ba77))
 
 ---
 
