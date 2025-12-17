@@ -272,5 +272,21 @@ if [[ $? -ne 0 ]]; then
 fi
 echo "✅ Claude Code slash commands installed"
 
+# Test Claude Code OpenTelemetry configuration
+echo "Testing Claude Code OTEL configuration..."
+OTEL_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c '
+    errors=0
+    [ "$CLAUDE_CODE_ENABLE_TELEMETRY" = "1" ] || { echo "CLAUDE_CODE_ENABLE_TELEMETRY not set"; errors=1; }
+    [ "$OTEL_METRICS_EXPORTER" = "otlp" ] || { echo "OTEL_METRICS_EXPORTER not set"; errors=1; }
+    [ "$OTEL_LOGS_EXPORTER" = "otlp" ] || { echo "OTEL_LOGS_EXPORTER not set"; errors=1; }
+    [ -n "$OTEL_EXPORTER_OTLP_ENDPOINT" ] || { echo "OTEL_EXPORTER_OTLP_ENDPOINT not set"; errors=1; }
+    exit $errors
+' 2>&1) || {
+    echo "❌ ERROR: OTEL environment variables not configured correctly"
+    echo "$OTEL_CHECK"
+    exit 1
+}
+echo "✅ Claude Code OTEL: configured"
+
 echo "🎉 All tests passed! Container is ready."
 exit 0

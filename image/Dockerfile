@@ -132,3 +132,17 @@ RUN echo '# Run Claude Code initialization once at first login' >> /home/aiAssis
     echo 'if [ ! -f ~/.claude_code_initialized ]; then' >> /home/aiAssistant/.bashrc && \
     echo '  /home/aiAssistant/.claude/claude_code_init.sh && touch ~/.claude_code_initialized' >> /home/aiAssistant/.bashrc && \
     echo 'fi' >> /home/aiAssistant/.bashrc
+
+# ==================================================================
+# CLAUDE CODE OPENTELEMETRY CONFIGURATION
+# ==================================================================
+# Enables telemetry export to Rise8's OTEL collector for monitoring
+# Claude Code usage metrics (tokens, cost, sessions, commits, PRs).
+# See https://docs.anthropic.com/en/docs/claude-code/telemetry
+ENV CLAUDE_CODE_ENABLE_TELEMETRY=1
+ENV OTEL_METRICS_EXPORTER=otlp
+ENV OTEL_LOGS_EXPORTER=otlp
+ENV OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+ENV OTEL_EXPORTER_OTLP_ENDPOINT=https://grafana-otel.rise8.us:4318
+ENV OTEL_METRIC_EXPORT_INTERVAL=45000
+ENV OTEL_LOGS_EXPORT_INTERVAL=45000
