@@ -63,6 +63,24 @@ Choose your path:
 
 ---
 
+## 🛠️ Tools Overview - When to Use What
+
+| Tool | Primary Use | When to Use |
+|------|-------------|-------------|
+| **GitHub Desktop** | Clone repos, view changes | Starting new projects, reviewing what changed |
+| **VS Code** | Write code, run Claude | Daily development (inside container) |
+| **Terminal** | Run scripts, troubleshooting | Setup, diagnostics, advanced git |
+
+**Typical Daily Workflow:**
+1. **Open GitHub Desktop** → Right-click your repo → "Open in Terminal"
+2. **Run `code .`** → Opens VS Code at the correct directory
+3. **Click "Reopen in Container"** → You're now in the AI assistant environment
+4. **Develop** using Claude inside the container
+
+> **Tip:** Once you're comfortable, you can open VS Code directly via Spotlight (Cmd+Space → "Visual Studio Code") and use File → Open Recent to access your project.
+
+---
+
 ## Creating a new project repository from this template
 
 *NOTE: If you or your team already has a project repository created from this template, skip this step.*
@@ -228,6 +246,19 @@ Run this in the new terminal window:
 code .
 ```
 
+> **⚠️ IMPORTANT: You must open the repository ROOT directory**
+>
+> The container only works when you open the **root** of your repository (where the `.devcontainer/` folder exists).
+>
+> **How to verify you're at the right level:**
+> - In VS Code's Explorer panel (left sidebar), you should see a `.devcontainer` folder
+> - If you don't see `.devcontainer`, you've opened the wrong directory
+>
+> **If "Reopen in Container" doesn't appear:**
+> 1. Close VS Code completely
+> 2. In GitHub Desktop, right-click your repository → "Open in Terminal"
+> 3. Run `code .` again (this opens the correct directory)
+
 **4.3 Install Devcontainers extension**
 
 When you first open VSCode, you'll see a notification in the lower right corner:
@@ -274,6 +305,12 @@ That's it! You're ready to develop with AI assistance. 🎉
 
 ## 🆘 Quick Help - Common Issues
 
+**Something not working?** Run the diagnostic script first:
+```bash
+./scripts/diagnose.sh
+```
+This checks your entire environment and shows exactly what's wrong with fix commands.
+
 | Error Message | Solution |
 |--------------|----------|
 | `x509: certificate signed by unknown authority` | [Zscaler Certificate Fix](docs/TROUBLESHOOTING.md#zscaler-certificate-errors-when-pulling-containers) |
@@ -282,7 +319,7 @@ That's it! You're ready to develop with AI assistance. 🎉
 | `code` command not found | [Restart terminal](docs/TROUBLESHOOTING.md#code-command-not-found-after-setup) |
 | Can't pull container images | [Authentication Fix](docs/TROUBLESHOOTING.md#authentication-to-pull-containers) |
 
-**Still stuck?** Ask in **#r-and-d** Slack channel.
+**Still stuck?** Run `./scripts/diagnose.sh`, copy the output, and share it in **#r-and-d** Slack channel.
 
 ## 📚 Additional Resources
 

@@ -4,6 +4,25 @@
 
 This guide covers common issues and their solutions for the AI Assistant Container. For CUI project-specific troubleshooting, see the [CUI Setup Guide](SETUP-CUI.md).
 
+---
+
+## 🔍 Run Diagnostics First
+
+Before diving into specific issues, run the diagnostic script to check your entire environment:
+
+```bash
+./scripts/diagnose.sh
+```
+
+This script checks all setup phases and shows:
+- ✅ What's working correctly
+- ❌ What's broken (with fix commands)
+- ⚠️ Warnings (non-critical issues)
+
+**Need help?** Copy the diagnostic output and share it in **#r-and-d** Slack channel.
+
+---
+
 ## Table of Contents
 
 - [Why Use the Container Instead of Local CLI?](#why-use-the-container-instead-of-local-cli)

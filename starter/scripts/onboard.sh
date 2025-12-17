@@ -10,6 +10,10 @@
 #
 # SECURITY: All downloads over HTTPS, minimal sudo usage, secure credential storage
 # IDEMPOTENCY: Safe to re-run, detects existing installations
+#
+# SYNC NOTE: When updating phases in this script, also update scripts/diagnose.sh
+# which provides diagnostic checks corresponding to each phase.
+# See: scripts/diagnose.sh
 ################################################################################
 
 set -euo pipefail  # Exit on error, undefined variables, pipe failures
