@@ -37,6 +37,22 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 17, 2025
+
+### Added
+- Diagnostic script (`scripts/diagnose.sh`) that checks all onboarding phases and provides actionable fix commands for self-service troubleshooting ([7c6d183](https://github.com/rise8-us/xpai-ai-assistant-container/commit/7c6d183))
+- "Tools Overview" section in README explaining when to use GitHub Desktop, VS Code, and Terminal for different tasks ([7c6d183](https://github.com/rise8-us/xpai-ai-assistant-container/commit/7c6d183))
+- Warning about opening repository ROOT directory to ensure "Reopen in Container" appears ([7c6d183](https://github.com/rise8-us/xpai-ai-assistant-container/commit/7c6d183))
+
+### Changed
+- Firewall manager now uses prebuilt Alpine container image instead of runtime script mounting, improving deployment simplicity and reproducibility ([60a2539](https://github.com/rise8-us/xpai-ai-assistant-container/commit/60a2539), [f9f6cb2](https://github.com/rise8-us/xpai-ai-assistant-container/commit/f9f6cb2))
+- Updated AI assistant container software with new capabilities and fixes ([be21127](https://github.com/rise8-us/xpai-ai-assistant-container/commit/be21127)):
+  - **Claude Code 2.0.65 → 2.0.71** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): `/config` toggle for prompt suggestions, `/settings` alias, Enter key to accept prompt suggestions immediately, wildcard MCP permissions (`mcp__server__*`), `plan_mode_required` spawn parameter for teammates, 3x memory usage improvement for large conversations, thinking mode enabled by default for Opus 4.5, `/permissions` search with `/` shortcut, IME support for CJK languages, enterprise managed settings support
+  - **Gemini CLI 0.20.0 → 0.21.0** ([changelog](https://github.com/google-gemini/gemini-cli/releases)): Fuzzy search in settings interface, message bus integration enabled by default, hooks system with lifecycle management and compression, auto-generated session summaries, extension hooks with security warnings, schema-validated settings, MCP dynamic tool updates via `notifications/tools/list_changed`
+- Base container now includes OpenTelemetry configuration for telemetry export to Rise8's monitoring infrastructure ([7f2f7ae](https://github.com/rise8-us/xpai-ai-assistant-container/commit/7f2f7ae))
+
+---
+
 ## December 16, 2025
 
 ### Added
