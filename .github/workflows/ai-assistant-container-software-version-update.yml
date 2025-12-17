@@ -1,6 +1,10 @@
 name: AI Assistant Container Software Update
 
 on:
+  schedule:
+    # Run every Wednesday at midnight Eastern Time (5:00 AM UTC)
+    # Note: Using EST (UTC-5). During EDT (daylight saving), this runs at 1:00 AM ET
+    - cron: '0 5 * * 3'
   workflow_dispatch:  # Allow manual triggering
 
 # Security: Restrict workflow permissions to minimum required
