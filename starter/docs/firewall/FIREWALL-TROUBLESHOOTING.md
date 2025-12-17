@@ -57,8 +57,7 @@ ls -la /workspaces/XPai/firewall/
 
 | Cause | Solution |
 |-------|----------|
-| **Whitelist file not found** | Verify `/workspaces/XPai/firewall/whitelist.txt` exists with correct path |
-| **init-firewall.sh not executable** | `chmod 555 /workspaces/XPai/firewall/init-firewall.sh` |
+| **Whitelist file not found** | Verify `whitelist.txt` exists and is mounted at `/firewall/whitelist.txt` |
 | **Volume mount path incorrect** | Check docker-compose.yml volume paths match actual file locations |
 | **NET_ADMIN capability missing** | Verify `cap_add: [NET_ADMIN]` in docker-compose.yml firewall service |
 | **Port conflict** | Another container using same ports - stop conflicting containers |
@@ -88,11 +87,10 @@ podman exec cui-firewall-manager lsmod | grep ip_tables
 
 | Cause | Solution |
 |-------|----------|
-| **iptables not installed** | Firewall init script installs iptables - check installation logs |
+| **iptables not working** | Prebuilt image includes iptables - check container logs |
 | **Kernel module not loaded** | Host kernel must support iptables - check `lsmod | grep ip_tables` |
-| **Rules not applied** | Check init script logs for errors during rule application |
+| **Rules not applied** | Check container logs for errors during rule application |
 | **Health check too early** | Wait for `start_period: 10s` - firewall needs time to initialize |
-| **DNS tools missing** | Init script installs `bind-tools` - check installation logs |
 
 ### 3. Whitelisted Endpoints Blocked
 
@@ -182,21 +180,17 @@ podman ps | grep cui-firewall-manager
 # Check logs with timestamps
 podman logs --timestamps cui-firewall-manager
 
-# Check if script is executed
-podman inspect cui-firewall-manager --format='{{.Config.Cmd}}'
-
-# Try running script manually
-podman exec cui-firewall-manager /firewall/init-firewall.sh
+# Check container entrypoint
+podman inspect cui-firewall-manager --format='{{.Config.Entrypoint}}'
 ```
 
 **Common Causes & Solutions**:
 
 | Cause | Solution |
 |-------|----------|
-| **Script not executed** | Check `command:` in docker-compose.yml |
-| **Script has syntax error** | Run `shellcheck /workspaces/XPai/firewall/init-firewall.sh` |
-| **Script fails before logging** | Add `set -x` to init script for detailed tracing |
-| **Container exits immediately** | Check for early exit errors - script may be crashing |
+| **Entrypoint not executed** | Check container image and entrypoint configuration |
+| **Container exits immediately** | Check for early exit errors in container logs |
+| **Whitelist not mounted** | Verify whitelist.txt volume mount in docker-compose.yml |
 
 ### 6. DNS Resolution Slow or Failing
 

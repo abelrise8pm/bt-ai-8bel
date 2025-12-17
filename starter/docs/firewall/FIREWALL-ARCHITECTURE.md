@@ -86,15 +86,19 @@ This document describes the security architecture of the firewall sidecar implem
 
 **Purpose**: Provides network namespace with iptables-based packet filtering
 
-**Image**: `alpine:latest` (minimal attack surface, ~10MB)
+**Image**: `ghcr.io/rise8-us/xpai/firewall-manager@sha256:<digest>` (prebuilt Alpine-based image, pinned by digest)
 
 **Capabilities**:
 - `CAP_NET_ADMIN`: Required to configure iptables
 - **Note**: Does NOT run in fully privileged mode
 
+**What's Baked Into Image**:
+- `iptables` - Network filtering
+- `bind-tools` - DNS resolution (dig)
+- `init-firewall.sh` - Firewall configuration script
+
 **Security Properties**:
 - Read-only whitelist mount (`/firewall/whitelist.txt:ro`)
-- Read-only initialization script (`/firewall/init-firewall.sh:ro`)
 - No shell access to AI data
 - Isolated from AI assistant file system
 

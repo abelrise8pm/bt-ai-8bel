@@ -1,0 +1,19 @@
+version: '3.8'
+
+# CI Test Override
+# Overrides container names, image, and whitelist path for testing
+# Uses the real ai-assistant image (which has curl/wget/python)
+# Usage: IMAGE_TAG=firewall-manager:test docker-compose -f docker-compose.firewall.yml -f docker-compose.test.yml up -d
+
+services:
+  firewall-manager:
+    container_name: fwtest-firewall-manager
+    # Override image with IMAGE_TAG env var (default: firewall-manager:test for local builds)
+    image: ${IMAGE_TAG:-firewall-manager:test}
+    volumes:
+      - ${TEST_WHITELIST_PATH:-./test-whitelist.txt}:/firewall/whitelist.txt:ro
+
+  ai-assistant:
+    container_name: fwtest-ai-assistant
+    # Use real image, just override volumes for CI (no workspace available)
+    volumes: []

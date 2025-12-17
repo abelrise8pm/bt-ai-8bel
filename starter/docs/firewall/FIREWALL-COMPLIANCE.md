@@ -84,12 +84,17 @@ Compliance auditors can verify the following:
 
 **Files**:
 - `whitelist.txt` - Approved network destinations (read-only, chmod 444)
-- `init-firewall.sh` - Firewall initialization script (read-only, chmod 555)
+
+**Prebuilt Image**:
+- `ghcr.io/rise8-us/xpai/firewall-manager:latest` - Contains firewall initialization script
+- Image built via GitHub Actions with security scanning (Trivy)
+- Image digest pinned in docker-compose for reproducibility
 
 **Audit Trail**:
-- All changes tracked in Git
+- Whitelist changes tracked in Git
 - Pull request review required (see `.github/CODEOWNERS.example`)
 - Change history available via `git log firewall/`
+- Image builds tracked via GitHub Actions workflow runs
 
 ### 2. Container Configuration
 

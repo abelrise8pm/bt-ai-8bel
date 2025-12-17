@@ -1,0 +1,150 @@
+name: Build Firewall Manager Container
+
+# This workflow builds, tests, and publishes the firewall manager container.
+# It runs on:
+# - Pushes to main that modify firewall-manager files
+# - Pull requests that modify firewall-manager files
+# - Manual trigger via workflow_dispatch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'firewall-manager/**'
+      - 'starter/.devcontainer/docker-compose.firewall.yml'
+      - '.github/workflows/build-firewall-manager.yml'
+      - '.github/actions/**'
+  pull_request:
+    paths:
+      - 'firewall-manager/**'
+      - 'starter/.devcontainer/docker-compose.firewall.yml'
+      - '.github/workflows/build-firewall-manager.yml'
+      - '.github/actions/**'
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/xpai/firewall-manager
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      pull-requests: write
+      security-events: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Setup multi-architecture build environment
+      - name: Setup container build environment
+        uses: ./.github/actions/setup-container-build
+        with:
+          registry: ${{ env.REGISTRY }}
+          registry-username: ${{ github.actor }}
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata for container image (tags, labels, annotations)
+      - name: Extract container metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      # Build for both ARM64 (Apple Silicon Macs) and AMD64 (GitHub runners, Intel Macs)
+      # Images are pushed to registry for testing since multi-arch builds can't be loaded locally
+      - name: Build and push test image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: firewall-manager
+          file: firewall-manager/Dockerfile
+          platforms: linux/arm64,linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+      # Test the AMD64 variant (GitHub Actions runners are AMD64)
+      - name: Test container functionality
+        run: |
+          cd firewall-manager
+          # Test using the test image (AMD64 variant on GitHub runners)
+          export DOCKER_DEFAULT_PLATFORM=linux/amd64
+          CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }}" ./integration-test.sh
+
+      # Scan for security vulnerabilities
+      - name: Security scan
+        uses: ./.github/actions/trivy-scan
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }}
+          trivyignores-path: firewall-manager/.trivyignore
+
+      # Tag and push as latest (only on main branch after tests pass)
+      - name: Promote to latest tag
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          # Tag the tested image as latest and with SHA
+          docker buildx imagetools create \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }} \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+
+          echo "✅ Successfully promoted image to latest"
+          echo "📦 Image digest: ${{ steps.build.outputs.digest }}"
+          echo "🏷️  Tags: latest, sha-${{ github.sha }}"
+
+      # Update docker-compose.firewall.yml with new digest and create PR
+      - name: Update docker-compose.firewall.yml with new digest
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          NEW_DIGEST="${{ steps.build.outputs.digest }}"
+          echo "Updating docker-compose.firewall.yml with digest: $NEW_DIGEST"
+
+          # Update the image reference in docker-compose.firewall.yml
+          # Pattern matches both PLACEHOLDER and actual sha256 hashes
+          sed -i "s|ghcr.io/rise8-us/xpai/firewall-manager@sha256:[a-fA-Z0-9]*|ghcr.io/rise8-us/xpai/firewall-manager@${NEW_DIGEST}|g" \
+            starter/.devcontainer/docker-compose.firewall.yml
+
+          # Check if file changed
+          if git diff --quiet starter/.devcontainer/docker-compose.firewall.yml; then
+            echo "✅ docker-compose.firewall.yml already up to date"
+            echo "CHANGES_MADE=false" >> $GITHUB_ENV
+          else
+            echo "📝 docker-compose.firewall.yml updated with new digest"
+            echo "CHANGES_MADE=true" >> $GITHUB_ENV
+          fi
+
+      - name: Create PR for docker-compose update
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.CHANGES_MADE == 'true'
+        uses: ./.github/actions/create-automated-pr
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          branch-name: auto-update-firewall-manager-${{ github.sha }}
+          commit-message: |
+            chore: update docker-compose.firewall.yml to latest firewall manager
+
+            Automated update of docker-compose.firewall.yml to use the latest firewall
+            manager image built in workflow run #${{ github.run_number }}.
+
+            - Firewall manager digest: ${{ steps.build.outputs.digest }}
+            - Workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          pr-title: "chore: update docker-compose.firewall.yml to latest firewall manager"
+          pr-body: |
+            ## Summary
+            Automated update of `starter/.devcontainer/docker-compose.firewall.yml` to use the latest firewall manager image.
+
+            ## Changes
+            - Updated firewall manager digest to: `${{ steps.build.outputs.digest }}`
+            - Workflow run: [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            🤖 Automated PR created by GitHub Actions

@@ -1,0 +1,3 @@
+# Alpine base image CVEs that are accepted risks or false positives
+# Add CVE IDs here if needed after reviewing Trivy scan results
+# Format: CVE-YYYY-NNNNN (one per line)

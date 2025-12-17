@@ -159,7 +159,6 @@ After setup, verify these properties:
 - [ ] Non-whitelisted endpoints are blocked
 - [ ] Blocked attempts are logged
 - [ ] whitelist.txt is read-only (chmod 444)
-- [ ] init-firewall.sh is read-only (chmod 555)
 - [ ] All tests pass
 
 ## Compliance

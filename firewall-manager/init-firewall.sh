@@ -1,8 +1,9 @@
 #!/usr/bin/env sh
 # Firewall Initialization Script
 # Configures iptables rules for network isolation with whitelist-based access
+# Note: Using 'set -eu' (not pipefail) for POSIX sh compatibility on Alpine
 
-set -euo pipefail
+set -eu
 
 # Configuration
 # RFC-compliant IPv4 address pattern: validates each octet is 0-255
