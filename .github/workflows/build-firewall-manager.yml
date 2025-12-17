@@ -11,13 +11,11 @@ on:
     branches: [main]
     paths:
       - 'firewall-manager/**'
-      - 'starter/.devcontainer/docker-compose.firewall.yml'
       - '.github/workflows/build-firewall-manager.yml'
       - '.github/actions/**'
   pull_request:
     paths:
       - 'firewall-manager/**'
-      - 'starter/.devcontainer/docker-compose.firewall.yml'
       - '.github/workflows/build-firewall-manager.yml'
       - '.github/actions/**'
   workflow_dispatch:
