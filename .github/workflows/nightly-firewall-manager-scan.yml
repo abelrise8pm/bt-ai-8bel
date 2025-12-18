@@ -1,0 +1,16 @@
+name: Nightly Firewall Manager Security Scan
+
+on:
+  schedule:
+    # Run nightly at 2:00 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  scan:
+    uses: ./.github/workflows/reusable-nightly-scan.yml
+    with:
+      image-name: ${{ github.repository_owner }}/xpai/firewall-manager
+      trivyignores-path: firewall-manager/.trivyignore
+      display-name: Firewall Manager
+    secrets: inherit

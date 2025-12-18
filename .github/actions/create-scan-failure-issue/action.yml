@@ -1,0 +1,70 @@
+name: 'Create Scan Failure Issue'
+description: 'Creates a GitHub issue when a security scan fails'
+
+inputs:
+  image-name:
+    description: 'Full image name (e.g., ghcr.io/rise8-us/xpai/firewall-manager)'
+    required: true
+  display-name:
+    description: 'Human-readable name for the image (e.g., "Firewall Manager")'
+    required: true
+  github-token:
+    description: 'GitHub token for creating issues'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create failure notification issue
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const today = new Date().toISOString().split('T')[0];
+          const workflowUrl = context.payload.repository.html_url + '/actions/runs/' + context.runId;
+          const repoUrl = context.payload.repository.html_url;
+          const owner = context.repo.owner;
+          const imageName = '${{ inputs.image-name }}';
+          const displayName = '${{ inputs.display-name }}';
+
+          const issueBody = [
+            '## Nightly Security Scan Failure',
+            '',
+            'The nightly security scan for **' + displayName + '** has detected vulnerabilities.',
+            '',
+            '**Workflow Run:** ' + workflowUrl,
+            '**Date:** ' + new Date().toISOString(),
+            '**Scan Time:** ' + new Date().toLocaleString('en-US', { timeZone: 'UTC' }) + ' UTC',
+            '',
+            '### Scan Results Summary:',
+            'The latest production image failed security scanning with CRITICAL or HIGH severity vulnerabilities.',
+            '',
+            '### Failed Image:',
+            '`' + imageName + ':latest`',
+            '',
+            '### Next Steps:',
+            '1. Review the workflow logs for specific scan results',
+            '2. Update base images or dependencies to address vulnerabilities',
+            '3. Rebuild and redeploy the container',
+            '4. Re-run this workflow once issues are resolved',
+            '',
+            '### Security Resources:',
+            '- [GitHub Security Advisories](' + repoUrl + '/security/advisories)',
+            '- [Container Registry Packages](https://github.com/orgs/' + owner + '/packages)',
+            '- [Trivy Documentation](https://aquasecurity.github.io/trivy/)',
+            '',
+            '**Priority:** High - Security vulnerabilities detected in production images',
+            '',
+            '@mikegehard-rise8 please investigate this security scan failure.'
+          ].join('\n');
+
+          const issue = await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: '🚨 Nightly ' + displayName + ' Security Scan Failed - ' + today,
+            body: issueBody,
+            assignees: ['mikegehard-rise8'],
+            labels: ['security', 'container', 'nightly', 'vulnerability']
+          });
+
+          console.log('Created issue #' + issue.data.number + ': ' + issue.data.html_url);
