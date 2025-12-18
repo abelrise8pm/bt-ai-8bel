@@ -33,6 +33,7 @@ This script checks all setup phases and shows:
 - [Podman Networking Issues on macOS](#podman-networking-issues-on-macos-infrastructure-containers)
 - [Devcontainer Fails to Open or Rebuild](#devcontainer-fails-to-open-or-rebuild)
 - [File Permission Issues in Devcontainer](#file-permission-issues-in-devcontainer)
+- [Claude Code Prompts for Login Instead of Using API Key](#claude-code-prompts-for-login-instead-of-using-api-key)
 - [Getting Help](#assistance)
 
 ---
@@ -426,6 +427,56 @@ After recreating the machine, rebuild your devcontainer in VSCode.
 ```
 
 Then rebuild the devcontainer.
+
+## Claude Code Prompts for Login Instead of Using API Key
+
+**Symptom:**
+
+When you open a terminal inside the devcontainer and Claude Code starts, instead of being ready to use, it shows a "Welcome to Claude Code" screen with login options:
+
+![Claude Code Login Prompt](claude-code-login-prompt.png)
+
+```
+Select login method:
+  1. Claude account with subscription - Pro, Max, Team, or Enterprise
+  2. Anthropic Console account - API usage billing
+```
+
+A browser window may also open asking you to "Select organization" on the Claude Developer Platform.
+
+**Cause:**
+
+Claude Code cannot find your `ANTHROPIC_API_KEY` environment variable. This happens when:
+- The `.env` file is missing from your project root
+- The `.env` file exists but doesn't contain `ANTHROPIC_API_KEY`
+- The `ANTHROPIC_API_KEY` value is empty or malformed
+
+**Solution:**
+
+1. **Check if `.env` file exists in your project root:**
+   ```bash
+   ls -la .env
+   ```
+
+2. **If missing, create it from the example:**
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Edit `.env` and add your Anthropic API key:**
+   ```bash
+   # Open .env in your editor and add:
+   ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
+   ```
+
+4. **Rebuild the devcontainer** to pick up the new environment variable:
+   - Press `Cmd + Shift + P` (macOS) or `Ctrl + Shift + P` (Windows/Linux)
+   - Type "Dev Containers: Rebuild Container"
+   - Select it and wait for the rebuild to complete
+
+5. **Verify the fix** - After rebuild, open a new terminal. Claude Code should start without prompting for login.
+
+**Note:** To obtain an Anthropic API key, submit a ticket in the **#helpdesk** Slack channel.
 
 ## Assistance
 
