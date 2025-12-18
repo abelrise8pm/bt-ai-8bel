@@ -37,6 +37,13 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 18, 2025
+
+### Changed
+- Expanded file watcher exclusions in CUI devcontainer config to match non-CUI config, preventing "too many files open" (ulimit) errors when VS Code watches large directories ([d0210e6](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d0210e6))
+
+---
+
 ## December 17, 2025
 
 ### Added
