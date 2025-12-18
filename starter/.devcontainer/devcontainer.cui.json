@@ -30,23 +30,30 @@
       // ======================================================================
       // PERFORMANCE OPTIMIZATION: File Watcher Exclusions (Optional)
       // ======================================================================
-      // Prevents VS Code from watching large directories. Uncomment and merge
-      // into the settings object above if you have large node_modules/build dirs.
+      // Prevents VS Code from watching large directories that change frequently,
+      // avoiding "too many files open" errors and reducing CPU/memory usage.
+      // Uncomment and merge into the settings object above if you have large
+      // node_modules or build directories.
       // ======================================================================
-      // "settings": {
+      // Additional settings to merge above:
       //   "files.watcherExclude": {
       //     "**/node_modules/**": true,
       //     "**/.git/objects/**": true,
+      //     "**/.git/subtree-cache/**": true,
       //     "**/dist/**": true,
       //     "**/build/**": true,
-      //     "**/__pycache__/**": true
+      //     "**/.next/**": true,
+      //     "**/.pnpm-store/**": true,
+      //     "**/target/**": true,        // Rust
+      //     "**/__pycache__/**": true    // Python
       //   },
       //   "search.exclude": {
       //     "**/node_modules": true,
       //     "**/dist": true,
-      //     "**/build": true
+      //     "**/build": true,
+      //     "**/.next": true,
+      //     "**/target": true
       //   }
-      // }
     }
   }
 }
