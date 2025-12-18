@@ -39,6 +39,9 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ## December 18, 2025
 
+### Added
+- Troubleshooting guide for Claude Code login prompt when `.env` file or `ANTHROPIC_API_KEY` is missing, with screenshot and step-by-step resolution ([0431150](https://github.com/rise8-us/xpai-ai-assistant-container/commit/0431150))
+
 ### Changed
 - Expanded file watcher exclusions in CUI devcontainer config to match non-CUI config, preventing "too many files open" (ulimit) errors when VS Code watches large directories ([d0210e6](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d0210e6))
 
