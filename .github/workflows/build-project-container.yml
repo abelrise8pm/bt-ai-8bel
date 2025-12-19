@@ -22,7 +22,10 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/project-container
+  # Repository path (e.g., owner/repo/project-container)
+  IMAGE_REPOSITORY: ${{ github.repository }}/project-container
+  # Full image reference without tag (e.g., ghcr.io/owner/repo/project-container)
+  IMAGE: ghcr.io/${{ github.repository }}/project-container
 
 jobs:
   build-and-test:
@@ -50,7 +53,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -67,10 +70,10 @@ jobs:
           file: project-container/Dockerfile
           platforms: linux/arm64,linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }}
+          tags: ${{ env.IMAGE }}:test-${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
       # Test the AMD64 variant (GitHub Actions runners are AMD64)
       - name: Test container functionality
@@ -78,13 +81,13 @@ jobs:
           cd project-container
           # Test using the test image (AMD64 variant on GitHub runners)
           export DOCKER_DEFAULT_PLATFORM=linux/amd64
-          CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }}" ./test.sh
+          CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.IMAGE }}:test-${{ github.sha }}" ./test.sh
 
       # Scan for security vulnerabilities
       - name: Security scan
         uses: ./.github/actions/trivy-scan
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }}
+          image-ref: ${{ env.IMAGE }}:test-${{ github.sha }}
           trivyignores-path: project-container/.trivyignore
 
       # Tag and push as latest (only on main branch after tests pass)
@@ -93,9 +96,9 @@ jobs:
         run: |
           # Tag the tested image as latest and with SHA
           docker buildx imagetools create \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }} \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+            ${{ env.IMAGE }}:test-${{ github.sha }} \
+            --tag ${{ env.IMAGE }}:latest \
+            --tag ${{ env.IMAGE }}:sha-${{ github.sha }}
 
           echo "✅ Successfully promoted image to latest"
           echo "📦 Image digest: ${{ steps.build.outputs.digest }}"
@@ -106,10 +109,11 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
           NEW_DIGEST="${{ steps.build.outputs.digest }}"
+          IMAGE_REF="${{ env.IMAGE }}"
           echo "Updating devcontainer.json with digest: $NEW_DIGEST"
 
           # Update the image reference in devcontainer.json
-          sed -i "s|ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@sha256:[a-f0-9]*|ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@${NEW_DIGEST}|g" \
+          sed -i "s|${IMAGE_REF}@sha256:[a-f0-9]*|${IMAGE_REF}@${NEW_DIGEST}|g" \
             .devcontainer/devcontainer.json
 
           # Check if file changed
