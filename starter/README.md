@@ -327,6 +327,7 @@ Want to learn more or customize your setup?
 
 - **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Detailed troubleshooting guide for common issues
 - **[docs/ADVANCED-TOPICS.md](docs/ADVANCED-TOPICS.md)** - Advanced configuration, CUI projects, custom containers, CI/CD workflows
+- **[docs/PLUGIN-DEVELOPMENT.md](docs/PLUGIN-DEVELOPMENT.md)** - Developing and contributing Claude Code plugins
 - **[docs/QUICK-START-BY-ROLE.md](docs/QUICK-START-BY-ROLE.md)** - Role-specific quick start guides (coming soon)
 - **[docs/KEY-CONCEPTS.md](docs/KEY-CONCEPTS.md)** - Understanding key concepts (coming soon)
 

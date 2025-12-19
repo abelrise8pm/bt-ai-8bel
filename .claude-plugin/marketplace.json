@@ -1,0 +1,27 @@
+{
+  "name": "ai-assistant-plugins",
+  "metadata": {
+    "description": "Rise8 plugins for AI-assisted development",
+    "version": "1.0.0"
+  },
+  "owner": {
+    "name": "Enablement Team"
+  },
+  "plugins": [
+    {
+      "name": "cve-triage",
+      "source": "./plugins/cve-triage",
+      "description": "Investigate CVEs from security scans (Trivy, Grype, Snyk) and generate POA&M documentation"
+    },
+    {
+      "name": "gh-actions-triage",
+      "source": "./plugins/gh-actions-triage",
+      "description": "Diagnose GitHub Actions workflow failures with detailed logs and remediation steps"
+    },
+    {
+      "name": "user-story",
+      "source": "./plugins/user-story",
+      "description": "Write actionable user stories following INVEST principles with acceptance criteria"
+    }
+  ]
+}

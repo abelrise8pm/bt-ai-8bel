@@ -1,0 +1,8 @@
+{
+  "name": "gh-actions-triage",
+  "version": "1.0.0",
+  "description": "Diagnose GitHub Actions workflow failures with detailed logs and remediation steps",
+  "author": {
+    "name": "AI Assistant Team"
+  }
+}
