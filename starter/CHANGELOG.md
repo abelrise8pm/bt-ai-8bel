@@ -37,6 +37,19 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 20, 2025
+
+### Added
+- Claude Code plugin marketplace for distributing shared project skills ([823f822](https://github.com/rise8-us/xpai-ai-assistant-container/commit/823f822)):
+  - Install centralized plugins via: `/plugin marketplace add rise8-us/xpai-ai-assistant-container`
+  - Included plugins: cve-triage (CVE investigation with POA&M generation), gh-actions-triage (GitHub Actions failure diagnosis), user-story (INVEST-compliant story writing)
+  - Documentation: docs/PLUGIN-DEVELOPMENT.md for contribution guide
+
+### Changed
+- Enhanced project-container workflow to update digests in both devcontainer.json and docker-compose.firewall.yml files, preventing version drift across standard and CUI development environments ([f9c2296](https://github.com/rise8-us/xpai-ai-assistant-container/commit/f9c2296))
+
+---
+
 ## December 18, 2025
 
 ### Added
