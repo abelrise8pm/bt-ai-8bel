@@ -26,7 +26,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/project-container
+  # Base image reference without tag or digest (e.g., ghcr.io/owner/repo/project-container)
+  IMAGE: ghcr.io/${{ github.repository }}/project-container
 
 jobs:
   build-and-test:
@@ -54,7 +55,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.IMAGE }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -71,10 +72,10 @@ jobs:
           file: project-container/Dockerfile
           platforms: linux/arm64,linux/amd64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }}
+          tags: ${{ env.IMAGE }}:test-${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
       # Test the AMD64 variant (GitHub Actions runners are AMD64)
       - name: Test container functionality
@@ -82,13 +83,13 @@ jobs:
           cd project-container
           # Test using the test image (AMD64 variant on GitHub runners)
           export DOCKER_DEFAULT_PLATFORM=linux/amd64
-          CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }}" ./test.sh
+          CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.IMAGE }}:test-${{ github.sha }}" ./test.sh
 
       # Scan for security vulnerabilities
       - name: Security scan
         uses: ./.github/actions/trivy-scan
         with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }}
+          image-ref: ${{ env.IMAGE }}:test-${{ github.sha }}
           trivyignores-path: project-container/.trivyignore
 
       # Tag and push as latest (only on main branch after tests pass)
@@ -97,55 +98,93 @@ jobs:
         run: |
           # Tag the tested image as latest and with SHA
           docker buildx imagetools create \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }} \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            --tag ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}
+            ${{ env.IMAGE }}:test-${{ github.sha }} \
+            --tag ${{ env.IMAGE }}:latest \
+            --tag ${{ env.IMAGE }}:sha-${{ github.sha }}
 
           echo "✅ Successfully promoted image to latest"
           echo "📦 Image digest: ${{ steps.build.outputs.digest }}"
           echo "🏷️  Tags: latest, sha-${{ github.sha }}"
 
-      # Update devcontainer.json with new digest and create PR
-      - name: Update devcontainer.json with new digest
+      # Update digest in devcontainer and docker-compose files
+      - name: Update image digests in devcontainer files
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
+          # NEW_DIGEST from docker/build-push-action is the full digest, including the 'sha256:' prefix.
+          # The sed pattern matches '@sha256:oldhash' and replaces the entire digest with '@${NEW_DIGEST}',
+          # resulting in '@sha256:newhash' since NEW_DIGEST includes the prefix.
           NEW_DIGEST="${{ steps.build.outputs.digest }}"
-          echo "Updating devcontainer.json with digest: $NEW_DIGEST"
+          IMAGE_REF="${{ env.IMAGE }}"
 
-          # Update the image reference in devcontainer.json
-          sed -i "s|ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@sha256:[a-f0-9]*|ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@${NEW_DIGEST}|g" \
-            .devcontainer/devcontainer.json
-
-          # Check if file changed
-          if git diff --quiet .devcontainer/devcontainer.json; then
-            echo "✅ devcontainer.json already up to date"
-            echo "CHANGES_MADE=false" >> $GITHUB_ENV
-          else
-            echo "📝 devcontainer.json updated with new digest"
-            echo "CHANGES_MADE=true" >> $GITHUB_ENV
+          # Validate digest format to prevent malformed image references
+          if [[ ! "$NEW_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "❌ Error: Invalid digest format: $NEW_DIGEST"
+            echo "Expected format: sha256:<64 hex characters>"
+            exit 1
           fi
 
-      - name: Create PR for devcontainer update
+          echo "Updating files with digest: $NEW_DIGEST"
+
+          # Files to update with new project container digest:
+          # - devcontainer.json: direct image reference or docker-compose reference
+          # - docker-compose.firewall.yml: CUI setup with ai-assistant service
+          FILES_TO_UPDATE=(
+            ".devcontainer/devcontainer.json"           # Direct image or compose reference
+            ".devcontainer/docker-compose.firewall.yml" # CUI setup: ai-assistant service
+          )
+
+          UPDATED_FILES=()
+          for file in "${FILES_TO_UPDATE[@]}"; do
+            if [ -f "$file" ]; then
+              # Update project-container image references with new digest
+              sed -i "s|${IMAGE_REF}@sha256:[a-f0-9]*|${IMAGE_REF}@${NEW_DIGEST}|g" "$file"
+
+              # Check if this specific file changed
+              if ! git diff --quiet "$file"; then
+                echo "📝 Updated: $file"
+                UPDATED_FILES+=("$file")
+              fi
+            fi
+          done
+
+          # Check if any files were updated
+          if [ ${#UPDATED_FILES[@]} -eq 0 ]; then
+            echo "✅ All files already up to date"
+            echo "CHANGES_MADE=false" >> $GITHUB_ENV
+          else
+            echo "✅ Updated ${#UPDATED_FILES[@]} file(s)"
+            echo "CHANGES_MADE=true" >> $GITHUB_ENV
+            # Export updated files list for PR body (printf repeats format for each array element)
+            printf -v UPDATED_FILES_LIST -- "- %s\n" "${UPDATED_FILES[@]}"
+            echo "UPDATED_FILES_LIST<<EOF" >> $GITHUB_ENV
+            echo "$UPDATED_FILES_LIST" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          fi
+
+      - name: Create PR for digest updates
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && env.CHANGES_MADE == 'true'
         uses: ./.github/actions/create-automated-pr
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          branch-name: auto-update-devcontainer-${{ github.sha }}
+          branch-name: auto-update-project-container-${{ github.sha }}
           commit-message: |
-            chore: update devcontainer.json to latest project container
+            chore: update devcontainer files to latest project container
 
-            Automated update of devcontainer.json to use the latest project container
-            image built in workflow run #${{ github.run_number }}.
+            Automated update of devcontainer configuration files to use the latest
+            project container image built in workflow run #${{ github.run_number }}.
 
             - Project container digest: ${{ steps.build.outputs.digest }}
             - Workflow run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          pr-title: "chore: update devcontainer.json to latest project container"
+          pr-title: "chore: update devcontainer files to latest project container"
           pr-body: |
             ## Summary
-            Automated update of `.devcontainer/devcontainer.json` to use the latest project container image.
+            Automated update of devcontainer configuration files to use the latest project container image.
 
             ## Changes
             - Updated project container digest to: `${{ steps.build.outputs.digest }}`
             - Workflow run: [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ## Files Updated
+            ${{ env.UPDATED_FILES_LIST }}
 
             🤖 Automated PR created by GitHub Actions
