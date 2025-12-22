@@ -40,6 +40,7 @@ Since your project doesn't share git history with this template, you'll need to 
 ## December 22, 2025
 
 ### Fixed
+- Corrected AWS GovCloud region from us-gov-east-1 to us-gov-west-1 in .env.example file for CUI Bedrock configuration ([413b5d7](https://github.com/rise8-us/xpai-ai-assistant-container/commit/413b5d7))
 - Corrected AWS SSO configuration values in CUI Bedrock setup documentation that prevented successful authentication - updated SSO start URL, SSO region, and default client region to correct values ([c47d3e4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/c47d3e4))
 
 ---
