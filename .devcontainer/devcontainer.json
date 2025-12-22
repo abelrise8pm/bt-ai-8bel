@@ -1,5 +1,5 @@
 {
-  "image": "ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@sha256:b4c4798278bf1760d6404875d417b9b79877ee37d3b9102e8e03940fbbc9605f",
+  "image": "ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@sha256:512b52b0862d7cdee139ac386fcd4bf52fbc232ccd374ca92321337181167137",
   "postCreateCommand": "echo 'Container ready for Non-CUI projects with AI assistants pre-installed'",
   "runArgs": [
     "--env-file",".env"
