@@ -37,6 +37,13 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 22, 2025
+
+### Fixed
+- Corrected AWS SSO configuration values in CUI Bedrock setup documentation that prevented successful authentication - updated SSO start URL, SSO region, and default client region to correct values ([c47d3e4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/c47d3e4))
+
+---
+
 ## December 20, 2025
 
 ### Added
