@@ -1,0 +1,8 @@
+{
+  "name": "claude-whisperer-beta",
+  "version": "0.1.0-beta",
+  "description": "(Beta) Meta-skills for building your Iron Man suit: create skills from pairing sessions, fork marketplace skills for iteration, and contribute improvements back. Only use when explicitly requested.",
+  "author": {
+    "name": "AI Assistant Team"
+  }
+}

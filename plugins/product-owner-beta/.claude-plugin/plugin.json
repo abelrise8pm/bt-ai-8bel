@@ -1,0 +1,8 @@
+{
+  "name": "product-owner-beta",
+  "version": "0.1.0-beta",
+  "description": "(Beta) Product ownership workflow: assess stories, refine requirements, create PRDs, and drive implementation. Only use when explicitly requested.",
+  "author": {
+    "name": "AI Assistant Team"
+  }
+}

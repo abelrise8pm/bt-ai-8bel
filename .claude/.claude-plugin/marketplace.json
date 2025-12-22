@@ -1,11 +1,10 @@
 {
-  "name": "rise8-ai-assistant-plugins",
+  "name": "local-dev",
   "metadata": {
-    "description": "Rise8 plugins for AI-assisted development",
-    "version": "1.0.0"
+    "description": "Local development marketplace - iterate on beta plugins directly in this repo"
   },
   "owner": {
-    "name": "Enablement Team"
+    "name": "Local"
   },
   "plugins": [
     {

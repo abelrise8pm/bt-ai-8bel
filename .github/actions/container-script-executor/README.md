@@ -135,7 +135,7 @@ The calling workflow only needs to provide valid credentials - no additional set
       #!/bin/bash
       set -e
       echo "Updating software versions..."
-      claude -p "/update-software-versions .devcontainer/Dockerfile" \
+      claude -p "Use release-engineer-beta:update-versions for .devcontainer/Dockerfile" \
         --dangerously-skip-permissions
     anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
     github-token: ${{ secrets.GITHUB_TOKEN }}  # Always use GITHUB_TOKEN
@@ -177,7 +177,7 @@ jobs:
               --dangerously-skip-permissions
 
             # Update versions
-            claude -p "/update-software-versions .devcontainer/Dockerfile" \
+            claude -p "Use release-engineer-beta:update-versions for .devcontainer/Dockerfile" \
               --dangerously-skip-permissions
 
             echo "All updates completed"

@@ -6,7 +6,7 @@ A monorepo containing the AI assistant base container and starter template for p
 
 - [`image/`](image/) - Base container with pre-configured AI tools (Claude Code, Gemini CLI, Goose)
 - [`starter/`](starter/) - Starter template for project teams
-- [`plugins/`](plugins/) - Claude Code plugin marketplace ([development guide](docs/PLUGIN-DEVELOPMENT.md))
+- [`plugins/`](plugins/) - Claude Code plugin marketplace ([skill development guide](docs/SKILL-DEVELOPMENT.md))
 
 ## Integrating AI Assistant into an Existing Repository
 

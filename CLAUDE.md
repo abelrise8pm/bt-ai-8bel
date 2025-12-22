@@ -23,6 +23,27 @@ This will build and test the container. Paste the output back here so I can help
 
 Container infrastructure monorepo providing secure, CMMC Level 2 compliant AI development environments. Contains base container images, firewall isolation, and starter templates.
 
+## Design Philosophy
+
+### Separation of Concerns
+
+Keep components focused on a single responsibility. When building skills, plugins, or scripts:
+
+- **Decouple data sources from logic**: Fetching data (GitHub, GitLab, Jira) should be separate from processing it. Define clean interfaces between components so swapping implementations only requires changing one piece.
+- **Prefer composition over monoliths**: Small, focused components that can be combined are better than large all-in-one solutions.
+- **Design for change**: Assume external dependencies (APIs, platforms, tools) will change. Isolate integration points behind stable interfaces.
+
+Example: A story assessment skill should accept a standardized story format, not call GitHub directly. A separate fetch skill handles the platform-specific API, outputting the common format.
+
+### High Cohesion, Low Coupling
+
+Apply this principle to all artifacts - code, documentation, and configuration:
+
+- **High cohesion**: Each module/file/section should focus on one clear purpose. Everything inside should be closely related.
+- **Low coupling**: Components should have minimal dependencies on each other. Changes in one area shouldn't ripple through unrelated areas.
+
+This applies beyond code: documentation sections should be self-contained, scripts should do one thing well, and configuration should be modular.
+
 ## Project Structure
 
 ```
@@ -172,6 +193,18 @@ Tests run against staging images before promotion to production tags.
 3. For firewall issues: `docker exec <firewall> iptables -L OUTPUT -n -v`
 
 ## Security Considerations
+
+### Principle of Least Access
+
+Apply principle of least access (least privilege) to all generated code:
+
+- **Request minimum permissions**: Only request the permissions, scopes, or access levels actually needed for the task
+- **Limit scope of variables and functions**: Prefer local over global, private over public, const over let
+- **Restrict file and network access**: Only open files/connections that are required; close them promptly
+- **Narrow API access**: When creating tokens, keys, or service accounts, grant only necessary permissions
+- **Validate at boundaries**: Check inputs at system entry points rather than trusting all data
+
+### General Security Practices
 
 - Never commit API keys or credentials
 - Use .env files locally (auto-loaded by test scripts)

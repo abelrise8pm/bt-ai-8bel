@@ -1,0 +1,8 @@
+{
+  "name": "cybersecurity-engineer-beta",
+  "version": "0.1.0-beta",
+  "description": "(Beta) Cybersecurity engineering workflows: CVE triage, vulnerability assessment, and POA&M documentation. Only use when explicitly requested.",
+  "author": {
+    "name": "AI Assistant Team"
+  }
+}

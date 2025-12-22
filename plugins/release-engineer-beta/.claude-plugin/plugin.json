@@ -1,0 +1,8 @@
+{
+  "name": "release-engineer-beta",
+  "version": "0.1.0-beta",
+  "description": "(Beta) Release engineering workflow: update changelogs, manage versions, and prepare releases. Only use when explicitly requested.",
+  "author": {
+    "name": "AI Assistant Team"
+  }
+}

@@ -43,8 +43,8 @@ jobs:
             echo "Starting Claude Code software version update process..."
             echo "Working directory: $(pwd)"
             echo "Target: image/Dockerfile"
-            echo "Running /update-software-versions command for image/Dockerfile"
-            claude -p "/update-software-versions image/Dockerfile" --dangerously-skip-permissions
+            echo "Running release-engineer-beta:update-versions skill for image/Dockerfile"
+            claude -p "Use release-engineer-beta:update-versions for image/Dockerfile" --dangerously-skip-permissions
             echo "Claude Code software version update completed successfully"
           anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -63,13 +63,13 @@ jobs:
           pr-body: |
             ## Summary
 
-            Automated software version updates performed using Claude Code's `/update-software-versions` command.
+            Automated software version updates performed using Claude Code's `release-engineer-beta:update-versions` skill.
 
             🤖 Generated with [Claude Code](https://claude.ai/code)
           commit-message: |
             Update AI assistant container software versions via Claude Code
 
-            Automated software version updates performed using /update-software-versions command.
+            Automated software version updates performed using release-engineer-beta:update-versions skill.
             Target: image/Dockerfile
 
             🤖 Generated with [Claude Code](https://claude.ai/code)
