@@ -38,11 +38,11 @@ aws configure sso --profile claude-bedrock
 
 # When prompted, provide:
 # SSO session name: bedrock-session
-# SSO start URL: https://start.us-gov-home.awsapps.com/directory/d-c2670a94b1
-# SSO region: us-gov-east-1
+# SSO start URL: https://start.us-gov-home.awsapps.com/directory/rise8
+# SSO region: us-gov-west-1
 # SSO registration scopes: sso:account:access
 # Role: Select "ClaudeBedrock"
-# Default client Region [None]: us-gov-east-1
+# Default client Region [None]: us-gov-west-1
 ```
 
 ### 2. Configure DevContainer
