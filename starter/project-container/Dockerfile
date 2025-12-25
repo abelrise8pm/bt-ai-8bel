@@ -6,7 +6,7 @@
 #
 # See https://github.com/rise8-us/XPai/pkgs/container/xpai%2Fai-assistant-home
 # Current base version: ai-assistant-home (digest pinned for reproducibility)
-FROM ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:bc994debd47fde1ea642f1370976287324b84424b059cb408a8f369e1774481f
+FROM ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:764c16f25e190f57c4d7c157276c7af4e60caae6262039ee9deecbe6f3c0e5df
 
 # ==================================================================
 # TOOL VERSIONS
