@@ -23,6 +23,20 @@ This will build and test the container. Paste the output back here so I can help
 
 Container infrastructure monorepo providing secure, CMMC Level 2 compliant AI development environments. Contains base container images, firewall isolation, and starter templates.
 
+## Beta Plugin Usage
+
+Auto-invoke beta plugins based on context without requiring explicit mention:
+
+- **software-engineer-beta:implement-story**: Use automatically when implementing GitHub issues or building features
+- **software-engineer-beta:review-pr**: Use automatically when analyzing or responding to PR feedback
+- **product-owner-beta:assess-story**: Use automatically when evaluating story readiness or INVEST criteria
+- **product-owner-beta:refine-story**: Use automatically when clarifying requirements or improving story quality
+- **release-engineer-beta**: Use automatically for version updates, changelogs, or release preparation
+- **platform-engineer-beta:triage-gh-actions**: Use automatically when given GitHub Actions run URLs or CI/CD failures
+- **cybersecurity-engineer-beta:triage-cve**: Use automatically when triaging CVEs or analyzing vulnerability scans
+
+The beta designation indicates active iteration, not that explicit invocation is required.
+
 ## Design Philosophy
 
 ### Separation of Concerns
