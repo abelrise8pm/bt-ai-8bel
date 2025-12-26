@@ -37,7 +37,20 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 25, 2025
+
+### Changed
+- Updated AI assistant container software with new capabilities and fixes ([73ba0e4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/73ba0e4)):
+  - **Claude Code 2.0.71 → 2.0.76** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): LSP tool for go-to-definition and code intelligence, Claude in Chrome (Beta) browser control, `/terminal-setup` for additional terminals, clickable image links, improved file suggestion performance (~3x faster), alt-y yank-pop for kill ring cycling, plugin search filtering, reduced terminal flickering, thinking toggle moved to Alt+T
+  - **Gemini CLI 0.21.0 → 0.21.3** ([changelog](https://github.com/google-gemini/gemini-cli/releases)): Automatic model persistence across sessions, official ACP SDK support, HTTP/SSE-based MCP servers, experimental in-CLI extension install/uninstall, unified secrets sanitization, hook enhancements with friendly names and clearcut logging, modifyOtherKeys protocol for tmux, .geminiignore support for SearchText tool
+  - **Goose 1.16.1 → 1.18.0** ([changelog](https://github.com/block/goose/releases)): New slash commands (/prompts, /compact, /clear), Code Mode MCP platform extension, MCP elicitation support for interactive prompts, recipe search and filtering, OpenRouter and Xai streaming support, privacy-aware analytics, canonical model system with pricing integration, improved tool calling and code execution
+
+---
+
 ## December 22, 2025
+
+### Changed
+- Updated publish scripts to support new role-based plugin architecture with beta skills organized by job function ([1bcfeeb](https://github.com/rise8-us/xpai-ai-assistant-container/commit/1bcfeeb))
 
 ### Fixed
 - Corrected AWS GovCloud region from us-gov-east-1 to us-gov-west-1 in .env.example file for CUI Bedrock configuration ([413b5d7](https://github.com/rise8-us/xpai-ai-assistant-container/commit/413b5d7))

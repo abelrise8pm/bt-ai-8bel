@@ -1,0 +1,10 @@
+{
+  "enabledPlugins": {
+    "claude-whisperer-beta@local-dev": true,
+    "cybersecurity-engineer-beta@local-dev": true,
+    "platform-engineer-beta@local-dev": true,
+    "product-owner-beta@local-dev": true,
+    "release-engineer-beta@local-dev": true,
+    "software-engineer-beta@local-dev": true
+  }
+}
