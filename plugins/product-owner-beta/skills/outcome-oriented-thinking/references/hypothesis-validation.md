@@ -205,11 +205,16 @@ Before launching, document:
 - Minimum sample size for conclusions
 - Evaluation timeframe
 
-### Use Control Groups When Possible
+### Choose Appropriate Experiment Design
 
-- A/B test: Random assignment to treatment vs. control
-- Before/after: Same population, different time periods (weaker)
-- Cohort comparison: Different user groups (risk of selection bias)
+Classic A/B testing is ideal but often impractical in GovTech contexts. Select the design that fits constraints:
+
+- **A/B test** - Random assignment (requires traffic, no policy constraints)
+- **Difference-in-differences** - Phased rollouts with comparison group
+- **Interrupted time series** - Before/after when no control group possible
+- **Cluster-randomized** - Randomize groups (offices, regions) not individuals
+
+For detailed guidance on all designs including geo-experiments, switchback, and interleaving, consult **`references/experiment-designs.md`**.
 
 ### Instrument Before Launching
 
@@ -224,6 +229,31 @@ Define ahead of time:
 - What if results are mixed (some metrics improve, others don't)?
 - What external factors might confound results?
 - What's the minimum detectable effect given sample size?
+
+## The "So What?" Test
+
+Apply this test when impact claims describe efficiency rather than effectiveness.
+
+**How it works:** Ask "So what?" until reaching a mission result leadership cares about.
+
+| Claim | Challenge | Keep Going |
+|-------|-----------|------------|
+| "Analysts save 2 hours/day" | So what? | "They can analyze more data" |
+| "They analyze more data" | So what? | "They catch 20% more fraud" |
+| "They catch 20% more fraud" | **Mission impact** | Stop |
+
+**Red flags triggering this test:**
+- "Time saved" as impact
+- "Effort reduced" as impact
+- "Faster processing" as impact
+
+These are valid **outcomes** (behavior changes) but not **impacts** (mission results). The hypothesis must complete the chain: efficiency enables effectiveness.
+
+**Fix pattern:**
+
+❌ `...and lead to 2 hours saved per analyst per day`
+
+✅ `...and lead to 20% more anomalies identified, catching $2M additional fraud monthly`
 
 ## Integration with Other Frameworks
 

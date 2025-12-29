@@ -151,6 +151,18 @@ Supporting outcomes don't immediately affect end users but enable faster, higher
 **Why separate these:**
 User-facing outcomes directly move mission metrics that stakeholders and customers care about.
 
+### Classification Rules
+
+When uncertain, apply these rules:
+
+| Behavior Change | Impact | Classification |
+|-----------------|--------|----------------|
+| External (end users/customers) | External | User-Facing |
+| Internal (employees/systems) | Internal | Supporting |
+| Internal (employees/systems) | External | User-Facing |
+
+The third case matters: internal process improvements that drive external mission results (e.g., manufacturing efficiency → revenue growth) are user-facing because the impact reaches customers or mission beneficiaries.
+
 ## Why Use Outcome-Oriented Roadmaps
 
 ### 1. Aligns Daily Work with Product Vision

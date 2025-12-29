@@ -1,6 +1,6 @@
 ---
 name: Outcome-Oriented Thinking
-description: This skill should be used when the user asks to "think outcome-first", "brainstorm solutions", "frame a problem", "define success criteria", "create a hypothesis", "map impact", "identify metrics", "avoid the feature factory", "plan a roadmap", "evaluate progress", "align stakeholders", wants to shift from outputs to outcomes, or is starting new work and needs to frame problems before designing solutions. Use when teams need to establish measurable criteria for validating hypotheses, communicate priorities as outcomes rather than deliverables, assess whether behavior changed, or build shared understanding around problems and success definitions. Helps teams focus on measurable behavior changes and mission impact rather than feature delivery.
+description: This skill should be used when the user asks to "think outcome-first", "brainstorm solutions", "frame a problem", "define success criteria", "create a hypothesis", "design an experiment", "map impact", "identify metrics", "avoid the feature factory", "plan a roadmap", "evaluate progress", "align stakeholders", wants to shift from outputs to outcomes, needs A/B testing alternatives for GovTech contexts, or is starting new work and needs to frame problems before designing solutions. Use when teams need to establish measurable criteria for validating hypotheses, communicate priorities as outcomes rather than deliverables, assess whether behavior changed, or build shared understanding around problems and success definitions. Helps teams focus on measurable behavior changes and mission impact rather than feature delivery.
 version: 0.1.0
 ---
 
@@ -130,7 +130,7 @@ Our hypothesis is valid if:
 ```
 
 **Key elements:**
-- **Quantified baselines** - "(from X to Y)" makes the change measurable
+- **Quantified baselines** - "(from X to Y)" makes the change measurable; prefer rates/ratios with percentage improvement: "from 40% to 75% (88% improvement)"
 - **Leading indicators** - Early signals that predict success
 - **Timeframes** - When to expect evidence
 
@@ -260,6 +260,7 @@ When brainstorming with teams, guide conversations toward outcomes:
 - **Metrics for metrics' sake** - Collecting data without tied decisions
 - **Premature optimization** - Solving symptoms without finding root causes
 - **Missing measurement** - Launching without success criteria
+- **Efficiency-as-impact trap** - Claiming "time saved" as mission impact (see "So What?" test in `references/hypothesis-validation.md`)
 
 ## Common Challenges
 
@@ -345,6 +346,7 @@ For detailed methodologies and examples, consult:
 - **`references/value-stream-mapping.md`** - Comprehensive VSM approach for identifying constraints
 - **`references/outcome-roadmaps.md`** - Outcome-oriented roadmap structure and hypothesis format
 - **`references/hypothesis-validation.md`** - Recognizing invalidation, pivot/persevere/kill decisions, evaluation timeframes, stakeholder communication
+- **`references/experiment-designs.md`** - A/B alternatives for GovTech contexts (difference-in-differences, interrupted time series, cluster-randomized, geo-experiments)
 
 ### Hypothesis Validation Reference
 
@@ -357,6 +359,9 @@ Load `references/hypothesis-validation.md` for these questions:
 | "Is it too early to declare failure?" | Clear invalidation signals vs. needs more time |
 | "Should we pivot or kill this?" | Pivot/persevere/kill decision framework |
 | "How do I communicate a failed hypothesis?" | Stakeholder framing language |
+| "What experiment design should I use?" | `references/experiment-designs.md` - Design selection guide |
+| "Can't do A/B testing, what are alternatives?" | `references/experiment-designs.md` - GovTech-appropriate designs |
+| "How do I run an experiment with phased rollout?" | `references/experiment-designs.md` - Difference-in-differences |
 
 ### Metrics Reference Files
 
