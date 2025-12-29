@@ -1,7 +1,14 @@
 {
   "permissions": {
     "deny": [
-      "Read(./.env)",
+      "Read(./.env*)",
+      "Read(**/.env*)",
+      "Edit(./.env*)",
+      "Edit(**/.env*)",
+      "Bash(env)",
+      "Bash(printenv)",
+      "Bash(export)",
+      "Bash(cat /proc/*/environ)",
       "Read(**/*.pem)",
       "Read(**/*.key)",
       "Read(**/*.p12)",

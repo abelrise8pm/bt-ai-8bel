@@ -41,50 +41,22 @@ Teams can configure project-level deny rules in `.claude/settings.json` to contr
 
 ### Configuration File
 
-Create `.claude/settings.json` in your project root:
+The starter includes a pre-configured [`.claude/settings.json`](../.claude/settings.json) with recommended deny rules that protect:
 
-```json
-{
-  "permissions": {
-    "deny": [
-      "Read(./.env)",
-      "Read(**/*.pem)",
-      "Read(**/*.key)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)"
-    ]
-  }
-}
-```
+- **Environment files and variables** - `.env` files and commands that dump environment variables (`env`, `printenv`, `export`, `/proc/*/environ`)
+- **Cryptographic material** - PEM certificates, private keys, PKCS#12 keystores
+- **Credential files** - Any file with "credentials" in the name
 
-### Recommended Defaults
-
-These rules protect sensitive files that should never be read by Claude:
-
-| Pattern | Purpose |
-|---------|---------|
-| `Read(./.env)` | Prevent reading environment files with secrets |
-| `Read(**/*.pem)` | Prevent reading SSL/TLS certificates |
-| `Read(**/*.key)` | Prevent reading private keys |
-| `Read(**/*.p12)` | Prevent reading PKCS#12 keystores |
-| `Read(**/*credentials*)` | Prevent reading credential files |
-
-### Optional Workflow Controls
-
-These are team preferences, not security controls. Use them to enforce human review points:
-
-| Pattern | Purpose |
-|---------|---------|
-| `Bash(git commit:*)` | Require human review of commits |
-| `Bash(git push:*)` | Require human to push changes |
-| `Bash(git rebase:*)` | Prevent automated rebasing |
-| `Bash(npm publish:*)` | Prevent automated npm publishing |
+Teams can customize this file to add workflow controls like blocking `git commit` or `git push` if human review is required.
 
 ### Pattern Syntax
 
 - `Read(<glob>)` - Block reading files matching the glob pattern
+- `Edit(<glob>)` - Block editing files matching the glob pattern
 - `Bash(<command>:*)` - Block bash commands matching the pattern
 - `mcp__.*` - Block all MCP tool calls (see [MCP section](#mcp-model-context-protocol-guidance))
+
+For complete documentation on permissions syntax, see the [Claude Code permissions documentation](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/settings#permissions).
 
 ### Deny List vs Security Controls
 
@@ -128,6 +100,23 @@ Different projects have different needs:
 
 MCP allows Claude to connect to external tools and services (databases, APIs, file systems) via configured servers. It enables powerful integrations but introduces risk if misconfigured.
 
+### Why MCP Requires Caution
+
+MCP servers introduce two significant security concerns:
+
+**1. Data Exfiltration Risk**
+
+MCP servers can bridge Claude's isolated environment to external services. If an MCP server connects to an external API, database, or service, it creates a potential path for sensitive data to leave the container - bypassing the firewall's protection.
+
+Example: An MCP server that connects to a cloud database could inadvertently send code snippets, environment variables, or other sensitive content to that external service.
+
+**2. Prompt Injection Risk**
+
+MCP servers that fetch external content (web pages, documents, API responses) can introduce prompt injection attacks. Malicious content retrieved by an MCP server could manipulate Claude's behavior, potentially causing it to:
+- Reveal sensitive information from the codebase
+- Execute unintended commands
+- Bypass other security controls
+
 ### Current State
 
 - **MCP is NOT enabled by default** - requires explicit configuration via `.mcp.json` or settings
@@ -139,8 +128,9 @@ MCP allows Claude to connect to external tools and services (databases, APIs, fi
 | Risk | Mitigation |
 |------|------------|
 | MCP server connects to external service | Firewall blocks this |
-| MCP server accesses local resources | Possible if configured |
-| Prompt injection exploits MCP tools | Risk exists for configured MCP servers |
+| MCP server accesses local resources | Possible if configured; use deny rules to limit scope |
+| Prompt injection via MCP-fetched content | Only use trusted MCP servers; avoid servers that fetch external content |
+| Data sent to MCP server endpoints | Firewall blocks external endpoints; audit local MCP server behavior |
 
 ### Team Options
 
@@ -210,65 +200,22 @@ Claude Code sends telemetry to Anthropic's services (Statsig, Sentry) by default
 
 ## Quick Reference
 
-### Example `.claude/settings.json`
+### Pattern Examples
 
-```json
-{
-  "permissions": {
-    "deny": [
-      "Read(./.env)",
-      "Read(**/*.pem)",
-      "Read(**/*.key)",
-      "Read(**/*.p12)",
-      "Read(**/*credentials*)"
-    ]
-  }
-}
-```
-
-### Adding Workflow Controls
-
-```json
-{
-  "permissions": {
-    "deny": [
-      "Read(./.env)",
-      "Read(**/*.pem)",
-      "Read(**/*.key)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)"
-    ]
-  }
-}
-```
-
-### Disabling MCP
-
-```json
-{
-  "permissions": {
-    "deny": [
-      "mcp__.*"
-    ]
-  }
-}
-```
-
-### Common Deny Patterns
+Use these patterns in `.claude/settings.json` to customize your deny list:
 
 | Pattern | Blocks |
 |---------|--------|
-| `Read(./.env)` | Reading .env file in project root |
-| `Read(**/*.env)` | Reading any .env file in project |
-| `Read(**/*.pem)` | Reading PEM certificate files |
-| `Read(**/*.key)` | Reading private key files |
-| `Read(**/*secret*)` | Reading files with "secret" in name |
+| `Read(./.env*)` | Reading .env files in project root |
+| `Read(**/.env*)` | Reading .env files anywhere in project |
+| `Edit(<glob>)` | Editing files matching the glob |
+| `Bash(env)` | Running the `env` command |
 | `Bash(git push:*)` | Git push commands |
 | `Bash(git commit:*)` | Git commit commands |
-| `Bash(rm -rf:*)` | Recursive delete commands |
-| `Bash(curl:*)` | Curl commands (already blocked by firewall) |
 | `mcp__.*` | All MCP tool calls |
-| `mcp__filesystem.*` | Filesystem MCP tools only |
+| `mcp__<server>.*` | Specific MCP server tools |
+
+See [`.claude/settings.json`](../.claude/settings.json) for the full recommended configuration.
 
 ---
 
