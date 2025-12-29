@@ -138,6 +138,21 @@ This structure makes assumptions explicit and defines success criteria upfront. 
 
 Hypotheses will be invalidated—this is learning, not failure. For guidance on recognizing invalidation, deciding to pivot/persevere/kill, and communicating to stakeholders, consult **`references/hypothesis-validation.md`**.
 
+#### From Hypothesis to Story
+
+Your hypothesis translates directly to a user story. Stories are hypotheses formatted for implementation:
+
+| Hypothesis Element | Story Element |
+|-------------------|---------------|
+| Actor (from impact mapping) | "As a [persona]" |
+| Deliverable/solution | "I want [capability]" |
+| Behavior change / mission impact | "so that [outcome]" |
+| Leading indicators | Acceptance criteria |
+
+The story inherits its "why" from the hypothesis. When stories are born from hypotheses, they are outcome-oriented by design.
+
+For detailed transformation examples and story formats, consult **`references/hypothesis-to-story.md`**.
+
 ### 6. Build Outcome-Oriented Roadmaps
 
 Communicate plans as experiments, not commitments to specific features. Each roadmap item should include:
