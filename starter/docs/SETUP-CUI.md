@@ -86,17 +86,39 @@ aws sso login --profile claude-bedrock
 
 # 2. Export credentials for container use
 aws configure export-credentials --profile claude-bedrock --format env-no-export > .env.bedrock
+
+# 3. Rebuild the container to load new credentials
+# In VSCode: Cmd/Ctrl + Shift + P → "Dev Containers: Rebuild Container"
 ```
 
-**NOTE:** You must rebuild the container every time you log back in again.
+**⚠️ IMPORTANT:** You **must rebuild the container** after refreshing credentials. The container only reads `.env.bedrock` during startup. If you don't rebuild, you'll get authentication errors even though your credentials are fresh.
 
 ## Troubleshooting
+
+### "403 The security token included in the request is expired" error:
+
+This is the most common error and means your AWS credentials have expired (8-hour limit).
+
+**Solution:**
+```bash
+# 1. Refresh your AWS credentials
+aws sso login --profile claude-bedrock
+aws configure export-credentials --profile claude-bedrock --format env-no-export > .env.bedrock
+
+# 2. Rebuild the container
+# In VSCode: Cmd/Ctrl + Shift + P → "Dev Containers: Rebuild Container"
+```
+
+**Why this happens:** The container reads `.env.bedrock` only at startup. Even if you refresh credentials, the running container still has the old expired tokens. Rebuilding loads the fresh credentials.
 
 ### "No credentials found" error:
 ```bash
 # Re-authenticate and export fresh credentials
 aws sso login --profile claude-bedrock
 aws configure export-credentials --profile claude-bedrock --format env-no-export > .env.bedrock
+
+# Then rebuild the container
+# In VSCode: Cmd/Ctrl + Shift + P → "Dev Containers: Rebuild Container"
 ```
 
 ### "Access denied" for Bedrock:
