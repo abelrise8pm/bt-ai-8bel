@@ -37,6 +37,13 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 29, 2025
+
+### Changed
+- Clarify AWS Bedrock token expiration and container rebuild requirement in CUI setup documentation, adding prominent troubleshooting section for common "403 expired token" error ([e256ba4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/e256ba4))
+
+---
+
 ## December 25, 2025
 
 ### Changed
