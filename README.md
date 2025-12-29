@@ -8,6 +8,20 @@ A monorepo containing the AI assistant base container and starter template for p
 - [`starter/`](starter/) - Starter template for project teams
 - [`plugins/`](plugins/) - Claude Code plugin marketplace ([skill development guide](docs/SKILL-DEVELOPMENT.md))
 
+## Quick Start
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/rise8-us/xpai-ai-assistant-container.git
+   cd xpai-ai-assistant-container
+   ```
+
+2. Copy the environment file and add your API key:
+   ```bash
+   cp .env.example .env
+   # Edit .env and set ANTHROPIC_API_KEY
+   ```
+
 ## Integrating AI Assistant into an Existing Repository
 
 If you have an existing repository and want to add AI Assistant capabilities to it, use our integration script:
