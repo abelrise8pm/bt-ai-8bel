@@ -1,6 +1,6 @@
 ---
 name: review-pr
-description: Autonomously respond to GitHub pull request feedback. Use when asked to analyze PR comments, review PR feedback, respond to PR comments, fix PR issues, or address PR feedback. Accepts PR URLs (https://github.com/owner/repo/pull/123), short format (owner/repo#123), or PR number (123). Automatically applies fixes, creates detailed commit with analysis, and pushes to PR branch.
+description: Autonomously respond to GitHub pull request feedback in an isolated git worktree. Use when asked to analyze PR comments, review PR feedback, respond to PR comments, fix PR issues, or address PR feedback. Accepts PR URLs (https://github.com/owner/repo/pull/123), short format (owner/repo#123), or PR number (123). Creates isolated worktree, applies fixes, commits, pushes to PR branch, and cleans up.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, TodoWrite
 ---
 
@@ -9,14 +9,18 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, TodoWrite
 ## Purpose
 
 This skill automates the process of responding to pull request feedback by:
-1. Extracting and analyzing all PR review comments (human + bot)
-2. Categorizing feedback as fix/no fix/why
-3. Automatically applying fixes
-4. Creating comprehensive commit messages with analysis
-5. Pushing changes to the PR branch
-6. Outputting formatted comment for human to post on GitHub
+1. Creating an isolated git worktree for the PR branch
+2. Extracting and analyzing all PR review comments (human + bot)
+3. Categorizing feedback as fix/no fix/why
+4. Automatically applying fixes in the worktree
+5. Creating comprehensive commit messages with analysis
+6. Pushing changes to the PR branch
+7. Cleaning up the worktree on success
+8. Outputting formatted comment for human to post on GitHub
 
 **Key principle**: Fully autonomous operation - make all decisions and apply all fixes automatically. Humans review on GitHub PR, not in CLI.
+
+**Worktree isolation**: Work happens in `.worktrees/pr-{number}/`, enabling multiple concurrent PR reviews without affecting the main workspace.
 
 **Output**: Terminal summary + formatted GitHub comment ready to copy/paste
 
@@ -92,7 +96,54 @@ gh api repos/{owner}/{repo}/pulls/{number}/comments
 gh pr view <pr-ref> --comments
 ```
 
-### Step 2: Analyze Comments
+### Step 2: Setup Git Worktree
+
+Create an isolated worktree for the PR branch. This keeps work separate from the main workspace and enables concurrent PR reviews.
+
+#### 2a. Track Main Workspace
+
+Before creating or entering a worktree, save the main workspace path for later cleanup:
+```bash
+MAIN_WORKSPACE=$(git rev-parse --show-toplevel)
+```
+
+#### 2b. Check for Existing Worktree
+
+```bash
+git worktree list | grep "pr-{number}"
+```
+
+If a worktree exists for this PR, reuse it:
+```bash
+cd "$MAIN_WORKSPACE/.worktrees/pr-{number}"
+git fetch origin
+git checkout {headRefName}
+git pull origin {headRefName}
+```
+
+#### 2c. Create New Worktree
+
+Create worktree from the PR branch (using `headRefName` from Step 1a):
+```bash
+git fetch origin
+git worktree add .worktrees/pr-{number} origin/{headRefName}
+cd "$MAIN_WORKSPACE/.worktrees/pr-{number}"
+```
+
+**Directory convention**: `.worktrees/pr-{number}/`
+
+#### 2d. Verify Setup
+
+```bash
+git branch  # Should show PR branch
+pwd         # Should be in .worktrees/pr-{number}
+```
+
+All subsequent work happens inside the worktree directory.
+
+---
+
+### Step 3: Analyze Comments
 
 For each comment:
 1. **Identify the concern**: What is the reviewer asking for?
@@ -111,7 +162,7 @@ For each comment:
 - Code quality principles
 - Security best practices
 
-### Step 3: Apply Fixes Automatically
+### Step 4: Apply Fixes Automatically
 
 For each "Fix" item:
 1. Read the affected files
@@ -121,7 +172,7 @@ For each "Fix" item:
 
 **Critical**: Apply ALL fixes without confirmation. Speed is the goal. Humans will review on GitHub.
 
-### Step 4: Create Comprehensive Commit Message
+### Step 5: Create Comprehensive Commit Message
 
 Use this format (based on PR #121 analysis pattern):
 
@@ -161,20 +212,46 @@ REFERENCES:
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ```
 
-### Step 5: Commit and Push
+### Step 6: Commit, Push, and Cleanup
+
+#### 6a. Commit and Push
 
 ```bash
 # Stage all changes
 git add <files>
 
 # Create commit with analysis message
-git commit -m "<message from Step 4>"
+git commit -m "<message from Step 5>"
 
 # Push to PR branch
-git push origin <head-ref-name>
+git push origin {headRefName}
 ```
 
-### Step 6: Output PR Comment for Manual Posting
+#### 6b. Cleanup Worktree (On Successful Push Only)
+
+Only cleanup after successful push. Return to main workspace and remove the worktree:
+
+```bash
+cd "$MAIN_WORKSPACE"
+git worktree remove .worktrees/pr-{number}
+```
+
+Confirm cleanup:
+```bash
+git worktree list
+```
+
+If cleanup fails due to uncommitted changes:
+```bash
+# Force removal if changes are already pushed
+git worktree remove --force .worktrees/pr-{number}
+```
+
+**If push fails**, keep the worktree for debugging:
+> Push failed. Keeping worktree at `.worktrees/pr-{number}` for debugging.
+> Error: {error_message}
+
+### Step 7: Output PR Comment for Manual Posting
 
 Generate a formatted comment for the user to copy/paste into GitHub:
 
@@ -338,24 +415,48 @@ gh auth status
 **No feedback at all**:
 - Report: "No review comments found on this PR."
 - Do NOT create an empty commit
+- Clean up worktree if created
+
+**Worktree creation fails**:
+If `git worktree add` fails due to existing branch:
+```bash
+# Check if worktree already exists
+git worktree list | grep pr-{number}
+
+# If it does, cd into it and pull latest
+cd "$MAIN_WORKSPACE/.worktrees/pr-{number}"
+git fetch origin
+git checkout {headRefName}
+git pull origin {headRefName}
+```
+
+**Working outside repository root**:
+If CWD is not the repository root when starting:
+```bash
+# Find repository root first
+MAIN_WORKSPACE=$(git rev-parse --show-toplevel)
+cd "$MAIN_WORKSPACE"
+```
 
 ## Success Criteria
 
 After running this skill:
-1. ✅ All feedback items categorized (fix/no fix/why)
-2. ✅ All "fix" items applied automatically
-3. ✅ Commit created with comprehensive analysis
-4. ✅ Commit pushed to PR branch
-5. ✅ Commit message includes:
+1. ✅ Worktree created or reused for PR branch
+2. ✅ All feedback items categorized (fix/no fix/why)
+3. ✅ All "fix" items applied automatically in worktree
+4. ✅ Commit created with comprehensive analysis
+5. ✅ Commit pushed to PR branch
+6. ✅ Worktree cleaned up (on successful push)
+7. ✅ Commit message includes:
    - Status of each feedback item
    - Locations of changes
    - References to similar past work
    - Key takeaways for future
-6. ✅ Terminal summary output showing counts and merge recommendation
-7. ✅ Formatted comment output ready to copy/paste into GitHub
-8. ✅ "How I verified this" included for all "No Fix Needed" items
-9. ✅ Clear merge recommendation (READY/NOT READY/NEEDS DISCUSSION)
-10. ✅ No questions asked to user - fully autonomous
+8. ✅ Terminal summary output showing counts and merge recommendation
+9. ✅ Formatted comment output ready to copy/paste into GitHub
+10. ✅ "How I verified this" included for all "No Fix Needed" items
+11. ✅ Clear merge recommendation (READY/NOT READY/NEEDS DISCUSSION)
+12. ✅ No questions asked to user - fully autonomous
 
 ## Output to User
 
@@ -371,6 +472,7 @@ Needs discussion: 0 items
 
 Commit: abc1234 "fix(starter): address PR #123 feedback"
 Pushed to branch: feature-branch
+Worktree cleaned up: .worktrees/pr-123
 Merge recommendation: READY TO MERGE
 
 📋 Copy the formatted comment below and paste into PR #123:
@@ -378,7 +480,7 @@ Merge recommendation: READY TO MERGE
 
 ### Part 2: Formatted Comment (ready to paste into GitHub)
 ```markdown
-[Output the complete formatted comment from Step 6 here]
+[Output the complete formatted comment from Step 7 here]
 ```
 
 **User workflow:**
@@ -434,6 +536,8 @@ This enables logic like: "Stop iterating if only human comments remain unresolve
 ## Notes
 
 - This skill operates fully autonomously - zero human prompts
+- Work happens in isolated worktree `.worktrees/pr-{number}/`, enabling concurrent PR reviews
+- Worktrees are cleaned up after successful push; kept for debugging on failure
 - Commits can be iterative as feedback is addressed over time
 - Commits can be squashed before merging to main if desired
 - Git history is consulted for consistency
