@@ -5,6 +5,8 @@
     "platform-engineer-beta@local-dev": true,
     "product-owner-beta@local-dev": true,
     "release-engineer-beta@local-dev": true,
-    "software-engineer-beta@local-dev": true
+    "software-engineer-beta@local-dev": true,
+    "hookify@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true
   }
 }
