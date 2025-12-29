@@ -7,6 +7,16 @@ description: Interactively refine a GitHub issue by asking clarifying questions 
 
 Interactively gather missing information for a GitHub issue and post a refined story as a comment.
 
+## Scope
+
+This skill handles **tactical refinement** - filling in missing details for stories that have clear intent and outcome orientation. It addresses gaps like:
+- Missing acceptance criteria
+- Unclear scope boundaries
+- Unspecified edge cases
+- Ambiguous requirements
+
+**This skill does NOT handle strategic gaps.** If a story lacks outcome orientation (no behavior change stated, no measurable success criteria, solution without problem), outcome framing must happen first. See "When to Stop and Frame Outcomes First" below.
+
 ## Workflow
 
 1. **Parse input**: Accept GitHub issue URL or `owner/repo#number` format
@@ -46,6 +56,29 @@ Ask direct, specific questions as plain text in your response. Do NOT use the As
 
 ### Naming Decisions
 If the proposed name for a feature, skill, or component changes during refinement, explicitly confirm: "So we're going with `[new-name]` instead of `[old-name]` - correct?"
+
+## When to Stop and Frame Outcomes First
+
+Before diving into tactical refinement, check if the story has outcome orientation. **Stop refinement** if you detect these signals:
+
+| Signal | Example | What's Missing |
+|--------|---------|----------------|
+| Solution without problem | "Implement caching" | Why? What problem does this solve? |
+| Circular "so that" | "so that I can export data" | Describes feature, not outcome |
+| No behavior change | "Users will have a dashboard" | How will users act differently? |
+| No success criteria | "Improve performance" | How will we measure success? |
+| Feature-only description | "Add search functionality" | What outcome does this enable? |
+
+**When these signals appear:**
+
+1. Pause tactical refinement
+2. Inform the user: "This story describes a solution but I don't see the underlying problem or desired outcome. Before refining the details, let's establish:
+   - What problem are we solving?
+   - What behavior will change if this works?
+   - How will we measure success?"
+3. Work through outcome framing before returning to tactical refinement
+
+**Do not** attempt to bolt outcomes onto an output-focused story during refinement. The outcome framing needs to happen first, then refinement can fill in tactical details.
 
 ## INVEST Principles
 
@@ -95,7 +128,7 @@ THEN a CSV file downloads containing their usage data from the last 30 days
 **Type:** Feature | Bug | Chore
 
 **Story:**
-As a [persona], I want [capability] so that [benefit/impact].
+As a [persona], I want [capability] so that [behavior change / measurable impact].
 
 **Acceptance Criteria:**
 
@@ -106,6 +139,10 @@ As a [persona], I want [capability] so that [benefit/impact].
 2. **GIVEN** [starting condition]
    **WHEN** [user action]
    **THEN** [expected result]
+
+**Success Metrics:**
+- Leading: [Early signal that predicts success - e.g., "Feature adoption rate reaches 50% within 2 weeks"]
+- Lagging: [Confirmation of impact - e.g., "Support tickets reduced by 30% within 60 days"]
 
 **Out of Scope:**
 - [What's explicitly NOT included]
@@ -137,7 +174,16 @@ If confirmed, post using:
 gh issue comment {number} --repo {owner}/{repo} --body "{refined_story}"
 ```
 
-## Scope
+## Skill Boundaries
 
-**Do**: Ask clarifying questions, gather information, draft refined story following INVEST, post comment with user approval
-**Don't**: Make assumptions about missing info, ask multiple questions at once, post without confirmation
+**Do**:
+- Ask clarifying questions one at a time
+- Gather tactical details (AC, scope, edge cases)
+- Draft refined story following INVEST with success metrics
+- Post comment with user approval
+
+**Don't**:
+- Make assumptions about missing info
+- Ask multiple questions at once
+- Post without confirmation
+- Attempt tactical refinement on stories lacking outcome orientation (frame outcomes first)
