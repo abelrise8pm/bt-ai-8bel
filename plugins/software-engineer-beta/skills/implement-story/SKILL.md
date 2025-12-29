@@ -1,6 +1,7 @@
 ---
 name: implement-story
 description: This skill should be used when the user asks to "implement issue", "implement story", "work on issue", "start issue", or provides a GitHub issue URL to implement. Creates an isolated git worktree, implements the story with tests, commits, pushes, and cleans up.
+version: 0.1.0
 ---
 
 # Story Implementation
@@ -128,55 +129,38 @@ Identify:
 
 ## 5. Implement with Tests
 
-### Testing Philosophy
+Follow test-driven implementation: write test, see it fail, implement, see it pass, refactor.
 
-- Tests validate expected behavior and serve as living documentation
-- Tests should fail for the right reasons, pinpointing what's broken
-- Tests enable safe refactoring with confidence
-- Follow the testing pyramid: many unit tests, moderate integration, few E2E
-
-### Implementation Cycle
-
-1. Write test capturing acceptance criterion
+For each acceptance criterion:
+1. Write test capturing the criterion
 2. Run test (should fail)
 3. Implement minimum code to pass
 4. Run test (should pass)
 5. Refactor if needed
-6. Repeat for next criterion
 
 ```bash
 {test_command}  # e.g., npm test, pytest, go test
 ```
 
+See `references/testing-philosophy.md` for testing pyramid, naming conventions, and best practices.
+
 ---
 
 ## 6. Commit Strategy
 
-Follow atomic commit principles. Never mix structural and behavioral changes.
+Follow atomic commit principles. **Never mix structural and behavioral changes.**
 
-**Structural changes** (refactoring):
 ```bash
-git add {files}
-git commit -m "refactor: {what changed structurally}"
-```
+# Structural changes (refactoring)
+git commit -m "refactor(scope): {what changed}"
 
-**Behavioral changes** (features):
-```bash
-git add {files}
-git commit -m "feat: {what capability was added}"
-```
-
-### Commit Message Format
-
-```
-<type>(<scope>): <description>
-
-[optional body explaining why]
-
-Closes #{issue_number}
+# Behavioral changes (features)
+git commit -m "feat(scope): {what capability was added}"
 ```
 
 Types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
+
+See `references/commit-conventions.md` for detailed format and examples.
 
 ---
 
@@ -267,25 +251,12 @@ Keep user informed at milestones:
 
 > The criterion "{criterion}" is ambiguous. Specifically: {what's unclear}. How should I interpret this?
 
-### Worktree Creation Fails
+### Worktree Issues
 
-If `git worktree add` fails due to existing branch:
-```bash
-# Check if branch exists
-git branch -a | grep feature/issue-{number}
-
-# If remote branch exists, create worktree tracking it
-git worktree add .worktrees/issue-{number} feature/issue-{number}-{slug}
-```
-
-### Working Outside Repository Root
-
-If CWD is not the repository root when starting:
-```bash
-# Find repository root
-git rev-parse --show-toplevel
-cd $(git rev-parse --show-toplevel)
-```
+See `references/git-worktree-guide.md` for troubleshooting:
+- Branch already exists
+- Worktree directory already exists
+- Uncommitted changes blocking removal
 
 ---
 
@@ -305,3 +276,15 @@ cd $(git rev-parse --show-toplevel)
 - Skip tests for "simple" changes
 - Cleanup worktree if push failed (keep for debugging)
 - Mix refactoring with feature changes in commits
+
+---
+
+## Additional Resources
+
+### Reference Files
+
+For detailed guidance on specific topics:
+
+- **`references/testing-philosophy.md`** - Testing pyramid, test naming, AAA pattern, common antipatterns
+- **`references/commit-conventions.md`** - Conventional commits format, atomic commits, examples
+- **`references/git-worktree-guide.md`** - Worktree commands, troubleshooting, best practices
