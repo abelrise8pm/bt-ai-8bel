@@ -136,6 +136,11 @@ RUN echo '# Run Claude Code initialization once at first login' >> /home/aiAssis
 # ==================================================================
 # CLAUDE CODE OPENTELEMETRY CONFIGURATION
 # ==================================================================
+# Disable non-essential traffic to Anthropic (Sentry, Statsig, /bug command)
+# This does NOT affect API calls to Claude or Rise8's OTEL telemetry collection
+# See https://code.claude.com/docs/en/data-usage
+ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
 # Enables telemetry export to Rise8's OTEL collector for monitoring
 # Claude Code usage metrics (tokens, cost, sessions, commits, PRs).
 # See https://docs.anthropic.com/en/docs/claude-code/telemetry
