@@ -139,3 +139,4 @@ aws configure sso --profile claude-bedrock
 🔄 **Automatic refresh** - 8-hour credential rotation for security
 🏠 **Local only** - No cloud development environments
 🔐 **Minimal permissions** - Only Bedrock model access, zero container capabilities
+⚡ **Prompt Caching** - Enabled by default (FedRAMP High authorized); disable by adding `DISABLE_PROMPT_CACHING=1` to `.env` if needed
