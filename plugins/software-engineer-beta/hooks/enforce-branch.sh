@@ -8,9 +8,22 @@ input=$(cat)
 tool_name=$(echo "$input" | jq -r '.tool_name // ""')
 command=$(echo "$input" | jq -r '.tool_input.command // ""')
 
+# Determine the git directory context based on the tool being used
+# This enables support for git worktrees by checking the branch of the
+# target file's repository, not the current working directory
+git_dir="."
+
 # Only check for Edit, Write, or git commit commands
 case "$tool_name" in
   Edit|Write)
+    # Extract target file path and use its directory for git context
+    file_path=$(echo "$input" | jq -r '.tool_input.file_path // ""')
+    if [[ -n "$file_path" ]]; then
+      target_dir="$(dirname "$file_path")"
+      if [[ -d "$target_dir" ]]; then
+        git_dir="$target_dir"
+      fi
+    fi
     ;;
   Bash)
     if [[ ! "$command" =~ ^git\ commit ]]; then
@@ -22,8 +35,9 @@ case "$tool_name" in
     ;;
 esac
 
-# Get current branch
-current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+# Get current branch for the target file's git repository
+# Using -C to run git commands in the context of the target directory
+current_branch=$(git -C "$git_dir" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
 
 if [[ -z "$current_branch" ]]; then
   exit 0  # Not in a git repo, allow
@@ -42,11 +56,11 @@ EOF
 fi
 
 # Check 2: Branch must be based on origin/main
-if ! git rev-parse --verify origin/main &>/dev/null; then
+if ! git -C "$git_dir" rev-parse --verify origin/main &>/dev/null; then
   exit 0  # No origin/main, skip this check
 fi
 
-if ! git merge-base --is-ancestor origin/main HEAD 2>/dev/null; then
+if ! git -C "$git_dir" merge-base --is-ancestor origin/main HEAD 2>/dev/null; then
   cat >&2 << EOF
 ERROR: Branch '$current_branch' is not based on origin/main.
 

@@ -10,3 +10,5 @@ ai-assistant-onboard.log
 # all .trivyignore files. It should not be committed to version control.
 # See: https://github.com/aquasecurity/trivy-action/blob/master/entrypoint.sh
 trivyignores
+
+.worktrees/
