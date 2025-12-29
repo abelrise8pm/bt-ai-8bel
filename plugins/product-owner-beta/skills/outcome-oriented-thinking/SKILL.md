@@ -10,6 +10,8 @@ version: 0.1.0
 
 This skill guides teams to think outcome-first when solving problems and brainstorming solutions. It shifts focus from outputs (features built) to outcomes (behavior changes achieved), ensuring work connects to measurable mission impact.
 
+**Terminology note:** This skill uses "mission impact" throughout. In commercial contexts, read this as "business impact"—the underlying concept is identical.
+
 ## Core Principle: Outcomes Over Outputs
 
 **Outputs** are things built or delivered (features, services, products).
@@ -43,7 +45,7 @@ I'm trying to [goal]
 but [problem/challenge]
 because [root cause]
 which makes me feel [emotion]
-and contributes to [business impact]
+and contributes to [mission impact]
 ```
 
 **Or the streamlined format:**
@@ -105,23 +107,36 @@ Establish how success will be measured. Use a balanced approach with both leadin
 - **Ratio metrics** - Comparative relationships (conversion rate %, on-time delivery %)
 - **Composite metrics** - Blended indicators when success is multidimensional
 
-For detailed metrics guidance, consult **`references/metrics.md`**.
+For detailed metrics guidance, consult the metrics references:
+- **`references/metrics-fundamentals.md`** - Defining good metrics, AAA framework, OMMTM, leading vs lagging
+- **`references/metrics-types.md`** - Rate/ratio construction, composite metrics
+- **`references/metrics-catalog.md`** - Specific metrics by category (DORA, flow, user, domain examples)
+- **`references/metrics-maturity.md`** - Assessing team metrics capability
 
 ### 5. Frame Hypotheses
 
 Convert ideas into testable hypotheses connecting outputs to outcomes.
 
-**Hypothesis format:**
+**Canonical hypothesis format:**
 
 ```
-We believe [outputs/solutions]
-will drive [behavior change]
-and lead to [mission impact]
+We believe [deliverable/solution]
+will drive [behavior change] (from X to Y)
+and lead to [mission impact] (from X to Y)
 
-Our hypothesis is valid if [quantitative/qualitative measures]
+Our hypothesis is valid if:
+- [Leading indicator with target and timeframe]
+- [Leading indicator with target and timeframe]
 ```
+
+**Key elements:**
+- **Quantified baselines** - "(from X to Y)" makes the change measurable
+- **Leading indicators** - Early signals that predict success
+- **Timeframes** - When to expect evidence
 
 This structure makes assumptions explicit and defines success criteria upfront. It enables learning-driven iteration rather than feature-factory production.
+
+Hypotheses will be invalidated—this is learning, not failure. For guidance on recognizing invalidation, deciding to pivot/persevere/kill, and communicating to stakeholders, consult **`references/hypothesis-validation.md`**.
 
 ### 6. Build Outcome-Oriented Roadmaps
 
@@ -145,8 +160,60 @@ Choose the right framework based on the situation:
 | Understanding the problem space | Problem Statement Framing | `references/problem-framing.md` |
 | Connecting work to strategic goals | Impact Mapping | `references/impact-mapping.md` |
 | Identifying process bottlenecks | Value Stream Mapping | `references/value-stream-mapping.md` |
-| Defining success metrics | Data & Metrics Collection | `references/metrics.md` |
+| Defining success metrics | Data & Metrics Collection | `references/metrics-fundamentals.md` |
 | Communicating strategic plans | Outcome-Oriented Roadmaps | `references/outcome-roadmaps.md` |
+
+## How the Frameworks Connect
+
+The frameworks in this skill form an integrated system. Each builds on the others:
+
+```
+Problem Statement Framing
+    ↓ Identifies problems and affected actors
+Impact Mapping
+    ↓ Connects problems to outcomes and deliverables
+Value Stream Mapping
+    ↓ Identifies process constraints to address
+Data & Metrics Collection
+    ↓ Defines how to measure success
+Outcome-Oriented Roadmaps
+    ↓ Communicates priorities and hypotheses
+```
+
+### Typical Flow
+
+1. **Start with Problem Statement Framing** when you need to understand what problem exists and who experiences it. The problem statement becomes the foundation for all other work.
+
+2. **Use Impact Mapping** to connect the problem to mission impact and identify which actors need to change behavior. The problem statement's "mission impact" becomes the Impact Map's goal.
+
+3. **Apply Value Stream Mapping** when the problem involves process inefficiency. VSM reveals constraints; the constraint becomes the focus for improvement.
+
+4. **Design Metrics** using guidance from Data & Metrics Collection. The outcomes from Impact Mapping become the behaviors to measure. VSM metrics like Lead Time and %C&A inform process health.
+
+5. **Build Outcome-Oriented Roadmaps** to communicate priorities. Each roadmap item includes the problem, hypothesis, outcomes, and impact from earlier frameworks.
+
+### Framework Integration Points
+
+| From | To | What Transfers |
+|------|-----|----------------|
+| Problem Framing | Impact Mapping | Mission impact becomes the goal; affected actors become the actors layer |
+| Impact Mapping | Metrics | Outcomes become behaviors to measure; impact becomes lagging indicators |
+| Impact Mapping | Roadmaps | Deliverables become hypotheses; outcomes become success criteria |
+| VSM | Problem Framing | Bottleneck becomes the problem context |
+| VSM | Metrics | LT, PT, %C&A inform delivery health metrics |
+| Metrics | Roadmaps | Leading/lagging indicators define "hypothesis is valid if" |
+
+### Choosing Your Entry Point
+
+Not every situation requires all frameworks:
+
+- **New initiative with unclear problem**: Start with Problem Statement Framing
+- **Strategic alignment needed**: Start with Impact Mapping
+- **Process inefficiency suspected**: Start with Value Stream Mapping
+- **Stakeholder communication needed**: Start with Outcome-Oriented Roadmaps
+- **Need to define success**: Start with Data & Metrics Collection
+
+After using one framework, follow the connections to determine what else is needed.
 
 ## Facilitating Outcome-Oriented Conversations
 
@@ -212,6 +279,61 @@ Response: Use leading indicators to predict outcomes early. Lagging indicators v
 
 Response: Outcome-oriented thinking prevents wasted effort on wrong solutions. Time spent framing problems and defining success saves delivery time.
 
+## Tracking Assumptions
+
+Every hypothesis contains assumptions. Track them explicitly to learn faster and avoid building on false beliefs.
+
+### What Are Assumptions?
+
+Assumptions are beliefs we hold to be true but haven't validated. They exist in every layer of outcome-oriented work:
+
+- **Problem assumptions**: "Users experience this pain because..."
+- **Actor assumptions**: "This persona has the authority to..."
+- **Outcome assumptions**: "If we change this behavior, it will lead to..."
+- **Solution assumptions**: "This deliverable will enable the behavior change..."
+
+### Why Track Assumptions?
+
+- **Prioritize learning**: Test the riskiest assumptions first
+- **Avoid wasted effort**: Don't build on beliefs that prove false
+- **Enable pivots**: Know when to change direction
+- **Share context**: Help the team understand what's uncertain
+
+### Simple Assumptions Tracking Format
+
+Maintain a living document or board section with assumptions:
+
+```
+| Assumption | Risk Level | Evidence Needed | Status |
+|------------|------------|-----------------|--------|
+| Veterans don't know which evidence is required | High | User research interviews | Validated |
+| Pre-submission checklist will be used 70%+ | Medium | Usage analytics post-launch | Testing |
+| Reduced evidence requests → faster processing | High | Correlation analysis | Untested |
+```
+
+### Risk Levels
+
+- **High risk**: If wrong, invalidates the hypothesis or requires major pivot
+- **Medium risk**: If wrong, requires adjustment but not abandonment
+- **Low risk**: If wrong, minor impact on approach
+
+### Assumption Lifecycle
+
+1. **Identify**: Surface assumptions when framing problems and hypotheses
+2. **Prioritize**: Focus on high-risk assumptions first
+3. **Test**: Design lightweight experiments to gather evidence
+4. **Update**: Mark as validated, invalidated, or needs more evidence
+5. **Act**: Pivot if invalidated; proceed if validated
+
+### When to Track Assumptions
+
+- During problem statement framing: "What do we believe about the root cause?"
+- During impact mapping: "What do we assume about actor behaviors?"
+- During hypothesis formation: "What must be true for this to work?"
+- After releases: "Did our assumptions hold? What did we learn?"
+
+Continuous assumptions tracking is a core practice that connects problem framing to learning and iteration.
+
 ## Additional Resources
 
 ### Reference Files
@@ -221,8 +343,40 @@ For detailed methodologies and examples, consult:
 - **`references/problem-framing.md`** - Complete problem statement framework with templates and examples
 - **`references/impact-mapping.md`** - Full impact mapping methodology and facilitation guide
 - **`references/value-stream-mapping.md`** - Comprehensive VSM approach for identifying constraints
-- **`references/metrics.md`** - Detailed guidance on leading/lagging indicators, rate/ratio/composite metrics
 - **`references/outcome-roadmaps.md`** - Outcome-oriented roadmap structure and hypothesis format
+- **`references/hypothesis-validation.md`** - Recognizing invalidation, pivot/persevere/kill decisions, evaluation timeframes, stakeholder communication
+
+### Hypothesis Validation Reference
+
+Load `references/hypothesis-validation.md` for these questions:
+
+| Question Type | Why This Reference |
+|---------------|-------------------|
+| "How long should I run this experiment?" | Timeframes for Evaluation table by metric type |
+| "When do I check lagging indicators?" | Minimum evaluation periods (30 days to 2 quarters) |
+| "Is it too early to declare failure?" | Clear invalidation signals vs. needs more time |
+| "Should we pivot or kill this?" | Pivot/persevere/kill decision framework |
+| "How do I communicate a failed hypothesis?" | Stakeholder framing language |
+
+### Metrics Reference Files
+
+Load the appropriate metrics reference based on the question:
+
+| Question Type | Load This Reference |
+|---------------|---------------------|
+| "How do I define a good metric?" | `references/metrics-fundamentals.md` |
+| "What's an OMMTM?" | `references/metrics-fundamentals.md` |
+| "What's the difference between leading and lagging?" | `references/metrics-fundamentals.md` |
+| "How do I set up a metrics program?" | `references/metrics-fundamentals.md` |
+| "How do I create a rate or ratio metric?" | `references/metrics-types.md` |
+| "How do I build a composite metric?" | `references/metrics-types.md` |
+| "What denominator should I use?" | `references/metrics-types.md` |
+| "What are DORA metrics?" | `references/metrics-catalog.md` |
+| "What flow metrics should we track?" | `references/metrics-catalog.md` |
+| "What user engagement metrics matter?" | `references/metrics-catalog.md` |
+| "Give me example metrics for healthcare/government" | `references/metrics-catalog.md` |
+| "How mature is our metrics capability?" | `references/metrics-maturity.md` |
+| "Where should we improve our metrics practice?" | `references/metrics-maturity.md` |
 
 ### Example Files
 
@@ -236,7 +390,7 @@ After establishing outcome-oriented thinking:
 
 1. **Frame the problem** using templates in `references/problem-framing.md`
 2. **Map impact** using methodology in `references/impact-mapping.md`
-3. **Define metrics** using guidance in `references/metrics.md`
+3. **Define metrics** using guidance in `references/metrics-fundamentals.md`
 4. **Build hypotheses** and create outcome-oriented roadmaps
 5. **Test and iterate** based on measured behavior changes
 

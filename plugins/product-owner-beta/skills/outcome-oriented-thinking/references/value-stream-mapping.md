@@ -143,7 +143,13 @@ Before the session, ensure:
 
 ✅ **Clear mission objectives** - What value stream are we mapping?
 
-✅ **Cross-functional participants** - Include everyone who touches the process
+✅ **Cross-functional participants** - Include representatives from:
+   - Customer Leadership (government organization leader)
+   - Buyer (responsible for contract decisions)
+   - Mission Owner (represents mission interests)
+   - User Community (leader, proxy, or member)
+   - Frontline workers and process owners from each step
+   - Representatives from edges (QA, Ops, Compliance)
 
 ✅ **Physical or virtual workspace** - Whiteboard, sticky notes, or Figjam/Miro board
 

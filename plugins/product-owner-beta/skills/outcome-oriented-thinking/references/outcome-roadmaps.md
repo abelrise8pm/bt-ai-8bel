@@ -42,12 +42,7 @@ Current impact: 60% of claims require evidence requests; average processing time
 
 **Purpose:** State beliefs about how solutions drive behavior changes and lead to mission impact
 
-**Format:**
-```
-We believe [outputs/solutions]
-will drive [behavior change]
-and lead to [mission impact]
-```
+Use the canonical hypothesis format from SKILL.md, which includes quantified baselines "(from X to Y)" and leading indicators with timeframes.
 
 This makes assumptions explicit and defines the cause-and-effect chain being tested.
 
@@ -68,15 +63,7 @@ and lead to reduced claim processing time (from 90 days to 50 days)
 
 **Purpose:** Define measurable evidence of behavior change
 
-**Format:**
-```
-Our hypothesis is valid if:
-- [Quantitative measure 1]
-- [Quantitative measure 2]
-- [Qualitative measure]
-```
-
-Outcomes are leading indicators that predict whether the mission impact will be achieved.
+Outcomes are leading indicators that predict whether the mission impact will be achieved. See the canonical hypothesis format in SKILL.md for the validation criteria structure.
 
 **Example:**
 ```
@@ -374,23 +361,11 @@ Score each potential deliverable using Impact, Confidence, Effort.
 
 ### Step 5: Frame Hypotheses (15 minutes per initiative)
 
-Convert top-priority deliverables into testable hypotheses.
+Convert top-priority deliverables into testable hypotheses using the canonical hypothesis format from SKILL.md.
 
-**Hypothesis template:**
-```
-We believe [deliverable]
-will drive [outcome/behavior change]
-and lead to [mission impact]
-
-Our hypothesis is valid if:
-- [Leading indicator 1]
-- [Leading indicator 2]
-- [Leading indicator 3]
-
-If successful, expect:
-- [Lagging indicator 1]
-- [Lagging indicator 2]
-```
+**Roadmap extension:** For roadmap items, also include lagging indicators that confirm success after hypothesis validation:
+- **Leading indicators** (from canonical format) - Early signals during experiment
+- **Lagging indicators** (roadmap extension) - Confirmation metrics after success
 
 **Example:**
 ```
@@ -532,7 +507,7 @@ and lead to faster evidence request turnaround (from 5 days to 1 day)
 
 ## Template
 
-Use this template for each roadmap initiative:
+Use this template for each roadmap initiative. The Hypothesis section follows the canonical format from SKILL.md:
 
 ```markdown
 ## [Initiative Name]

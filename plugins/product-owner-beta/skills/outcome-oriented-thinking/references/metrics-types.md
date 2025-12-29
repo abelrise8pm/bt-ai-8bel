@@ -1,138 +1,6 @@
-# Data and Metrics Collection
+# Metric Types: Rates, Ratios, and Composites
 
-## Overview
-
-Data and Metrics Collection is the systematic approach to capturing, governing, and interpreting evidence that validates whether products, services, or delivery processes achieve desired outcomes.
-
-The core principle: **Measure only what enables learning and decision-making.** Avoid metrics collected "for metrics' sake."
-
-## Six Foundational Principles
-
-### 1. Outcomes Over Outputs
-
-Focus on user behavior changes and system impacts that drive mission results, not feature delivery counts.
-
-**Output metric:** "Deployed 15 features this quarter"
-
-**Outcome metric:** "Users complete tasks 40% faster, support calls decreased 25%"
-
-### 2. Questions Precede Dashboards
-
-Begin with decisions that need making, then collect data minimally to inform those decisions.
-
-**Wrong approach:** "Let's instrument everything and see what's interesting"
-
-**Right approach:** "What behavior change indicates success? What data proves this change occurred?"
-
-### 3. Quality Trumps Quantity
-
-Prioritize accuracy, freshness, and coverage over volume of metrics.
-
-**Quality dimensions:**
-- **Accuracy** - Is the data correct?
-- **Freshness** - Is the data current enough to drive action?
-- **Coverage** - Does the sample represent the population?
-- **Consistency** - Is measurement stable over time?
-
-### 4. Leading Indicators First
-
-Guide early course corrections with forward-looking metrics. Validate with lagging indicators later.
-
-Use leading indicators to steer; lagging indicators to prove impact.
-
-### 5. Version Metric Definitions
-
-Treat metric definitions as code with governance and change logs. When formulas change, track versions to preserve historical comparability.
-
-**Metric definition template:**
-```
-Name: [Metric name]
-Purpose: [What decision does this inform?]
-Owner: [Who maintains this metric?]
-Formula: [Exact calculation]
-Data Sources: [Where does data come from?]
-Calculation Window: [Time period and cadence]
-Target: [Success threshold]
-Version: [1.0, 1.1, etc.]
-Change Log: [What changed and when]
-```
-
-### 6. Ethical by Design
-
-Minimize data collection and protect sensitive information. Collect only what's necessary; delete when no longer needed.
-
-**Privacy considerations:**
-- Anonymize user data when possible
-- Aggregate before sharing
-- Set retention policies
-- Document PII handling
-
-## Leading vs. Lagging Indicators
-
-### Leading Indicators (Forward-Looking)
-
-**Definition:** Inputs you can influence now that predict future outcomes.
-
-**Characteristics:**
-- Actionable in the present
-- Predict future performance
-- Change quickly based on interventions
-- Enable proactive adjustments
-
-**Examples:**
-- **Feature adoption rate** - Predicts long-term engagement
-- **Page load speed** - Predicts conversion and retention
-- **Appointment availability** - Predicts patient satisfaction
-- **Test coverage** - Predicts defect rates
-- **Deployment frequency** - Predicts time-to-market
-
-**Use for:** Steering decisions, early course corrections, experimentation feedback
-
-### Lagging Indicators (Backward-Looking)
-
-**Definition:** Outputs that confirm past performance after results occur.
-
-**Characteristics:**
-- Measure outcomes after they happen
-- Validate strategy effectiveness
-- Change slowly over time
-- Prove impact to stakeholders
-
-**Examples:**
-- **Retention rate** - Confirms long-term value delivery
-- **Readmission rate** - Confirms care quality
-- **Customer satisfaction score** - Confirms experience quality
-- **Revenue growth** - Confirms business model
-- **Incident rate** - Confirms system reliability
-
-**Use for:** Validating hypotheses, reporting progress, strategic planning
-
-### Balancing Leading and Lagging
-
-Effective metric programs use both:
-
-**Lead to steer:**
-- Monitor daily/weekly
-- Drive operational decisions
-- Enable rapid experimentation
-- Guide team focus
-
-**Lag to prove:**
-- Report monthly/quarterly
-- Validate strategic direction
-- Communicate to executives
-- Justify investment
-
-**Example pairing (reducing claim processing time):**
-
-| Leading Indicators | Lagging Indicators |
-|-------------------|-------------------|
-| % claims submitted complete on first attempt | Average claim processing time |
-| Average evidence request turnaround time | % claims processed within 30 days |
-| Pre-submission checklist usage rate | Veteran satisfaction score |
-| Automated validation accuracy | Claims backlog size |
-
-Team monitors leading indicators daily to course-correct. Leadership reviews lagging indicators quarterly to validate the strategy.
+This reference covers how to construct specific metric types. For foundational principles (AAA framework, OMMTM, leading vs lagging), see `metrics-fundamentals.md`.
 
 ## Rate and Ratio Metrics
 
@@ -142,7 +10,7 @@ Team monitors leading indicators daily to course-correct. Leadership reviews lag
 
 **Formula:**
 ```
-Rate = (numerator / exposure) × K
+Rate = (numerator / exposure) x K
 ```
 
 Where K is a constant for readability (e.g., 1,000 for "per 1k users").
@@ -159,9 +27,9 @@ Where K is a constant for readability (e.g., 1,000 for "per 1k users").
 
 **Example:**
 
-Service A: 500 errors with 50M requests = 10 errors per 1k requests
+Service A: 500 errors with 50M requests = 10 errors per 1M requests
 
-Service B: 50 errors with 10k requests = 5 errors per 1k requests
+Service B: 50 errors with 10k requests = 5,000 errors per 1M requests
 
 Despite Service A having more absolute errors, Service B has a higher error rate and needs attention.
 
@@ -171,7 +39,7 @@ Despite Service A having more absolute errors, Service B has a higher error rate
 
 **Formula:**
 ```
-Ratio = (numerator / denominator) × 100
+Ratio = (numerator / denominator) x 100
 ```
 
 Often expressed as percentages.
@@ -207,7 +75,7 @@ Teams of different sizes can be evaluated equitably. Rate/ratio metrics avoid pe
 Both numerator and denominator offer improvement opportunities. To improve error rate, either reduce errors (numerator) or handle more requests successfully (denominator).
 
 **Forecasting capability:**
-Plug-and-play for capacity projections. "If traffic grows 50%, expect 1.5× errors given current rate."
+Plug-and-play for capacity projections. "If traffic grows 50%, expect 1.5x errors given current rate."
 
 **Experiment clarity:**
 Results remain interpretable despite traffic variations. A/B test outcomes don't require complex traffic normalization.
@@ -238,9 +106,9 @@ Choose denominators that:
 
 **Always display both numerator and denominator:**
 
-❌ Bad: "Error rate is 0.5%"
+Bad: "Error rate is 0.5%"
 
-✅ Good: "Error rate is 0.5% (250 errors / 50k requests)"
+Good: "Error rate is 0.5% (250 errors / 50k requests)"
 
 Showing components enables:
 - Understanding absolute magnitude
@@ -249,31 +117,31 @@ Showing components enables:
 
 **Use rolling windows to reduce seasonality:**
 
-❌ Bad: Comparing Monday to Saturday (different usage patterns)
+Bad: Comparing Monday to Saturday (different usage patterns)
 
-✅ Good: Trailing 28-day window centered on each date
+Good: Trailing 28-day window centered on each date
 
 Rolling windows smooth out daily/weekly variations and reveal true trends.
 
 **Aggregate using sums, not averages:**
 
-❌ Bad: Average of daily error rates
+Bad: Average of daily error rates
 
-✅ Good: Sum(errors) / Sum(requests)
+Good: Sum(errors) / Sum(requests)
 
 Averaging rates can produce misleading results due to Simpson's Paradox. Always aggregate numerators and denominators separately, then divide.
 
 **Set minimum thresholds before reporting:**
 
-❌ Bad: "100% success rate!" (2 successes / 2 attempts)
+Bad: "100% success rate!" (2 successes / 2 attempts)
 
-✅ Good: Only report when denominator ≥ 30 (statistical significance)
+Good: Only report when denominator >= 30 (statistical significance)
 
 Small denominators create volatile metrics that mislead more than inform.
 
 **Pair rates with absolute counts:**
 
-✅ Dashboard shows both:
+Dashboard shows both:
 - Error rate: 0.5% (trending metric)
 - Total errors: 250 (absolute impact)
 
@@ -371,12 +239,12 @@ Convert each component to a comparable range.
 
 **Higher-is-better formula:**
 ```
-normalized = clamp(value ÷ target, 0, 1)
+normalized = clamp(value / target, 0, 1)
 ```
 
 **Lower-is-better formula:**
 ```
-normalized = clamp(target ÷ value, 0, 1)
+normalized = clamp(target / value, 0, 1)
 ```
 
 **Example:**
@@ -421,7 +289,7 @@ Choose aggregation based on desired trade-off behavior.
 **Compensatory (weighted average):**
 
 ```
-Composite = Σ (weight × normalized_value)
+Composite = Sum(weight x normalized_value)
 ```
 
 Allows trade-offs; strong components offset weak ones.
@@ -430,7 +298,7 @@ Allows trade-offs; strong components offset weak ones.
 
 **Example:**
 ```
-Composite = (0.35 × 0.91) + (0.25 × 0.80) + (0.25 × 0.85) + (0.15 × 0.95)
+Composite = (0.35 x 0.91) + (0.25 x 0.80) + (0.25 x 0.85) + (0.15 x 0.95)
          = 0.319 + 0.200 + 0.213 + 0.143
          = 0.875 (or 87.5%)
 ```
@@ -438,7 +306,7 @@ Composite = (0.35 × 0.91) + (0.25 × 0.80) + (0.25 × 0.85) + (0.15 × 0.95)
 **Non-compensatory (geometric mean):**
 
 ```
-Composite = (Π normalized_value^weight)
+Composite = Product(normalized_value^weight)
 ```
 
 Penalizes weak links; requires balanced performance.
@@ -447,8 +315,8 @@ Penalizes weak links; requires balanced performance.
 
 **Example:**
 ```
-Composite = (0.91^0.35) × (0.80^0.25) × (0.85^0.25) × (0.95^0.15)
-         = 0.968 × 0.950 × 0.959 × 0.992
+Composite = (0.91^0.35) x (0.80^0.25) x (0.85^0.25) x (0.95^0.15)
+         = 0.968 x 0.950 x 0.959 x 0.992
          = 0.873 (or 87.3%)
 ```
 
@@ -506,7 +374,7 @@ Apply hard rules like "if accessibility < 95%, cap overall score at 0.60."
 
 **Composite (weighted average):**
 ```
-(0.35 × 0.944) + (0.25 × 0.700) + (0.25 × 0.933) + (0.15 × 0.980)
+(0.35 x 0.944) + (0.25 x 0.700) + (0.25 x 0.933) + (0.15 x 0.980)
 = 0.330 + 0.175 + 0.233 + 0.147
 = 0.885 (or 88.5%)
 ```
@@ -522,7 +390,7 @@ Apply hard rules like "if accessibility < 95%, cap overall score at 0.60."
 
 **Without gate:**
 ```
-(0.35 × 1.0) + (0.25 × 1.0) + (0.25 × 1.0) + (0.15 × 0.88)
+(0.35 x 1.0) + (0.25 x 1.0) + (0.25 x 1.0) + (0.15 x 0.88)
 = 0.35 + 0.25 + 0.25 + 0.132
 = 0.982 (or 98.2%)
 ```
@@ -565,140 +433,16 @@ Dashboard shows:
 
 This prevents masking issues when composite score looks good but one component is failing.
 
-## Implementation Framework
-
-### Six-Step Approach
-
-#### Step 1: Identify Outcomes and Assign Ownership
-
-Define what behavior changes drive mission impact. Assign owners accountable for each outcome.
-
-**Example:**
-- Outcome: Users complete claim submissions 80%+ first time
-- Owner: Product Manager for Claims Portal
-
-#### Step 2: Start with Questions
-
-Ask what behavior changes drive mission impact. Avoid "let's track everything."
-
-**Key questions:**
-- What decision does this metric inform?
-- What behavior change indicates success?
-- What would we do differently if this metric changed?
-
-If a metric doesn't inform a decision, don't collect it.
-
-#### Step 3: Define Metrics Formally
-
-Use the metric definition template for every metric:
-
-```
-Name: First-Time Claim Completion Rate
-Purpose: Measure whether pre-submission improvements reduce rework
-Owner: Product Manager - Claims
-Formula: (Claims requiring no evidence requests) / (Total claims submitted) × 100%
-Data Sources: VBMS claims database
-Calculation Window: Trailing 28 days, updated daily
-Target: 80% by Q4 2025
-Version: 1.0
-Change Log: Initial definition Jan 2025
-```
-
-#### Step 4: Instrument and Automate Collection
-
-Use industry-standard tools to collect data automatically.
-
-**Common tooling:**
-- **Application metrics:** DataDog, New Relic, Prometheus
-- **User analytics:** Google Analytics, Mixpanel, Amplitude
-- **Custom dashboards:** Grafana, Tableau, Looker
-
-**Instrumentation principles:**
-- Capture at source (avoid manual reporting)
-- Version tracking (timestamp and user for every event)
-- Privacy-preserving (anonymize PII)
-- Low overhead (don't slow production systems)
-
-#### Step 5: Analyze and Share Findings
-
-Create accessible dashboards that surface insights, not just data.
-
-**Dashboard best practices:**
-- Lead with the decision: "Should we invest more in Feature X?"
-- Show trend over time (not just current value)
-- Display both leading and lagging indicators
-- Include context (targets, benchmarks, prior periods)
-- Link to runbooks (what to do when metric degrades)
-
-#### Step 6: Continuously Improve
-
-As products and questions evolve, metrics must evolve too.
-
-**Review cadence:**
-- Weekly: Operational dashboards
-- Monthly: Leading indicators review
-- Quarterly: Lagging indicators and metric definitions review
-- Annually: Strategic metric portfolio review
-
-**Questions to ask during reviews:**
-- Are we still making decisions based on this metric?
-- Has the formula or target changed without documentation?
-- Are there new metrics we need to add?
-- Can we sunset any metrics no longer used?
-
-## Anti-Patterns to Avoid
-
-### Counting Events Without Tied Decisions
-
-Collecting data that never informs action wastes engineering effort and creates noise.
-
-**Example:** Tracking page views on every page without asking "what would we do if this number changed?"
-
-**Fix:** For every metric, answer "what decision does this enable?"
-
-### Silently Changing Definitions
-
-Updating formulas without versioning breaks historical comparisons.
-
-**Example:** Changing "active user" from "logged in past 30 days" to "performed action past 7 days" without noting the change.
-
-**Fix:** Version all metric definitions; document changes in change log.
-
-### Over-Indexing on Vanity Metrics
-
-Celebrating numbers that don't correlate with outcomes creates false confidence.
-
-**Example:** "We have 1M users!" (but 99% never returned after signing up)
-
-**Fix:** Pair vanity metrics with engagement or outcome metrics.
-
-### Declaring Wins Prematurely
-
-Celebrating lagging indicator improvements before confirming leading indicators moved.
-
-**Example:** "Retention increased!" (but due to seasonal factors, not product changes)
-
-**Fix:** Validate causation by checking leading indicators and running controlled experiments.
-
-### Owning Orphaned Dashboards
-
-Creating dashboards without runbooks means metrics don't drive action.
-
-**Example:** Dashboard shows "error rate spiked" but no one knows who to page or what to do.
-
-**Fix:** Every dashboard needs ownership and runbooks documenting response procedures.
-
 ## Summary
 
-Effective data and metrics collection:
+**Rate metrics** measure frequency over time. Use when measuring tempo, throughput, or comparing across time periods.
 
-1. **Focuses on outcomes over outputs** - Behavior changes, not feature counts
-2. **Starts with questions** - What decisions need making?
-3. **Balances leading and lagging** - Lead to steer, lag to prove
-4. **Uses rate/ratio metrics** - Enables fair comparison and forecasting
-5. **Builds composite metrics carefully** - Combines dimensions without obscuring trade-offs
-6. **Versions definitions** - Maintains historical comparability
-7. **Automates collection** - Reduces manual reporting burden
-8. **Drives decisions** - Metrics inform action, not just reporting
+**Ratio metrics** compare quantities as percentages. Use when measuring effectiveness, quality, or success rates.
 
-Measure what matters, measure it well, and act on what you measure.
+**Composite metrics** blend multiple indicators into one. Use when outcomes are multidimensional and leadership needs a single decision lever.
+
+For all metric types:
+- Display components alongside computed values
+- Use rolling windows to smooth seasonality
+- Stratify to reveal hidden disparities
+- Document formulas and version changes

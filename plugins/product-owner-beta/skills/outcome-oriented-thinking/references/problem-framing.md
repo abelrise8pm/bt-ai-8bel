@@ -69,7 +69,7 @@ I'm trying to [goal]
 but [problem/challenge]
 because [root cause]
 which makes me feel [emotion]
-and contributes to [business impact]
+and contributes to [mission impact]
 ```
 
 **When to use:** Complex problems requiring empathy and emotional understanding.

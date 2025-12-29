@@ -109,16 +109,18 @@ Impact Mapping uses four hierarchical layers, working from mission impact down t
 
 Before the session:
 1. **Establish clear mission objectives** - What's the strategic goal?
-2. **Gather cross-functional participants** - Include users, engineers, operations, compliance
-3. **Prepare workspace** - Physical whiteboard or virtual Miro/Figjam board
-4. **Collect baseline data** - Current metrics, user feedback, pain points
-5. **Time-box the session** - 90-120 minutes recommended
+2. **Gather balanced team** - Product, Design, Engineering + key stakeholders
+3. **Designate lead facilitator** - One person to guide session and prompt critical thinking
+4. **Prepare workspace** - Physical whiteboard or virtual Miro/Figjam board
+5. **Collect baseline data** - Current metrics, user feedback, pain points
+6. **Prepare context brief** - Background material on problem space, relevant data, mission objectives
+7. **Time-box the session** - Use timer to pace each mapping phase and maintain momentum
 
 ### Six-Step Facilitation
 
 #### Step 1: Frame Impact (15 minutes)
 
-Start by establishing the measurable mission/business impact.
+Start by establishing the measurable mission impact.
 
 **Facilitation approach:**
 - Write the impact goal at the center/top of the workspace
@@ -229,17 +231,7 @@ Group related deliverables and assess impact potential.
 
 #### Step 6: Frame Hypotheses (15 minutes)
 
-Convert top deliverables into testable hypotheses.
-
-**Hypothesis format:**
-
-```
-We believe [deliverable/output]
-will drive [outcome/behavior change]
-and lead to [mission impact]
-
-Our hypothesis is valid if [quantitative/qualitative measures]
-```
+Convert top deliverables into testable hypotheses using the canonical hypothesis format from SKILL.md.
 
 **Example hypothesis:**
 
