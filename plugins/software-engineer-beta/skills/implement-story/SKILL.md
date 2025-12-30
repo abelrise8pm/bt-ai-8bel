@@ -17,9 +17,9 @@ GitHub issue URL or reference:
 
 ## Workflow Overview
 
-1. **Fetch story** - Understand requirements and acceptance criteria
+1. **Fetch story and comments** - Read ALL comments first, then understand requirements
 2. **Setup worktree** - Create isolated branch and working directory
-3. **Plan implementation** - Break down into tasks
+3. **Plan implementation** - Break down into tasks (unless comments already contain a plan)
 4. **Implement** - Write tests, code, and verify
 5. **Push and cleanup** - Push branch and remove worktree
 
@@ -31,7 +31,19 @@ GitHub issue URL or reference:
 gh issue view {number} --repo {owner}/{repo} --json title,body,labels,comments
 ```
 
-Extract:
+### Read Comments First
+
+**CRITICAL**: Before doing ANY research or planning, read ALL comments on the issue. Comments often contain:
+- **Research already done** - Don't duplicate work that's already been completed
+- **Decisions made** - Implementation approach may already be decided
+- **Implementation plans** - Step-by-step guidance from prior analysis
+- **Clarifications** - Answers to questions about the original requirements
+- **Context** - Why certain approaches were chosen or rejected
+
+If comments contain a decision or implementation plan, **follow it** rather than starting from scratch.
+
+### Extract from Issue Body
+
 - **Story statement**: Problem description or "As a... I want... so that..."
 - **Acceptance criteria**: GIVEN/WHEN/THEN conditions or requirements
 - **Out of scope**: What's explicitly excluded
