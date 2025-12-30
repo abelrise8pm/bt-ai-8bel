@@ -56,6 +56,7 @@ Choose your path:
 
 - **🆕 First time setup?** → Follow Steps 1-5 below
 - **✅ Already set up?** → Jump to [Step 5: Start Developing](#step-5-start-developing)
+- **📊 Context running low?** → See [Managing Context](#-managing-context-in-long-sessions)
 - **🆘 Having issues?** → See [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 - **👤 Non-technical user?** → See [docs/QUICK-START-BY-ROLE.md](docs/QUICK-START-BY-ROLE.md)
 - **🔧 Advanced setup?** → See [docs/ADVANCED-TOPICS.md](docs/ADVANCED-TOPICS.md)
@@ -301,6 +302,35 @@ That's it! You're ready to develop with AI assistance. 🎉
 > **Pro Tip:** Now that Claude is running, you have an infinitely patient tutor that can teach you terminal commands, git workflows, or anything else you want to learn!
 
 **Having issues?** See the [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) or check [Quick Help](#-quick-help---common-issues) for common errors.
+
+---
+
+## 📊 Managing Context in Long Sessions
+
+Claude Code has a limited context window (~200k tokens). When context fills up, **auto-compaction** automatically summarizes the conversation to make room.
+
+### Should Your Team Disable Auto-Compact?
+
+Auto-compact works well for exploratory sessions, but some teams prefer to disable it because:
+- **Reserves 22.5% buffer** (~45k tokens) whether used or not
+- **Can lose context** - variable names get generalized, error messages become vague
+- **May forget CLAUDE.md rules** after compaction
+
+**Recommended for**: Teams doing discrete, task-oriented work (implement story → PR → done).
+
+**To disable**: Run `/config` and toggle "Auto-compact when context is full" off.
+
+> **Note**: This is a per-user setting stored in `~/.claude.json`. There's currently no project-level override, so each team member must configure this individually.
+
+### Context Management Commands
+
+| Command | What It Does |
+|---------|--------------|
+| `/compact` | Manually summarize conversation |
+| `/compact [focus]` | Summarize with focus on specific topic (e.g., `/compact authentication`) |
+| `/clear` | Start fresh session (clears all context) |
+| `/context` | Check current context usage |
+| `/config` | Toggle auto-compact on/off for your session |
 
 **Note:** GitHub Codespaces support has been removed from this starter template. For cloud-based development, please contact #r-and-d.
 
