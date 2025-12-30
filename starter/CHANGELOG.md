@@ -39,7 +39,12 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ## December 29, 2025
 
+### Added
+- Security model documentation explaining three-layer protection (firewall, container contents, permissions deny list) with recommended `settings.json` deny rules for environment variable protection ([054d03a](https://github.com/rise8-us/xpai-ai-assistant-container/commit/054d03a), [6c16c3e](https://github.com/rise8-us/xpai-ai-assistant-container/commit/6c16c3e))
+- Git worktree directory (`.worktrees/`) to `.gitignore` for isolated story implementation workflows ([b27b4d5](https://github.com/rise8-us/xpai-ai-assistant-container/commit/b27b4d5))
+
 ### Changed
+- Enable prompt caching by default for CUI projects - FedRAMP High authorized with ~90% faster responses and 50-80% cost reduction ([6d84692](https://github.com/rise8-us/xpai-ai-assistant-container/commit/6d84692))
 - Clarify AWS Bedrock token expiration and container rebuild requirement in CUI setup documentation, adding prominent troubleshooting section for common "403 expired token" error ([e256ba4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/e256ba4))
 
 ---
