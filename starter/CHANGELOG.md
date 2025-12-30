@@ -37,6 +37,17 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## December 30, 2025
+
+### Added
+- Documentation about auto-compaction behavior, trade-offs (22.5% buffer reservation, potential context loss, rule forgetting), and how to disable via `/config` ([1aeea2f](https://github.com/rise8-us/xpai-ai-assistant-container/commit/1aeea2f))
+
+### Changed
+- Improved template creation guidance with explicit "Use this template" button location, "you're not done yet!" reminder, and corrected step numbering to reduce onboarding confusion ([5e54e05](https://github.com/rise8-us/xpai-ai-assistant-container/commit/5e54e05))
+- Updated base container to disable non-essential traffic to Anthropic (Sentry error reporting, Statsig telemetry, /bug command) while preserving API functionality and Rise8 OTEL observability ([5a9832c](https://github.com/rise8-us/xpai-ai-assistant-container/commit/5a9832c))
+
+---
+
 ## December 29, 2025
 
 ### Added
