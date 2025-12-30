@@ -97,17 +97,20 @@ Before clicking "Use this template", open these instructions in a separate brows
 
 1. **Open these instructions in a new tab** (Right-click on this tab → select "Duplicate")
 2. Return to this tab
-3. **Cmd-click** on **"Use this template"** → **"Create a new repository"** to open in a new tab
-4. Fill in the repository details:
+3. **Look for the green "Use this template" button in the upper right corner of the page**
+4. **Cmd-click** on **"Use this template"** → **"Create a new repository"** to open in a new tab
+5. Fill in the repository details:
    - **Owner:** Select **"rise8-us"** from the dropdown (**NOT your personal account** - personal repos can't access the container registry)
    - **Repository name:** Enter a descriptive name (e.g., "project-alpha-ai-assistant" or "yourname-playground")
    - **Description:** Why does this repository exist? What does it do? Why should I care about it?
    - **Visibility:** **private** (required)
    - **Repository apps:** Leave unchecked (no apps needed)
-5. Click **"Create repository"**
-6. **Switch to your instructions tab** to continue with the next section
+6. Click **"Create repository"**
+7. **Switch to your instructions tab and continue to the next section below** - you're not done yet!
 
 ## Getting Started on your laptop with an existing project repository
+
+> **👉 Just created a new repository above?** Continue here! These steps will walk you through cloning and setting up your new repository on your laptop.
 
 This guide walks you through setting up the project environment from scratch. Supported platforms:
 - **ARM macOS** (Apple Silicon - M1, M2, M3, M4) - Full automated setup
