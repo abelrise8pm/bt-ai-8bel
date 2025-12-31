@@ -9,7 +9,7 @@ FROM ubuntu:24.04@sha256:c35e29c9450151419d9448b0fd75374fec4fff364a27f176fb458d4
 ARG CLAUDE_CODE_VERSION=2.0.76
 # curl https://www.npmjs.com/package/@google/gemini-cli for latest version
 # curl https://github.com/google-gemini/gemini-cli/releases for changelog information
-ARG GEMINI_CLI_VERSION=0.21.3
+ARG GEMINI_CLI_VERSION=0.22.5
 # curl https://github.com/block/goose/releases for latest version
 # curl https://github.com/block/goose/releases for changelog information
 ARG GOOSE_VERSION=1.18.0
