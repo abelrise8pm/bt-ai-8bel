@@ -339,21 +339,24 @@ Auto-compact works well for exploratory sessions, but some teams prefer to disab
 
 ## 🆘 Quick Help - Common Issues
 
-**Something not working?** Run the diagnostic script first:
+**Something not working?** Re-run the onboarding script:
+
 ```bash
-./scripts/diagnose.sh
+./scripts/onboard.sh
 ```
-This checks your entire environment and shows exactly what's wrong with fix commands.
+
+This is safe to re-run and will validate/fix your configuration automatically.
 
 | Error Message | Solution |
 |--------------|----------|
+| Claude prompts for login | Re-run `./scripts/onboard.sh` |
 | `x509: certificate signed by unknown authority` | [Zscaler Certificate Fix](docs/TROUBLESHOOTING.md#zscaler-certificate-errors-when-pulling-containers) |
 | `Permission denied` in container | [File Permissions Fix](docs/TROUBLESHOOTING.md#file-permission-issues-in-devcontainer) |
 | Container won't start / rebuild fails | [Devcontainer Troubleshooting](docs/TROUBLESHOOTING.md#devcontainer-fails-to-open-or-rebuild) |
 | `code` command not found | [Restart terminal](docs/TROUBLESHOOTING.md#code-command-not-found-after-setup) |
 | Can't pull container images | [Authentication Fix](docs/TROUBLESHOOTING.md#authentication-to-pull-containers) |
 
-**Still stuck?** Run `./scripts/diagnose.sh`, copy the output, and share it in **#r-and-d** Slack channel.
+**Still stuck?** Check the [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) guide or ask in **#r-and-d** Slack channel.
 
 ## 📚 Additional Resources
 

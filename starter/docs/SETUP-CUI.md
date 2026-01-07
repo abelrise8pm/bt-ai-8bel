@@ -51,7 +51,6 @@ Use the CUI devcontainer with mandatory firewall protection:
 
 ```bash
 mv .devcontainer/devcontainer.cui.json .devcontainer/devcontainer.json
-rm .devcontainer/devcontainer.no-cui.json
 ```
 
 **Firewall Features (Required for CUI):**

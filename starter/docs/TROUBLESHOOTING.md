@@ -6,25 +6,26 @@ This guide covers common issues and their solutions for the AI Assistant Contain
 
 ---
 
-## 🔍 Run Diagnostics First
+## 🔄 First Step: Re-run the Onboarding Script
 
-Before diving into specific issues, run the diagnostic script to check your entire environment:
+**Before trying anything else**, re-run the onboarding script:
 
 ```bash
-./scripts/diagnose.sh
+./scripts/onboard.sh
 ```
 
-This script checks all setup phases and shows:
-- ✅ What's working correctly
-- ❌ What's broken (with fix commands)
-- ⚠️ Warnings (non-critical issues)
+This script is safe to re-run (idempotent) and will:
+- Validate your environment configuration
+- Fix common issues automatically (including misconfigured devcontainer.json)
+- Update any outdated configuration files
 
-**Need help?** Copy the diagnostic output and share it in **#r-and-d** Slack channel.
+If the script completes successfully and you're still having issues, continue to the specific troubleshooting sections below.
 
 ---
 
 ## Table of Contents
 
+- [First Step: Re-run the Onboarding Script](#-first-step-re-run-the-onboarding-script)
 - [Why Use the Container Instead of Local CLI?](#why-use-the-container-instead-of-local-cli)
 - [Onboarding Script Failures](#onboarding-script-failures)
 - [Common First-Time Setup Issues](#common-first-time-setup-issues)
@@ -450,31 +451,38 @@ Claude Code cannot find your `ANTHROPIC_API_KEY` environment variable. This happ
 - The `.env` file is missing from your project root
 - The `.env` file exists but doesn't contain `ANTHROPIC_API_KEY`
 - The `ANTHROPIC_API_KEY` value is empty or malformed
+- The `devcontainer.json` is misconfigured (not loading the `.env` file)
 
 **Solution:**
 
-1. **Check if `.env` file exists in your project root:**
+1. **Re-run the onboarding script** (fixes most cases including misconfigured devcontainer.json):
+   ```bash
+   ./scripts/onboard.sh
+   ```
+   The script will validate and fix your configuration automatically.
+
+2. **If that doesn't work**, check your `.env` file manually:
    ```bash
    ls -la .env
    ```
 
-2. **If missing, create it from the example:**
+3. **If `.env` is missing, create it from the example:**
    ```bash
    cp .env.example .env
    ```
 
-3. **Edit `.env` and add your Anthropic API key:**
+4. **Edit `.env` and add your Anthropic API key:**
    ```bash
    # Open .env in your editor and add:
    ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
    ```
 
-4. **Rebuild the devcontainer** to pick up the new environment variable:
+5. **Rebuild the devcontainer** to pick up the new environment variable:
    - Press `Cmd + Shift + P` (macOS) or `Ctrl + Shift + P` (Windows/Linux)
    - Type "Dev Containers: Rebuild Container"
    - Select it and wait for the rebuild to complete
 
-5. **Verify the fix** - After rebuild, open a new terminal. Claude Code should start without prompting for login.
+6. **Verify the fix** - After rebuild, open a new terminal. Claude Code should start without prompting for login.
 
 **Note:** To obtain an Anthropic API key, submit a ticket in the **#helpdesk** Slack channel.
 

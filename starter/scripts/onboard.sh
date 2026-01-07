@@ -9,11 +9,10 @@
 # tool setup and configuration.
 #
 # SECURITY: All downloads over HTTPS, minimal sudo usage, secure credential storage
-# IDEMPOTENCY: Safe to re-run, detects existing installations
+# IDEMPOTENCY: Safe to re-run, validates and fixes configuration issues
 #
-# SYNC NOTE: When updating phases in this script, also update scripts/diagnose.sh
-# which provides diagnostic checks corresponding to each phase.
-# See: scripts/diagnose.sh
+# TROUBLESHOOTING: If something breaks, re-run this script. It will detect
+# what's wrong and fix it automatically.
 ################################################################################
 
 set -euo pipefail  # Exit on error, undefined variables, pipe failures
@@ -1327,6 +1326,8 @@ cleanup_cui_files() {
 ################################################################################
 
 # Configure devcontainer for non-CUI development
+# This function embeds the expected devcontainer.json content directly, allowing
+# the script to validate and fix misconfigured files when re-run.
 configure_devcontainer() {
     print_step "Phase 4: DevContainer Configuration"
 
@@ -1337,96 +1338,151 @@ configure_devcontainer() {
     echo "   environment using Docker/Podman containers. This ensures all team members"
     echo "   work with identical tools, dependencies, and configurations."
     echo ""
-    echo "   This repository includes different devcontainer configurations:"
-    echo "   • devcontainer.no-cui.json - For standard cloud projects (Anthropic API)"
-    echo "   • devcontainer.cui.json - For CUI-compliant projects (isolated networks)"
-    echo ""
-    echo "   We'll configure the standard (non-CUI) devcontainer for your environment."
-    echo ""
 
     log_info "Phase 4: DevContainer configuration started"
 
-    # Define source and target paths
-    local source_file=".devcontainer/devcontainer.no-cui.json"
     local target_file=".devcontainer/devcontainer.json"
 
-    # IDEMPOTENCY: Check if target file already exists (configuration already done)
+    # Expected devcontainer.json content (embedded for self-contained validation)
+    # When updating this content, ensure it matches the expected non-CUI configuration
+    local expected_content
+    expected_content=$(cat <<'DEVCONTAINER_EOF'
+{
+  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:3728496243b1bd36ae2db4bf060bef1424c3adff66277df62995e9aeb5370ead",
+  "postCreateCommand": "echo 'Container ready for Non-CUI projects with AI assistants pre-installed'",
+  "runArgs": [
+    "--env-file",".env"
+  ],
+
+  // ============================================================================
+  // PERFORMANCE OPTIMIZATION: Cache Persistence (Optional)
+  // ============================================================================
+  // Uncomment these sections to dramatically improve container restart speed by
+  // persisting package manager caches and dependencies across container rebuilds.
+  //
+  // IMPORTANT: Replace "YOURPROJECT" with your project name (no spaces/dashes)
+  // Example: "myapp" creates volumes like "myapp-node-modules", "myapp-playwright"
+  //
+  // Without these volumes, you'll reinstall all packages on every container restart.
+  // With volumes: restart in seconds. Without: 5-15 minutes for full reinstall.
+  // ============================================================================
+
+  // Override workspace mount for better macOS performance (uses cached I/O)
+  // "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
+  // "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+  // Named volumes for common caches (customize based on your tech stack)
+  // "mounts": [
+  //   // Node.js projects: persist node_modules and package manager caches
+  //   "source=YOURPROJECT-node-modules,target=/workspaces/${localWorkspaceFolderBasename}/node_modules,type=volume",
+  //   "source=YOURPROJECT-npm-cache,target=/home/aiAssistant/.npm,type=volume",
+  //   "source=YOURPROJECT-pnpm-cache,target=/home/aiAssistant/.cache/node,type=volume",
+  //   "source=YOURPROJECT-pnpm-store,target=/home/aiAssistant/.local/share/pnpm,type=volume",
+  //
+  //   // Playwright: persist browser binaries (~500MB download saved)
+  //   "source=YOURPROJECT-playwright,target=/home/aiAssistant/.cache/ms-playwright,type=volume",
+  //
+  //   // Next.js: persist build cache
+  //   "source=YOURPROJECT-next-cache,target=/workspaces/${localWorkspaceFolderBasename}/.next,type=volume",
+  //
+  //   // Python: persist pip cache
+  //   "source=YOURPROJECT-pip-cache,target=/home/aiAssistant/.cache/pip,type=volume",
+  //
+  //   // Go: persist module cache
+  //   "source=YOURPROJECT-go-cache,target=/home/aiAssistant/go/pkg/mod,type=volume"
+  // ],
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code"
+      ]
+
+      // ============================================================================
+      // PERFORMANCE OPTIMIZATION: File Watcher Exclusions (Optional)
+      // ============================================================================
+      // Prevents VS Code from watching large directories that change frequently,
+      // avoiding "too many files open" errors and reducing CPU/memory usage.
+      // Uncomment if you have large node_modules or build directories.
+      // ============================================================================
+      // "settings": {
+      //   "files.watcherExclude": {
+      //     "**/node_modules/**": true,
+      //     "**/.git/objects/**": true,
+      //     "**/.git/subtree-cache/**": true,
+      //     "**/dist/**": true,
+      //     "**/build/**": true,
+      //     "**/.next/**": true,
+      //     "**/.pnpm-store/**": true,
+      //     "**/target/**": true,        // Rust
+      //     "**/__pycache__/**": true    // Python
+      //   },
+      //   "search.exclude": {
+      //     "**/node_modules": true,
+      //     "**/dist": true,
+      //     "**/build": true,
+      //     "**/.next": true,
+      //     "**/target": true
+      //   }
+      // }
+    }
+  },
+
+  "remoteUser": "aiAssistant"
+}
+DEVCONTAINER_EOF
+)
+
+    # Check if devcontainer.json already exists
     if [[ -f "${target_file}" ]]; then
-        print_success "DevContainer already configured: ${target_file}"
-        log_info "Target file already exists - skipping configuration (idempotent)"
+        # Compare existing content with expected content
+        local existing_content
+        existing_content=$(cat "${target_file}")
 
-        # Clean up source file if it still exists (in case previous run was interrupted)
-        if [[ -f "${source_file}" ]]; then
-            print_info "Cleaning up leftover source file..."
-            rm -f "${source_file}" && print_success "Source file removed" || print_info "Could not remove source file (non-critical)"
+        if [[ "${existing_content}" == "${expected_content}" ]]; then
+            print_success "DevContainer already correctly configured: ${target_file}"
+            log_info "Target file exists and matches expected configuration - skipping (idempotent)"
+            echo ""
+            print_success "DevContainer configuration completed!"
+            log_info "Phase 4: DevContainer configuration completed (already correct)"
+            return 0
+        else
+            # File exists but doesn't match - back it up and replace
+            local backup_file="${target_file}.backup.$(date +%s)"
+            print_info "DevContainer config exists but differs from expected - updating..."
+            log_warn "Existing devcontainer.json differs from expected configuration"
+
+            if mv "${target_file}" "${backup_file}"; then
+                print_info "Backed up existing config to: ${backup_file}"
+                log_info "Backed up existing devcontainer.json to: ${backup_file}"
+            else
+                print_error "Failed to backup existing devcontainer.json"
+                log_error "Failed to create backup: ${backup_file}"
+                return 1
+            fi
         fi
-
-        echo ""
-        print_success "DevContainer configuration completed!"
-        log_info "Phase 4: DevContainer configuration completed (already configured)"
-        return 0
     fi
 
-    # Check if source file exists (only if target doesn't exist)
-    if [[ ! -f "${source_file}" ]]; then
-        print_error "Source file not found: ${source_file}"
-        echo ""
-        echo "ERROR: Cannot configure devcontainer - source file missing"
-        echo ""
-        echo "Expected file: ${source_file}"
-        echo "Target file: ${target_file} (also not found)"
-        echo ""
-        echo "This may indicate a corrupted repository clone."
-        echo ""
-        echo "NEXT STEPS:"
-        echo "  1. Check the log file: ${LOG_FILE}"
-        echo "  2. Try: git checkout .devcontainer/"
-        echo "  3. Or delete the repository and re-clone"
-        echo "  4. File a #helpdesk ticket if issue persists"
-        echo ""
-        log_error "DevContainer source file not found: ${source_file}"
-        log_error "Target file also not found: ${target_file}"
-        log_error "Directory contents: $(ls -la .devcontainer/ 2>&1 || echo 'directory not accessible')"
-        return 1
-    fi
+    # Create devcontainer.json with expected content
+    print_info "Creating devcontainer.json..."
+    log_info "Writing devcontainer.json to: ${target_file}"
 
-    print_success "Source file found: ${source_file}"
-    log_info "Source file verified: ${source_file}"
-
-    # Perform the rename/copy operation
-    print_info "Configuring devcontainer.json..."
-    log_info "Copying ${source_file} to ${target_file}"
-
-    if cp "${source_file}" "${target_file}"; then
+    if echo "${expected_content}" > "${target_file}"; then
         print_success "DevContainer configuration file created: ${target_file}"
-        log_info "Successfully created/updated devcontainer.json"
+        log_info "Successfully created devcontainer.json"
     else
         print_error "Failed to create devcontainer configuration"
         echo ""
-        echo "ERROR: Could not copy devcontainer configuration"
+        echo "ERROR: Could not write devcontainer configuration"
         echo ""
         echo "NEXT STEPS:"
         echo "  1. Check the log file: ${LOG_FILE}"
-        echo "  2. Verify file permissions"
-        echo "  3. Try copying manually or file a #helpdesk ticket"
+        echo "  2. Verify file permissions on .devcontainer/ directory"
+        echo "  3. File a #helpdesk ticket if issue persists"
         echo ""
-        log_error "Failed to copy ${source_file} to ${target_file}"
-        log_error "Source file permissions: $(ls -l "${source_file}" 2>&1 || echo 'cannot stat')"
-        log_error "Target directory permissions: $(ls -ld .devcontainer/ 2>&1 || echo 'cannot stat')"
+        log_error "Failed to write ${target_file}"
+        log_error "Target directory permissions: $(ls -ld .devcontainer/ 2>&1 || echo 'directory not accessible')"
         return 1
-    fi
-
-    # Remove the source file after successful configuration
-    print_info "Cleaning up source file..."
-    log_info "Removing source file: ${source_file}"
-
-    if rm -f "${source_file}"; then
-        print_success "Source file removed: ${source_file}"
-        log_info "Successfully removed source file"
-    else
-        print_info "Could not remove source file (non-critical)"
-        echo "   You can manually remove: ${source_file}"
-        log_warn "Failed to remove source file (non-critical): ${source_file}"
     fi
 
     echo ""
