@@ -24,6 +24,22 @@
 
 # ############################## End of example ##################################
 
-# Last reviewed: 2025-12-17 (Version update review: Claude Code 2.0.71, Gemini CLI 0.21.0, Goose 1.16.1)
+# Last reviewed: 2026-01-07 (Version update review: Claude Code 2.0.76, Gemini CLI 0.23.0, Goose 1.19.0)
 
-# No active CVE ignores
+# CVE-2026-0621 - MCP SDK ReDoS vulnerability
+# Affects: @modelcontextprotocol/sdk@1.25.1 (transitive dependency via Gemini CLI)
+# Issue: Regular Expression Denial of Service vulnerability in MCP TypeScript SDK
+# Risk: MEDIUM - ReDoS requires attacker-controlled input to reach vulnerable regex patterns
+#       in the MCP SDK. Gemini CLI uses MCP for tool integration, not user input processing.
+# Source: Gemini CLI depends on @modelcontextprotocol/sdk@^1.23.0, which resolves to 1.25.1
+# Fixed Versions: Not yet available (as of 2026-01-07)
+# Timeline:
+#   - 2025-12-16: MCP SDK 1.25.1 published with vulnerability
+#   - 2026-01-07: CVE detected during Gemini CLI 0.23.0 update, added to ignore list
+# Tracking:
+#   - Monitor: https://www.npmjs.com/package/@modelcontextprotocol/sdk
+#   - Monitor: https://github.com/google-gemini/gemini-cli/releases
+#   - Check: npm view @modelcontextprotocol/sdk versions | grep -E "1\.2[5-9]\.[2-9]|1\.[3-9]"
+#   - Verify fix: npm explain @modelcontextprotocol/sdk after Gemini CLI updates
+# Review: Weekly until patched version available - see GitHub issue for tracking
+CVE-2026-0621
