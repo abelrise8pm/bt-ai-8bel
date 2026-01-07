@@ -37,6 +37,24 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## January 7, 2026
+
+### Changed
+- Simplify troubleshooting by making "re-run onboard.sh" the universal fix ([0c60143](https://github.com/rise8-us/xpai-ai-assistant-container/commit/0c60143)):
+  - Embed devcontainer.json configuration directly in onboard.sh as single source of truth
+  - Script now validates existing devcontainer.json and auto-repairs if misconfigured
+  - Updated docs to recommend onboard.sh as first troubleshooting step
+- Updated base container to latest image ([a763a0b](https://github.com/rise8-us/xpai-ai-assistant-container/commit/a763a0b))
+
+### Removed
+- Removed diagnose.sh diagnostic script (functionality now built into onboard.sh)
+- Removed devcontainer.no-cui.json template (configuration now embedded in onboard.sh)
+
+### Security
+- **Action Required for project-container users**: CVE-2026-0621 (HIGH severity ReDoS in @modelcontextprotocol/sdk@1.25.1) added to base image trivyignore ([0fe8d64](https://github.com/rise8-us/xpai-ai-assistant-container/commit/0fe8d64)). If you run Trivy scans on your project-container, add `CVE-2026-0621` to your `.trivyignore`. This is a transitive dependency via Gemini CLI with medium actual risk (requires attacker-controlled input). Upstream will monitor and push a new base image when a patched version is available.
+
+---
+
 ## December 30, 2025
 
 ### Added
