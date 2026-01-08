@@ -34,6 +34,7 @@ If the script completes successfully and you're still having issues, continue to
 - [Podman Networking Issues on macOS](#podman-networking-issues-on-macos-infrastructure-containers)
 - [Devcontainer Fails to Open or Rebuild](#devcontainer-fails-to-open-or-rebuild)
 - [File Permission Issues in Devcontainer](#file-permission-issues-in-devcontainer)
+- [VS Code Window Crashed (Too Many File Handles)](#vs-code-window-crashed-too-many-file-handles)
 - [Claude Code Prompts for Login Instead of Using API Key](#claude-code-prompts-for-login-instead-of-using-api-key)
 - [Getting Help](#assistance)
 
@@ -428,6 +429,72 @@ After recreating the machine, rebuild your devcontainer in VSCode.
 ```
 
 Then rebuild the devcontainer.
+
+## VS Code Window Crashed (Too Many File Handles)
+
+**Symptom:**
+
+VS Code crashes with a dialog showing:
+
+![VS Code Window Crashed](vscode-window-crashed.png)
+
+```
+The window terminated unexpectedly (reason: 'crashed', code: '5')
+```
+
+**Cause:**
+
+VS Code's file watcher is monitoring too many files, exhausting system file handle limits. This commonly happens in projects with large `node_modules` directories, build outputs (`dist/`, `build/`, `.next/`), or other generated files.
+
+**Solution:**
+
+Enable both performance optimizations in `.devcontainer/devcontainer.json`. The template includes commented-out sections for this purpose.
+
+**Step 1: Enable cache volumes** (moves `node_modules` out of watched workspace)
+
+Find the `mounts` section and uncomment it, replacing `YOURPROJECT` with your project name:
+
+```json
+"mounts": [
+  "source=YOURPROJECT-node-modules,target=/workspaces/${localWorkspaceFolderBasename}/node_modules,type=volume",
+  "source=YOURPROJECT-npm-cache,target=/home/aiAssistant/.npm,type=volume"
+]
+```
+
+**Step 2: Enable file watcher exclusions** (prevents watching remaining large directories)
+
+Find the `settings` block inside `customizations.vscode` and uncomment it:
+
+```json
+"settings": {
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.next/**": true,
+    "**/.pnpm-store/**": true,
+    "**/target/**": true,
+    "**/__pycache__/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.next": true,
+    "**/target": true
+  }
+}
+```
+
+**Step 3: Rebuild the devcontainer**
+
+- Press `Cmd + Shift + P` (macOS) or `Ctrl + Shift + P` (Windows/Linux)
+- Type "Dev Containers: Rebuild Container"
+- After rebuild, run `npm install` to populate the volume
+
+**Why both?** Volumes move `node_modules` entirely out of the workspace so VS Code doesn't watch it at all. File watcher exclusions handle any remaining large directories (build outputs, caches) that stay in the workspace.
 
 ## Claude Code Prompts for Login Instead of Using API Key
 
