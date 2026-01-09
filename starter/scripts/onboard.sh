@@ -1326,8 +1326,8 @@ cleanup_cui_files() {
 ################################################################################
 
 # Configure devcontainer for non-CUI development
-# This function embeds the expected devcontainer.json content directly, allowing
-# the script to validate and fix misconfigured files when re-run.
+# This function loads the expected devcontainer.json content from the template file,
+# allowing the script to validate and fix misconfigured files when re-run.
 configure_devcontainer() {
     print_step "Phase 4: DevContainer Configuration"
 
@@ -1342,96 +1342,26 @@ configure_devcontainer() {
     log_info "Phase 4: DevContainer configuration started"
 
     local target_file=".devcontainer/devcontainer.json"
+    local template_file="scripts/template/devcontainer_example.jsonc"
 
-    # Expected devcontainer.json content (embedded for self-contained validation)
-    # When updating this content, ensure it matches the expected non-CUI configuration
+    # Load expected devcontainer.json content from template file
     local expected_content
-    expected_content=$(cat <<'DEVCONTAINER_EOF'
-{
-  "image": "ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:3728496243b1bd36ae2db4bf060bef1424c3adff66277df62995e9aeb5370ead",
-  "postCreateCommand": "echo 'Container ready for Non-CUI projects with AI assistants pre-installed'",
-  "runArgs": [
-    "--env-file",".env"
-  ],
 
-  // ============================================================================
-  // PERFORMANCE OPTIMIZATION: Cache Persistence (Optional)
-  // ============================================================================
-  // Uncomment these sections to dramatically improve container restart speed by
-  // persisting package manager caches and dependencies across container rebuilds.
-  //
-  // IMPORTANT: Replace "YOURPROJECT" with your project name (no spaces/dashes)
-  // Example: "myapp" creates volumes like "myapp-node-modules", "myapp-playwright"
-  //
-  // Without these volumes, you'll reinstall all packages on every container restart.
-  // With volumes: restart in seconds. Without: 5-15 minutes for full reinstall.
-  // ============================================================================
+    if [[ ! -f "${template_file}" ]]; then
+        print_error "Template file not found: ${template_file}"
+        echo ""
+        echo "ERROR: Cannot configure devcontainer - template file missing"
+        echo ""
+        echo "Expected file: ${template_file}"
+        echo ""
+        print_helpdesk_instructions
+        log_error "DevContainer template file not found: ${template_file}"
+        log_error "Current directory: $(pwd)"
+        return 1
+    fi
 
-  // Override workspace mount for better macOS performance (uses cached I/O)
-  // "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},type=bind,consistency=cached",
-  // "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-
-  // Named volumes for common caches (customize based on your tech stack)
-  // "mounts": [
-  //   // Node.js projects: persist node_modules and package manager caches
-  //   "source=YOURPROJECT-node-modules,target=/workspaces/${localWorkspaceFolderBasename}/node_modules,type=volume",
-  //   "source=YOURPROJECT-npm-cache,target=/home/aiAssistant/.npm,type=volume",
-  //   "source=YOURPROJECT-pnpm-cache,target=/home/aiAssistant/.cache/node,type=volume",
-  //   "source=YOURPROJECT-pnpm-store,target=/home/aiAssistant/.local/share/pnpm,type=volume",
-  //
-  //   // Playwright: persist browser binaries (~500MB download saved)
-  //   "source=YOURPROJECT-playwright,target=/home/aiAssistant/.cache/ms-playwright,type=volume",
-  //
-  //   // Next.js: persist build cache
-  //   "source=YOURPROJECT-next-cache,target=/workspaces/${localWorkspaceFolderBasename}/.next,type=volume",
-  //
-  //   // Python: persist pip cache
-  //   "source=YOURPROJECT-pip-cache,target=/home/aiAssistant/.cache/pip,type=volume",
-  //
-  //   // Go: persist module cache
-  //   "source=YOURPROJECT-go-cache,target=/home/aiAssistant/go/pkg/mod,type=volume"
-  // ],
-
-  "customizations": {
-    "vscode": {
-      "extensions": [
-        "anthropic.claude-code"
-      ]
-
-      // ============================================================================
-      // PERFORMANCE OPTIMIZATION: File Watcher Exclusions (Optional)
-      // ============================================================================
-      // Prevents VS Code from watching large directories that change frequently,
-      // avoiding "too many files open" errors and reducing CPU/memory usage.
-      // Uncomment if you have large node_modules or build directories.
-      // ============================================================================
-      // "settings": {
-      //   "files.watcherExclude": {
-      //     "**/node_modules/**": true,
-      //     "**/.git/objects/**": true,
-      //     "**/.git/subtree-cache/**": true,
-      //     "**/dist/**": true,
-      //     "**/build/**": true,
-      //     "**/.next/**": true,
-      //     "**/.pnpm-store/**": true,
-      //     "**/target/**": true,        // Rust
-      //     "**/__pycache__/**": true    // Python
-      //   },
-      //   "search.exclude": {
-      //     "**/node_modules": true,
-      //     "**/dist": true,
-      //     "**/build": true,
-      //     "**/.next": true,
-      //     "**/target": true
-      //   }
-      // }
-    }
-  },
-
-  "remoteUser": "aiAssistant"
-}
-DEVCONTAINER_EOF
-)
+    expected_content=$(cat "${template_file}")
+    log_info "Loaded devcontainer template from: ${template_file}"
 
     # Check if devcontainer.json already exists
     if [[ -f "${target_file}" ]]; then
