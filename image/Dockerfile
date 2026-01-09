@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Pinned Ubuntu 24.04 LTS for multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
 # Use `skopeo inspect --format "{{.Digest}}" docker://docker.io/library/ubuntu:24.04` to get the sha256 digest.
-FROM ubuntu:24.04@sha256:c35e29c9450151419d9448b0fd75374fec4fff364a27f176fb458d472dfc9e54
+FROM ubuntu:24.04@sha256:955364933d0d91afa6e10fb045948c16d2b191114aa54bed3ab5430d8bbc58cc
 
 # Version definitions
 # curl https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
