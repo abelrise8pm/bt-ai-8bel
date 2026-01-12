@@ -37,6 +37,26 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## January 12, 2026
+
+### Added
+- Troubleshooting guide for VS Code window crashes caused by file handle limits, with instructions to enable cache volumes and file watcher exclusions ([7c08a09](https://github.com/rise8-us/xpai-ai-assistant-container/commit/7c08a09))
+
+### Changed
+- Updated AI assistant container software with new capabilities and fixes ([6f72e79](https://github.com/rise8-us/xpai-ai-assistant-container/commit/6f72e79)):
+  - **Claude Code 2.0.76 → 2.1.1** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): Automatic skill hot-reload, forked sub-agent contexts, unified skills/commands model, Shift+Enter iTerm2 support, enhanced Vim motions (yank/paste with text objects), `/plan` and `/teleport` commands, wildcard Bash permissions, security fix for command injection, performance optimizations
+  - **Gemini CLI 0.22.5 → 0.23.0** ([changelog](https://github.com/google-gemini/gemini-cli/releases)): Gemini 3 Flash model with automatic persistence, remote agent infrastructure, `/auth logout` command, enhanced hook system with granular controls, Windows clipboard image support, improved model statistics display
+  - **Goose 1.18.0 → 1.19.1** ([changelog](https://github.com/block/goose/releases)): Shell completion generation (bash/zsh/fish), OpenAI Codex provider support, MCP servers from Zed honored (stdio + http), app renderer for richer UI, improved tool call handling, JSONL streaming option
+- Updated base container to latest Ubuntu 24.04 image with GnuPG security patches ([f2281a5](https://github.com/rise8-us/xpai-ai-assistant-container/commit/f2281a5))
+- Simplified onboarding script by extracting devcontainer configuration to external template file, removing 90+ lines of embedded JSON for better maintainability ([22cfaba](https://github.com/rise8-us/xpai-ai-assistant-container/commit/22cfaba))
+- Improved onboard.sh stat check ordering for better validation reliability ([0008a1d](https://github.com/rise8-us/xpai-ai-assistant-container/commit/0008a1d))
+
+### Security
+- Fixed CVE-2025-68973 (HIGH severity GnuPG out-of-bounds write vulnerability) via Ubuntu 24.04 base image update to patched version ([117c2f9](https://github.com/rise8-us/xpai-ai-assistant-container/commit/117c2f9))
+- **Action Required for project-container users**: CVE-2026-0621 (HIGH severity ReDoS in @modelcontextprotocol/sdk@1.25.1) added to base image trivyignore ([0fe8d64](https://github.com/rise8-us/xpai-ai-assistant-container/commit/0fe8d64)). If you run Trivy scans on your project-container, add `CVE-2026-0621` to your `.trivyignore`. This is a transitive dependency via Gemini CLI 0.23.0 with medium actual risk (requires attacker-controlled input). Upstream will monitor and push a new base image when a patched version is available.
+
+---
+
 ## January 7, 2026
 
 ### Changed
