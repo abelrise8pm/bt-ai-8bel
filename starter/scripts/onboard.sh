@@ -2458,7 +2458,8 @@ verify_setup() {
 
     if [[ -f ".env" ]]; then
         local env_perms
-        env_perms=$(stat -f "%Lp" ".env" 2>/dev/null || stat -c "%a" ".env" 2>/dev/null)
+        # Tries GNU stat first, then BSD stat (macOS)
+        env_perms=$(stat -c "%a" ".env" 2>/dev/null || stat -f "%Lp" ".env" 2>/dev/null)
 
         if [[ "${env_perms}" == "600" ]]; then
             print_success ".env file has secure permissions (600)"
