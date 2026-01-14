@@ -74,7 +74,7 @@ echo ""
 # Find all relevant config files (Dockerfiles, devcontainer JSONs, docker-compose YAMLs)
 # Exclude documentation, test fixtures, and git directories
 mapfile -t FILES_TO_UPDATE < <(find . -type f \
-    \( -name "Dockerfile" -o -name "devcontainer*.json" -o -name "docker-compose*.yml" -o -name "docker-compose*.yaml" \) \
+    \( -name "Dockerfile" -o -name "devcontainer*.json" -o -name "devcontainer*.jsonc" -o -name "docker-compose*.yml" -o -name "docker-compose*.yaml" \) \
     ! -path "*/image/thoughts/*" \
     ! -path "*/image/notes/*" \
     ! -path "*/image/stories/*" \
