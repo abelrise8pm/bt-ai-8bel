@@ -64,6 +64,12 @@ jobs:
 
       # Build for both ARM64 (Apple Silicon Macs) and AMD64 (GitHub runners, Intel Macs)
       # Images are pushed to registry for testing since multi-arch builds can't be loaded locally
+      #
+      # TROUBLESHOOTING: If this step fails with "403 Forbidden" on first push:
+      #   1. Visit: https://github.com/orgs/rise8-us/packages/container/REPO-NAME%2Fproject-container/settings
+      #   2. Add your repository with "Write" access under "Manage Actions access"
+      #   3. Re-run this workflow
+      # See docs/TROUBLESHOOTING.md for detailed instructions
       - name: Build and push test image
         id: build
         uses: docker/build-push-action@v5

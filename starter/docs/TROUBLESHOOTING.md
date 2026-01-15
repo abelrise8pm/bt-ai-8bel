@@ -36,6 +36,7 @@ If the script completes successfully and you're still having issues, continue to
 - [File Permission Issues in Devcontainer](#file-permission-issues-in-devcontainer)
 - [VS Code Window Crashed (Too Many File Handles)](#vs-code-window-crashed-too-many-file-handles)
 - [Claude Code Prompts for Login Instead of Using API Key](#claude-code-prompts-for-login-instead-of-using-api-key)
+- [403 Errors During Build Project Container Workflow Run](#403-errors-during-build-project-container-workflow-run)
 - [Getting Help](#assistance)
 
 ---
@@ -552,6 +553,51 @@ Claude Code cannot find your `ANTHROPIC_API_KEY` environment variable. This happ
 6. **Verify the fix** - After rebuild, open a new terminal. Claude Code should start without prompting for login.
 
 **Note:** To obtain an Anthropic API key, submit a ticket in the **#helpdesk** Slack channel.
+
+## 403 Errors During Build Project Container Workflow Run
+
+**Symptom:**
+
+When the GitHub Actions workflow "Build Project Container" runs (typically triggered on push to main or manually), the workflow fails with a 403 Forbidden error when trying to push the container image to the GitHub Container Registry:
+
+```
+Error: buildx failed with: ERROR: failed to build: failed to solve: failed to push
+ghcr.io/rise8-us/<repo name>/project-container:test-5c88db2dbf9fe307fd24a7831b5171a7c02c9b1f:
+unexpected status from HEAD request to
+https://ghcr.io/v2/rise8-us/<repo name>/project-container/blobs/sha256:<digest>:
+403 Forbidden
+```
+
+**Cause:**
+
+The GitHub Actions workflow (`GITHUB_TOKEN`) does not have write permissions to push images to the GitHub Container Registry (ghcr.io) for this repository's package.
+
+**Solution:**
+
+You need to grant the repository's workflow write access to the container package through the package settings:
+
+1. **Navigate to the package settings page:**
+   - Go to the package URL (replace `YOUR-REPO` and `PACKAGE-NAME` with your actual repository and package names):
+   ```
+   https://github.com/orgs/rise8-us/packages/container/YOUR-REPO%2FPACKAGE-NAME/settings
+   ```
+
+   For example, if your repository is `penava-devcontainer` and package is `project-container`:
+   ```
+   https://github.com/orgs/rise8-us/packages/container/penava-devcontainer%2Fproject-container/settings
+   ```
+
+2. **Add repository access:**
+   - Click "Add Repository" under "Manage Actions Access" section
+   - Search for and select your repository (e.g., `rise8-us/penava-devcontainer`)
+   - Set the role to **"Write"**
+   - Click "Add repository"
+
+3. **Verify the fix:**
+   - Re-run the failed workflow/push commit to trigger the workflow again
+   - The workflow should now successfully push the container image
+
+**Note:** This is typically a one-time setup step. Once the repository has write access to the package, all subsequent workflow runs will succeed.
 
 ## Assistance
 

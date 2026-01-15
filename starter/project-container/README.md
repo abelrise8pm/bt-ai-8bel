@@ -40,10 +40,11 @@ The base `ai-assistant-home` image provides Claude Code CLI and common developme
 The `.devcontainer/devcontainer.json` files reference pre-built images from GitHub Container Registry. The GitHub workflow automatically builds and publishes images when you push changes to `project-container/` directory.
 
 **First-time setup:**
-1. Push container changes to trigger workflow build
-2. Wait for `.github/workflows/build-project-container.yml` to complete
-3. Update `.devcontainer/devcontainer.json` with the new image digest
-4. Open in VS Code: Command Palette → "Dev Containers: Reopen in Container"
+1. **Enable automatic builds**: Edit `.github/workflows/build-project-container.yml` and uncomment the `on:` trigger section (lines 14-25) to enable automatic workflow runs on push and pull request events
+2. Push container changes to trigger workflow build
+3. Wait for `.github/workflows/build-project-container.yml` to complete
+4. Update `.devcontainer/devcontainer.json` with the new image digest (or use the automated PR created by the workflow)
+5. Open in VS Code: Command Palette → "Dev Containers: Reopen in Container"
 
 ### 2. Local Development (Optional)
 
