@@ -37,6 +37,13 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## January 15, 2026
+
+### Security
+- Added CVE-2026-22817 and CVE-2026-22818 suppressions to project-container .trivyignore for Hono JWT algorithm confusion vulnerabilities. These HIGH severity CVEs affect hono@4.11.3 (transitive dependency from base image), but risk is LOW in deployment context as the container provides CLI tools without web services, HTTP endpoints, or JWT authentication. Awaiting upstream fix in hono@4.11.4+.
+
+---
+
 ## January 12, 2026
 
 ### Added

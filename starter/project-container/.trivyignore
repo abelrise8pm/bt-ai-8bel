@@ -22,12 +22,48 @@
 # CVE-YYYY-XXXXX
 
 # ==================== ACTIVE IGNORES ====================
-# No active CVE ignores
+
+# CVE-2026-22817, CVE-2026-22818 - Hono JWT algorithm confusion vulnerabilities
+# Affects: hono@4.11.3 (transitive dependency via Claude Code or Gemini CLI in base image)
+# Severity: HIGH (CVSS 8.2) - Risk downgraded to LOW in deployment context
+# Issue: JWT algorithm confusion in Hono's JWT and JWK/JWKS middleware allows
+#        forged token acceptance when explicit algorithm configuration is missing
+# Risk: LOW - Despite HIGH severity (CVSS 8.2), vulnerable code is not executed
+#       This container extends ai-assistant-home base image which provides CLI tools
+#       (Claude Code, Gemini CLI, Goose), NOT web services
+#       - No web server or HTTP endpoints exposed
+#       - No JWT token processing or authentication workflows
+#       - Hono's JWT middleware is not invoked in CLI workflows
+#       - Vulnerable code path is unreachable in this deployment context
+#       EPSS: Not yet available (CVEs disclosed 2026-01-13)
+# Status: AWAITING UPSTREAM - Fixed in hono@4.11.4+
+#         Waiting for Claude Code or Gemini CLI to update their dependencies
+# Mitigation: Using latest available versions of base image tools
+# Fixed Versions: hono@4.11.4+
+# Timeline:
+#   - 2026-01-13: CVEs disclosed by Hono project
+#   - 2026-01-14: Detected during nightly Trivy scan, added to ignore list
+# Tracking:
+#   - Base image tracking: image/.trivyignore
+#   - Monitor: https://www.npmjs.com/package/@anthropic-ai/claude-code
+#   - Monitor: https://www.npmjs.com/package/@google/gemini-cli
+#   - GitHub Actions failure: https://github.com/rise8-us/xpai-ai-assistant-container/actions/runs/20980327903
+# CVSS: 8.2 HIGH (AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:H/A:N)
+# CWE: CWE-347 (Improper Verification of Cryptographic Signature)
+# Review: Weekly until base image updates to include hono@4.11.4+
+CVE-2026-22817
+CVE-2026-22818
 
 # ==================== NOTES ====================
+# Current scan (2026-01-14) shows:
+# - 0 CRITICAL, 0 HIGH (✅ Pipeline passes with ignores)
+# - Ignored HIGH: CVE-2026-22817 (awaiting base image update with hono@4.11.4+)
+# - Ignored HIGH: CVE-2026-22818 (awaiting base image update with hono@4.11.4+)
+# - MEDIUM and LOW vulnerabilities not tracked in this file
+#
 # This is the starter template for new project containers.
 # When you customize your container, review scan results and add
 # entries here only for CRITICAL/HIGH vulnerabilities that need
 # to be suppressed with documented justification.
 
-# Last reviewed: 2025-12-01
+# Last reviewed: 2026-01-14
