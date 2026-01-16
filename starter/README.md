@@ -62,6 +62,7 @@ Choose your path:
 - **🔧 Advanced setup?** → See [docs/ADVANCED-TOPICS.md](docs/ADVANCED-TOPICS.md)
 - **🔒 CUI project?** → See [CUI Setup Guide](docs/SETUP-CUI.md)
 - **🛡️ Security & permissions?** → See [Security Model](docs/security-model.md)
+- **👨🏻‍💻 Want to see working examples?** → See [EXAMPLES.md](docs/EXAMPLES.md)
 
 ---
 
