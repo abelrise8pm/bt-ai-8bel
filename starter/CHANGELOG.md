@@ -37,6 +37,21 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## January 20, 2026
+
+### Added
+- Devcontainer setup examples documentation with real-world implementations demonstrating multi-language runtimes, database services, and CI/CD patterns ([347059a](https://github.com/rise8-us/xpai-ai-assistant-container/commit/347059a))
+
+### Changed
+- Updated AI assistant container software with security patches and new capabilities ([d14fe57](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d14fe57)):
+  - **Claude Code 2.1.1 → 2.1.12** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): Setup hook for repository initialization/maintenance (--init flag), search in /config command, MCP tool search auto mode enabled by default for efficient context usage, release channel toggle (stable/latest), merged slash commands and skills into unified model, Windows Package Manager (winget) support, large bash outputs saved to disk instead of truncated for full access, plan file cleanup after /clear, VS Code plugin install counts and trust warnings, external editor in AskUserQuestion fields, session URL attribution in commits/PRs, multiple security fixes (command injection, wildcard permissions, permission bypass via line continuation), performance improvements (memory leak fixes, typing responsiveness), OAuth URL updates (platform.claude.com), temporary directory customization (CLAUDE_CODE_TMPDIR), improved terminal rendering, status line context percentage fields, file suggestion enhancements, background task management improvements, skill duplicate detection fixes, unreachable permission rule warnings
+  - **Gemini CLI 0.23.0 → 0.24.5** ([changelog](https://github.com/google-gemini/gemini-cli/releases)): Gemini 3 Flash model with automatic persistence, agent skills infrastructure with autonomous activation and tiered discovery, remote agents support with multi-agent TOML files, folder trust support for hooks with enhanced security (defaults to untrusted), tool input modification support, context injection via SessionStart hook, /auth logout command to clear credentials, official ACP SDK with HTTP/SSE-based MCP servers, Windows clipboard image support and Alt+V paste, automatic background color detection, OSC 52 paste support, experimental in-CLI extension install/uninstall, JIT context memory loading, .geminiignore support for SearchText tool, hooks enhancements (friendly names, clearcut logging, visual indicators, granular stop/block behavior, STOP_EXECUTION), policy engine improvements (mode-aware evaluation, granular shell allowlisting, unified security policy), model persistence opt-in toggle, improved error messages and UI refinements, admin settings with secureModeEnabled/mcpEnabled, skills CLI management command (/skills reload)
+
+### Security
+- Fixed CVE-2026-23745 (HIGH severity path traversal vulnerability in node-tar) via Claude Code 2.1.12 and Gemini CLI 0.24.5 updates which include tar@7.5.4 ([5622622](https://github.com/rise8-us/xpai-ai-assistant-container/commit/5622622))
+
+---
+
 ## January 15, 2026
 
 ### Added
