@@ -1,8 +1,0 @@
-{
-  "name": "platform-engineer-beta",
-  "version": "0.1.0-beta",
-  "description": "(Beta) Platform engineering workflows: CI/CD troubleshooting, infrastructure diagnostics, and deployment support. Only use when explicitly requested.",
-  "author": {
-    "name": "AI Assistant Team"
-  }
-}

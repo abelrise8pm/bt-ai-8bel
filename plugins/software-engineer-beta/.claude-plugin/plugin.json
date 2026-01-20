@@ -1,8 +1,0 @@
-{
-  "name": "software-engineer-beta",
-  "version": "0.1.0-beta",
-  "description": "(Beta) Software engineering workflow: implement stories using TDD, write clean code, and create atomic commits. Only use when explicitly requested.",
-  "author": {
-    "name": "AI Assistant Team"
-  }
-}

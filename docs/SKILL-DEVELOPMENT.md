@@ -140,7 +140,7 @@ When a marketplace skill almost works but needs refinement for your use case.
 Your Project Repo                 Marketplace Repo
 ─────────────────                 ────────────────
 .claude/
-├── plugins-dev/                  ← Copy skill here
+├── skills/                  ← Copy skill here
 │   └── my-improved-skill/
 └── .claude-plugin/
     └── marketplace.json          ← Local-dev marketplace
@@ -156,7 +156,7 @@ First time only—create a local marketplace in your project:
 
 ```bash
 mkdir -p .claude/.claude-plugin
-mkdir -p .claude/plugins-dev
+mkdir -p .claude/skills
 ```
 
 Create `.claude/.claude-plugin/marketplace.json`:
@@ -191,7 +191,7 @@ Use fork-skill to copy the assess-story skill locally so I can improve it.
 Or manually:
 
 1. Find the skill in the installed marketplace plugin
-2. Copy it to `.claude/plugins-dev/my-plugin/skills/`
+2. Copy it to `.claude/skills/my-plugin/skills/`
 3. Add the plugin to your local `marketplace.json`
 4. Install from local: `/plugin install my-plugin@local-dev`
 
@@ -257,7 +257,7 @@ The skill will:
 
 2. **Copy your improved skill:**
    ```bash
-   cp -r /path/to/your-project/.claude/plugins-dev/my-plugin/skills/improved-skill \
+   cp -r /path/to/your-project/.claude/skills/my-plugin/skills/improved-skill \
          plugins/existing-plugin/skills/
    ```
 
@@ -366,7 +366,7 @@ Create a local marketplace in your project:
 
 ```bash
 mkdir -p .claude/.claude-plugin
-mkdir -p .claude/plugins-dev
+mkdir -p .claude/skills
 ```
 
 Create `.claude/.claude-plugin/marketplace.json`:
@@ -383,7 +383,7 @@ Create `.claude/.claude-plugin/marketplace.json`:
   "plugins": [
     {
       "name": "my-plugin",
-      "source": "./plugins-dev/my-plugin",
+      "source": "./skills/my-plugin",
       "description": "My work-in-progress plugin"
     }
   ]
@@ -404,11 +404,11 @@ Add your local marketplace:
 ### Step 2: Create Your Plugin
 
 ```bash
-mkdir -p .claude/plugins-dev/my-plugin/.claude-plugin
-mkdir -p .claude/plugins-dev/my-plugin/skills/my-skill
+mkdir -p .claude/skills/my-plugin/.claude-plugin
+mkdir -p .claude/skills/my-plugin/skills/my-skill
 ```
 
-Create `.claude/plugins-dev/my-plugin/.claude-plugin/plugin.json`:
+Create `.claude/skills/my-plugin/.claude-plugin/plugin.json`:
 
 ```json
 {
@@ -421,7 +421,7 @@ Create `.claude/plugins-dev/my-plugin/.claude-plugin/plugin.json`:
 }
 ```
 
-Create `.claude/plugins-dev/my-plugin/skills/my-skill/SKILL.md`:
+Create `.claude/skills/my-plugin/skills/my-skill/SKILL.md`:
 
 ```markdown
 ---
@@ -485,7 +485,7 @@ cd xpai-ai-assistant-container
 ### Step 2: Copy Your Plugin
 
 ```bash
-cp -r /path/to/your-project/.claude/plugins-dev/my-plugin plugins/
+cp -r /path/to/your-project/.claude/skills/my-plugin plugins/
 ```
 
 ### Step 3: Finalize for Release
@@ -694,15 +694,13 @@ This repo uses two marketplaces:
 xpai-ai-assistant-container/
 ├── .claude-plugin/
 │   └── marketplace.json        # Production (what users install from)
-├── plugins/                    # Production plugins
 └── .claude/
     ├── .claude-plugin/
     │   └── marketplace.json    # Local-dev (for testing before merge)
-    ├── plugins -> ../../plugins  # Symlink to production plugins
-    └── plugins-dev/            # Work-in-progress plugins
+    └── skills/                 # Work-in-progress plugins and production plugins
 ```
 
-The symlink exists because marketplace sources must start with `./` (no `../` allowed).
+All plugins are now consolidated under `.claude/skills/` for simpler organization.
 
 ### Versioning
 
