@@ -85,39 +85,61 @@ Removed `cache-from` and `cache-to` from all three build workflows:
 
 **Rationale**: Registry caching for multi-arch builds is prone to cross-architecture contamination. The corrupted cache was serving ARM64 layers for AMD64 builds. Removing caching entirely trades slightly slower builds for reliability.
 
-**Result**: ✅ SUCCESS - Build Project Container workflow passed with all tests succeeding (PR #229).
+**Result**: Build workflows pass (QEMU masks issue), but software-update workflow still fails with exec format error.
+
+### Fix 6: Explicit platform targeting in Dockerfile (PR #235)
+Added `ARG TARGETPLATFORM` and `--platform=$TARGETPLATFORM` to FROM instructions:
+```dockerfile
+ARG TARGETPLATFORM
+FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:...
+```
+**Rationale**: Force buildx to use correct platform when pulling base image layers.
+
+**Result**: ❌ FAILED - Warning still appears in build logs:
+```
+InvalidBaseImagePlatform: Base image ubuntu:24.04@sha256:... was pulled with platform "linux/arm64", expected "linux/amd64"
+```
+Build tests pass (QEMU emulation), but software-update workflow still fails with exec format error.
 
 ## Current Hypothesis
 
-**Buildx registry cache is corrupted.**
+**Buildx is pulling wrong platform variant for base images during multi-arch builds.**
 
-The workflows use registry caching:
-```yaml
-cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
-cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
-```
+Despite:
+- Removing registry cache
+- Adding explicit `--platform=$TARGETPLATFORM` to FROM instructions
+- Building fresh images
 
-The cache may contain ARM64 layers that buildx incorrectly uses for AMD64 builds.
+Buildx still pulls ARM64 layers when building the AMD64 variant. The warning `InvalidBaseImagePlatform` confirms this. QEMU emulation masks the issue during build tests, but the final image contains ARM64 binaries.
 
 ## Next Steps to Try
 
-### Option 1: Disable build cache (quick test)
-Add `no-cache: true` to docker/build-push-action:
+### Option 1: Build AMD64 only (recommended next step)
+Remove ARM64 from build to confirm AMD64 works correctly in isolation:
 ```yaml
-- name: Build and push test image
-  uses: docker/build-push-action@v5
-  with:
-    context: project-container
-    no-cache: true  # <-- Add this
-    platforms: linux/amd64,linux/arm64
-    ...
+platforms: linux/amd64  # Was: linux/amd64,linux/arm64
+```
+This sacrifices Apple Silicon support temporarily but should fix CI.
+
+### Option 2: Separate single-arch builds
+Build each architecture separately and combine with `docker buildx imagetools create`:
+```yaml
+# Build AMD64
+docker buildx build --platform linux/amd64 --tag $IMAGE:amd64 --push .
+# Build ARM64
+docker buildx build --platform linux/arm64 --tag $IMAGE:arm64 --push .
+# Combine
+docker buildx imagetools create -t $IMAGE:latest $IMAGE:amd64 $IMAGE:arm64
 ```
 
-### Option 2: Delete and recreate cache
-Delete the `buildcache` tag from the registry, then rebuild.
-
-### Option 3: Build single architecture first
-Build AMD64 only, verify it works, then add ARM64 back.
+### Option 3: Use different buildx driver
+Try `docker-container` driver with fresh builder:
+```yaml
+- uses: docker/setup-buildx-action@v3
+  with:
+    driver: docker-container
+    driver-opts: image=moby/buildkit:latest
+```
 
 ### Option 4: Inspect actual layers
 ```bash
