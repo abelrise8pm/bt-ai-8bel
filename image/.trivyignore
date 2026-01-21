@@ -24,7 +24,7 @@
 
 # ############################## End of example ##################################
 
-# Last reviewed: 2026-01-20 (CVE removal: CVE-2026-0621 fixed in MCP SDK 1.25.2; Versions: Claude Code 2.1.1, Gemini CLI 0.24.5, Goose 1.19.0)
+# Last reviewed: 2026-01-21 (CVE removal: CVE-2026-22817, CVE-2026-22818 fixed in Hono 4.11.4 via MCP SDK 1.25.3; Versions: Claude Code 2.1.14, Gemini CLI 0.25.0, Goose 1.20.1)
 
 # CVE-2026-0621 - MCP SDK ReDoS vulnerability [RESOLVED]
 # Status: RESOLVED - Fixed in MCP SDK 1.25.2+, Gemini CLI ^1.23.0 now resolves to 1.25.3
@@ -34,28 +34,14 @@
 #   - 2026-01-20: MCP SDK 1.25.2 released with fix, CVE removed from ignore list
 # Tracking issue: https://github.com/rise8-us/xpai-ai-assistant-container/issues/172
 
-# CVE-2026-22817, CVE-2026-22818 - Hono JWT algorithm confusion vulnerabilities
-# Affects: hono@4.11.3 (transitive dependency via Claude Code 2.1.1 or Gemini CLI 0.23.0)
-# Issue: JWT algorithm confusion in Hono's JWT and JWK/JWKS middleware allows
-#        forged token acceptance when explicit algorithm configuration is missing
-# Risk: LOW - Despite HIGH severity (CVSS 8.2), vulnerable code is not executed
-#       Container provides CLI tools (Claude Code, Gemini CLI, Goose), NOT web services
-#       - No web server or HTTP endpoints exposed
-#       - No JWT token processing or authentication
-#       - Hono's JWT middleware is not invoked in CLI workflows
-#       - Vulnerable code path is unreachable in this deployment context
+# CVE-2026-22817, CVE-2026-22818 - Hono JWT algorithm confusion vulnerabilities [RESOLVED]
+# Status: RESOLVED - Fixed in Hono 4.11.4+, MCP SDK 1.25.3 now resolves to patched version
+# Issue: JWT algorithm confusion in Hono's JWT and JWK/JWKS middleware
 # Fixed Versions: hono@4.11.4+
 # Timeline:
-#   - 2026-01-13: CVEs disclosed by Hono project
-#   - 2026-01-14: Detected during nightly Trivy scan, added to ignore list
-# Tracking:
-#   - Monitor: https://www.npmjs.com/package/@anthropic-ai/claude-code
-#   - Monitor: https://www.npmjs.com/package/@google/gemini-cli
-#   - Check: npm view @anthropic-ai/claude-code versions | tail -5
-#   - Check: npm view @google/gemini-cli versions | tail -5
-#   - Verify dependency: docker run --rm ghcr.io/rise8-us/xpai/ai-assistant-home:latest npm ls hono
-# Review: Weekly until parent package updates to hono@4.11.4+
-# CVSS: 8.2 HIGH (AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:H/A:N)
-# CWE: CWE-347 (Improper Verification of Cryptographic Signature)
-CVE-2026-22817
-CVE-2026-22818
+#   - 2026-01-13: CVEs disclosed, Hono 4.11.4 released with fix
+#   - 2026-01-14: CVEs detected during nightly Trivy scan, added to ignore list
+#   - 2026-01-20: MCP SDK 1.25.3 published with @hono/node-server@^1.19.9
+#   - 2026-01-21: Container updated to Gemini CLI 0.25.0, CVEs removed (resolved by Hono 4.11.4 via MCP SDK 1.25.3)
+# Tracking issue: https://github.com/rise8-us/xpai-ai-assistant-container/issues/[TBD]
+# DO NOT UNCOMMENT - Resolved and removed from active ignore list
