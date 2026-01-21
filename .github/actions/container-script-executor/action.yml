@@ -51,7 +51,10 @@ runs:
         echo "Starting script execution..."
 
         # Run script in container with timeout, capturing all output
+        # Explicitly request linux/amd64 to ensure correct architecture on GitHub runners
+        # (multi-arch images may default to wrong arch depending on runner image version)
         timeout ${{ inputs.timeout-seconds }}s docker run --rm \
+          --platform linux/amd64 \
           -e ANTHROPIC_API_KEY="${{ inputs.anthropic-api-key }}" \
           -e GITHUB_TOKEN="${{ inputs.github-token }}" \
           -v "$GITHUB_WORKSPACE":${{ inputs.workspace-path }} \
