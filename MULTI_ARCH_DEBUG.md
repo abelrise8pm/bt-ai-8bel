@@ -77,6 +77,16 @@ platforms: linux/amd64,linux/arm64  # Was: linux/arm64,linux/amd64
 Updated pinned digest to latest ai-assistant-home base image.
 **Result**: No change. Fresh build still has wrong layers.
 
+### Fix 5: Remove registry caching entirely (Jan 21, 2026)
+Removed `cache-from` and `cache-to` from all three build workflows:
+- `build-project-container.yml`
+- `build-ai-assistant-container.yml`
+- `build-firewall-manager.yml`
+
+**Rationale**: Registry caching for multi-arch builds is prone to cross-architecture contamination. The corrupted cache was serving ARM64 layers for AMD64 builds. Removing caching entirely trades slightly slower builds for reliability.
+
+**Result**: TBD - testing in progress.
+
 ## Current Hypothesis
 
 **Buildx registry cache is corrupted.**

@@ -73,8 +73,6 @@ jobs:
           push: true
           tags: ${{ env.IMAGE }}:test-${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
-          cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
       # Test the AMD64 variant (GitHub Actions runners are AMD64)
       # Explicitly pull with --platform to ensure correct architecture variant

@@ -60,8 +60,6 @@ jobs:
           labels: ${{ steps.setup.outputs.labels }}
           platforms: linux/amd64,linux/arm64
           push: true
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
       # Explicitly pull with --platform to ensure correct architecture variant
       - name: Test container functionality
