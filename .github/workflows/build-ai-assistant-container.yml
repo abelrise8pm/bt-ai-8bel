@@ -58,7 +58,7 @@ jobs:
           file: ./image/Dockerfile
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
           labels: ${{ steps.setup.outputs.labels }}
-          platforms: linux/amd64  # ARM64 temporarily disabled - see MULTI_ARCH_DEBUG.md
+          platforms: linux/amd64,linux/arm64
           push: true
 
       # Explicitly pull with --platform to ensure correct architecture variant

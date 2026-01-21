@@ -174,30 +174,86 @@ OLD_IMAGE="ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@sha256
 
 ## Current Status
 
-### Confirmed Facts
-- ✅ Script is valid (runs locally, no BOM/CRLF)
-- ✅ Container can execute commands (via emulation)
-- ❌ Container has ARM64 binaries (`uname -m` = `aarch64`)
-- ❌ Build warning confirms: `InvalidBaseImagePlatform: ... pulled with platform "linux/arm64"`
-- ❌ `docker inspect` is misleading - reports manifest arch, not actual binary arch
+### 🎉 ROOT CAUSE FOUND AND FIXED (Jan 21, 2026)
 
-### Root Cause
-**Buildx is producing ARM64 binaries when targeting AMD64.** The manifest metadata says `amd64`, but the actual layers contain ARM64 binaries. This is a buildx bug, not a workflow or script issue.
+**The Ubuntu base image SHA was architecture-specific (ARM64), not a multi-arch manifest digest.**
+
+### The Actual Root Cause
+
+The Dockerfile pinned Ubuntu with an **architecture-specific SHA**:
+```dockerfile
+FROM ubuntu:24.04@sha256:955364933d0d91afa6e10fb045948c16d2b191114aa54bed3ab5430d8bbc58cc
+```
+
+This SHA (`955364933d...`) was an **ARM64-specific digest**, not the multi-arch manifest. When buildx tried to build for AMD64, it could only pull ARM64 layers because that's all the SHA pointed to.
+
+**Evidence:**
+```bash
+# The pinned SHA returns ARM64
+skopeo inspect docker://ubuntu@sha256:955364933d... | jq .Architecture
+# Returns: "arm64"
+
+# The correct multi-arch manifest SHA
+skopeo inspect --format "{{.Digest}}" docker://ubuntu:24.04
+# Returns: sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f200828b2b
+```
+
+### Why Previous Fixes Didn't Work
+
+All previous fixes (1-8) failed because they addressed the wrong problem:
+- Adding `--platform` flags couldn't help - the SHA only had ARM64 layers
+- Removing caches couldn't help - the SHA itself was wrong
+- Adding `TARGETPLATFORM` couldn't help - still pulling from wrong SHA
+
+### How the Wrong SHA Got There
+
+The Dockerfile comment said to use `skopeo inspect --format "{{.Digest}}"` to get the SHA, but **all historical SHAs were ARM64-specific**. This suggests the automation (`release-engineer-beta:update-versions`) was getting the SHA incorrectly - likely via `docker pull` + `docker inspect` which returns the pulled architecture's digest, not the multi-arch manifest.
+
+## Fix 9: Use Multi-Arch Manifest SHA (PR fix/ubuntu-multiarch-sha)
+
+**The Fix:**
+```dockerfile
+# Old (ARM64-specific):
+FROM ubuntu:24.04@sha256:955364933d0d91afa6e10fb045948c16d2b191114aa54bed3ab5430d8bbc58cc
+
+# New (multi-arch manifest):
+FROM ubuntu:24.04@sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f200828b2b
+```
+
+**Also in this PR:**
+- Re-enabled ARM64 builds (`platforms: linux/amd64,linux/arm64`)
+- Removed debug diagnostic steps
+- Added detailed comments to prevent future mistakes
+
+**Local Testing Results:**
+```bash
+# AMD64 build
+podman build --platform linux/amd64 --no-cache -t test:amd64 .
+podman run --rm test:amd64 uname -m
+# Returns: x86_64 ✅
+
+# ARM64 build
+podman build --platform linux/arm64 --no-cache -t test:arm64 .
+podman run --rm test:arm64 uname -m
+# Returns: aarch64 ✅
+```
+
+**Status:** ✅ CI passed - All three build workflows (ai-assistant-container, project-container, firewall-manager) completed successfully with multi-arch builds.
 
 ## Next Steps
 
-1. **Merge fix/amd64-only-build to main** - includes debug diagnostics (will confirm in CI)
-2. **Fix the build process** - the issue is in buildx, not the workflow:
-   - Option A: Try separate single-arch builds with `imagetools create` (see issue #243)
-   - Option B: Try different buildx driver (`docker-container` with fresh builder)
-   - Option C: Investigate why buildx pulls wrong base image platform
-3. **Clean up**: Remove debug steps once build is fixed
+1. ~~**Wait for CI** - Build workflows should pass with correct architectures~~ ✅ Done
+2. **Merge PR and trigger Software Update workflow** - Should no longer fail with exec format error
+3. **Delete this file** - Once Software Update workflow is green, this debug doc can be removed
 
-## Changes to Undo After Resolution
+## Changes Made in Fix
 
-Once the issue is fixed, consider reverting:
-- [ ] Debug diagnostic steps in `ai-assistant-container-software-version-update.yml`
-- [ ] (Maybe) Re-enable ARM64 builds once proper multi-arch solution is implemented (issue #243)
+- [x] Updated Ubuntu SHA to multi-arch manifest digest
+- [x] Added comments explaining multi-arch SHA requirements
+- [x] Re-enabled ARM64 builds in all build workflows
+- [x] Removed debug diagnostic steps from software-update workflow
+- [x] Kept extracted script `.github/scripts/update-software-versions.sh` (useful refactor)
+- [x] Updated project-container base image SHA to new multi-arch ai-assistant-home
 
 ## Key Files
 

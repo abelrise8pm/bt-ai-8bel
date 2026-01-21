@@ -42,44 +42,6 @@ jobs:
           echo "Pulling $IMAGE..."
           docker pull --platform linux/amd64 "$IMAGE"
 
-      - name: Debug - Container diagnostics
-        env:
-          IMAGE: ghcr.io/${{ github.repository }}/project-container:latest
-        run: |
-          echo "=== Container Diagnostics ==="
-          echo ""
-          echo "1. Image architecture (from manifest):"
-          docker inspect "$IMAGE" --format '{{.Architecture}}'
-          echo ""
-          echo "2. Test: Can container run /bin/echo?"
-          docker run --rm --platform linux/amd64 "$IMAGE" /bin/echo "Hello from container" || echo "FAILED: /bin/echo"
-          echo ""
-          echo "3. Test: What is /bin/bash?"
-          docker run --rm --platform linux/amd64 "$IMAGE" file /bin/bash || echo "FAILED: file /bin/bash"
-          echo ""
-          echo "4. Test: uname -m inside container:"
-          docker run --rm --platform linux/amd64 "$IMAGE" uname -m || echo "FAILED: uname -m"
-          echo ""
-          echo "=== End Diagnostics ==="
-
-      - name: Debug - Script file diagnostics
-        run: |
-          echo "=== Script Diagnostics ==="
-          echo ""
-          echo "1. Script exists and is executable:"
-          ls -la .github/scripts/update-software-versions.sh
-          echo ""
-          echo "2. Script shebang (first line):"
-          head -1 .github/scripts/update-software-versions.sh
-          echo ""
-          echo "3. Script shebang hex dump (check for BOM/CRLF):"
-          head -1 .github/scripts/update-software-versions.sh | xxd | head -2
-          echo ""
-          echo "4. File type:"
-          file .github/scripts/update-software-versions.sh
-          echo ""
-          echo "=== End Script Diagnostics ==="
-
       - name: Run Claude Code software version updates
         id: claude_updates
         env:

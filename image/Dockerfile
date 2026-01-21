@@ -1,9 +1,20 @@
 # syntax=docker/dockerfile:1
 # Pinned Ubuntu 24.04 LTS for multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
-# Use `skopeo inspect --format "{{.Digest}}" docker://docker.io/library/ubuntu:24.04` to get the sha256 digest.
+#
+# IMPORTANT: The SHA must be the MULTI-ARCH MANIFEST digest, NOT an architecture-specific digest.
+# To get the correct SHA, run: skopeo inspect --format "{{.Digest}}" docker://docker.io/library/ubuntu:24.04
+# This returns the manifest list digest that works for ALL architectures.
+#
+# DO NOT use `docker inspect` or `docker pull` + inspect - those return architecture-specific digests
+# which will cause cross-platform builds to fail with "exec format error".
+#
+# To verify a SHA is multi-arch: skopeo inspect --raw docker://docker.io/library/ubuntu@sha256:<SHA> | jq .mediaType
+# - Multi-arch: "application/vnd.oci.image.index.v1+json" or "application/vnd.docker.distribution.manifest.list.v2+json"
+# - Single-arch (WRONG): "application/vnd.oci.image.manifest.v1+json"
+#
 # TARGETPLATFORM is automatically set by buildx - explicitly use it to ensure correct platform layers are pulled
 ARG TARGETPLATFORM
-FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:955364933d0d91afa6e10fb045948c16d2b191114aa54bed3ab5430d8bbc58cc
+FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f200828b2b
 
 # Version definitions
 # curl https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
