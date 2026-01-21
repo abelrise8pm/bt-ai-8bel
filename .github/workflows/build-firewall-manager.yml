@@ -57,7 +57,8 @@ jobs:
             type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      # Build for both ARM64 (Apple Silicon Macs) and AMD64 (GitHub runners, Intel Macs)
+      # Build for both AMD64 (GitHub runners, Intel Macs) and ARM64 (Apple Silicon Macs)
+      # AMD64 listed first as it's the CI priority architecture
       # Images are pushed to registry for testing since multi-arch builds can't be loaded locally
       - name: Build and push test image
         id: build
@@ -65,12 +66,10 @@ jobs:
         with:
           context: firewall-manager
           file: firewall-manager/Dockerfile
-          platforms: linux/arm64,linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:test-${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
       # Test the AMD64 variant (GitHub Actions runners are AMD64)
       - name: Test container functionality
