@@ -85,7 +85,7 @@ Removed `cache-from` and `cache-to` from all three build workflows:
 
 **Rationale**: Registry caching for multi-arch builds is prone to cross-architecture contamination. The corrupted cache was serving ARM64 layers for AMD64 builds. Removing caching entirely trades slightly slower builds for reliability.
 
-**Result**: TBD - testing in progress.
+**Result**: ✅ SUCCESS - Build Project Container workflow passed with all tests succeeding (PR #229).
 
 ## Current Hypothesis
 
