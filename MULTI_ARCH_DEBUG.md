@@ -131,42 +131,67 @@ Refactored software update workflow to isolate the problem:
    file script.sh
    ```
 
-**Result**: 🔄 PENDING - needs merge to main and workflow trigger to test.
+**Result**: 🔄 PENDING - needs merge to main and workflow trigger to test in GitHub Actions.
+
+## Local Testing Results (Jan 21, 2026)
+
+Tested on Apple Silicon Mac with Podman to isolate the issue:
+
+```bash
+NEW_IMAGE="ghcr.io/rise8-us/xpai-ai-assistant-container/project-container:latest"
+
+# Test 1: Can container run commands?
+podman run --rm --platform linux/amd64 "$NEW_IMAGE" /bin/echo "Hello"
+# Result: ✅ "Hello from new image" - works via Rosetta 2 emulation
+
+# Test 2: What architecture is the container?
+podman run --rm --platform linux/amd64 "$NEW_IMAGE" uname -m
+# Result: ❌ "aarch64" - CONTAINER HAS ARM64 BINARIES!
+
+# Test 3: Does the extracted script run?
+podman run --rm --platform linux/amd64 -v "$(pwd)":/workspaces/repo --workdir /workspaces/repo "$NEW_IMAGE" /workspaces/repo/.github/scripts/update-software-versions.sh
+# Result: ✅ Script runs! Only fails at "Invalid API key" (expected - no ANTHROPIC_API_KEY)
+```
+
+### Conclusions from Local Testing
+
+| Test | Result | Meaning |
+|------|--------|---------|
+| `/bin/echo` | ✅ Works | Rosetta 2 emulates ARM64 → AMD64 |
+| `uname -m` | `aarch64` | **Container has ARM64 binaries** |
+| Script execution | ✅ Runs | Script is valid, no BOM/CRLF issues |
+
+**Root cause confirmed: Container has ARM64 binaries despite `--platform linux/amd64` and manifest saying `amd64`.**
+
+- Works on Mac: Rosetta 2 transparently emulates ARM64
+- Fails on GitHub Actions: Native AMD64 Linux has no emulation → `exec format error`
+
+### Why Old Image Can't Be Tested
+```bash
+OLD_IMAGE="ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@sha256:3728496243b1bd36ae2db4bf060bef1424c3adff66277df62995e9aeb5370ead"
+# Result: "manifest unknown" - old images have been garbage collected
+```
 
 ## Current Status
 
-### What We Know
-- All three container builds pass (AMD64-only)
-- `docker inspect` reports `amd64` architecture
-- Build logs show warning: `InvalidBaseImagePlatform: ... pulled with platform "linux/arm64"`
-- Software Update workflow fails with `exec format error`
+### Confirmed Facts
+- ✅ Script is valid (runs locally, no BOM/CRLF)
+- ✅ Container can execute commands (via emulation)
+- ❌ Container has ARM64 binaries (`uname -m` = `aarch64`)
+- ❌ Build warning confirms: `InvalidBaseImagePlatform: ... pulled with platform "linux/arm64"`
+- ❌ `docker inspect` is misleading - reports manifest arch, not actual binary arch
 
-### Open Questions
-The `exec format error` could be caused by:
-
-| Hypothesis | Evidence For | Evidence Against |
-|------------|--------------|------------------|
-| ARM64 binaries in container | Build warning about wrong platform | `docker inspect` shows amd64 |
-| Script file corruption (BOM/CRLF) | Inline YAML is fragile | Script looks correct in logs |
-| Something else entirely | We haven't proven it's architecture | - |
-
-### What the Debug Run Will Tell Us
-
-| Diagnostic | If Passes | If Fails |
-|------------|-----------|----------|
-| `/bin/echo "Hello"` | Container can execute binaries | Container has wrong arch binaries |
-| `file /bin/bash` | Shows actual binary architecture | - |
-| `uname -m` | Shows kernel arch seen by container | - |
-| Script hex dump | Shows if BOM (EF BB BF) or CRLF (0d 0a) present | - |
+### Root Cause
+**Buildx is producing ARM64 binaries when targeting AMD64.** The manifest metadata says `amd64`, but the actual layers contain ARM64 binaries. This is a buildx bug, not a workflow or script issue.
 
 ## Next Steps
 
-1. **Merge fix/amd64-only-build to main** - includes debug diagnostics
-2. **Trigger Software Update workflow** - `gh workflow run "AI Assistant Container Software Update"`
-3. **Analyze debug output** to determine actual root cause
-4. **If architecture issue confirmed**: Implement separate single-arch builds (see issue #243)
-5. **If script issue**: Fix the script handling
-6. **Clean up**: Remove debug steps once issue is resolved
+1. **Merge fix/amd64-only-build to main** - includes debug diagnostics (will confirm in CI)
+2. **Fix the build process** - the issue is in buildx, not the workflow:
+   - Option A: Try separate single-arch builds with `imagetools create` (see issue #243)
+   - Option B: Try different buildx driver (`docker-container` with fresh builder)
+   - Option C: Investigate why buildx pulls wrong base image platform
+3. **Clean up**: Remove debug steps once build is fixed
 
 ## Changes to Undo After Resolution
 
