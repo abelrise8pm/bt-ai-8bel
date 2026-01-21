@@ -101,55 +101,78 @@ InvalidBaseImagePlatform: Base image ubuntu:24.04@sha256:... was pulled with pla
 ```
 Build tests pass (QEMU emulation), but software-update workflow still fails with exec format error.
 
-## Current Hypothesis
-
-**Buildx is pulling wrong platform variant for base images during multi-arch builds.**
-
-Despite:
-- Removing registry cache
-- Adding explicit `--platform=$TARGETPLATFORM` to FROM instructions
-- Building fresh images
-
-Buildx still pulls ARM64 layers when building the AMD64 variant. The warning `InvalidBaseImagePlatform` confirms this. QEMU emulation masks the issue during build tests, but the final image contains ARM64 binaries.
-
-## Next Steps to Try
-
-### Option 1: Build AMD64 only (recommended next step)
-Remove ARM64 from build to confirm AMD64 works correctly in isolation:
+### Fix 7: AMD64-only builds (PR #236, merged Jan 21, 2026)
+Changed all build workflows to only build AMD64:
 ```yaml
 platforms: linux/amd64  # Was: linux/amd64,linux/arm64
 ```
-This sacrifices Apple Silicon support temporarily but should fix CI.
 
-### Option 2: Separate single-arch builds
-Build each architecture separately and combine with `docker buildx imagetools create`:
-```yaml
-# Build AMD64
-docker buildx build --platform linux/amd64 --tag $IMAGE:amd64 --push .
-# Build ARM64
-docker buildx build --platform linux/arm64 --tag $IMAGE:arm64 --push .
-# Combine
-docker buildx imagetools create -t $IMAGE:latest $IMAGE:amd64 $IMAGE:arm64
-```
+**Result**: ✅ All build workflows pass. ❌ Software Update workflow still fails with `exec format error`.
 
-### Option 3: Use different buildx driver
-Try `docker-container` driver with fresh builder:
-```yaml
-- uses: docker/setup-buildx-action@v3
-  with:
-    driver: docker-container
-    driver-opts: image=moby/buildkit:latest
-```
+### Fix 8: Extract script and add debug diagnostics (Jan 21, 2026, branch: fix/amd64-only-build)
+Refactored software update workflow to isolate the problem:
 
-### Option 4: Inspect actual layers
-```bash
-# Check what layers are actually in the image
-docker buildx imagetools inspect ghcr.io/rise8-us/xpai-ai-assistant-container/project-container:latest --raw | jq '.manifests'
+1. **Extracted inline script to file**: `.github/scripts/update-software-versions.sh`
+   - Eliminates YAML multi-line string issues
+   - Git handles line endings properly
+   - Script is testable locally
 
-# Pull and check actual binaries
-docker pull --platform linux/amd64 ghcr.io/rise8-us/xpai-ai-assistant-container/project-container:latest
-docker run --rm --entrypoint file ghcr.io/rise8-us/xpai-ai-assistant-container/project-container:latest /bin/bash
-```
+2. **Removed `container-script-executor` action** - inline docker commands are simpler
+
+3. **Added debug diagnostics** to determine root cause:
+   ```yaml
+   # Container diagnostics - tests if container binaries work
+   docker run --rm --platform linux/amd64 "$IMAGE" /bin/echo "Hello"
+   docker run --rm --platform linux/amd64 "$IMAGE" file /bin/bash
+   docker run --rm --platform linux/amd64 "$IMAGE" uname -m
+
+   # Script diagnostics - checks for BOM/CRLF issues
+   head -1 script.sh | xxd | head -2
+   file script.sh
+   ```
+
+**Result**: 🔄 PENDING - needs merge to main and workflow trigger to test.
+
+## Current Status
+
+### What We Know
+- All three container builds pass (AMD64-only)
+- `docker inspect` reports `amd64` architecture
+- Build logs show warning: `InvalidBaseImagePlatform: ... pulled with platform "linux/arm64"`
+- Software Update workflow fails with `exec format error`
+
+### Open Questions
+The `exec format error` could be caused by:
+
+| Hypothesis | Evidence For | Evidence Against |
+|------------|--------------|------------------|
+| ARM64 binaries in container | Build warning about wrong platform | `docker inspect` shows amd64 |
+| Script file corruption (BOM/CRLF) | Inline YAML is fragile | Script looks correct in logs |
+| Something else entirely | We haven't proven it's architecture | - |
+
+### What the Debug Run Will Tell Us
+
+| Diagnostic | If Passes | If Fails |
+|------------|-----------|----------|
+| `/bin/echo "Hello"` | Container can execute binaries | Container has wrong arch binaries |
+| `file /bin/bash` | Shows actual binary architecture | - |
+| `uname -m` | Shows kernel arch seen by container | - |
+| Script hex dump | Shows if BOM (EF BB BF) or CRLF (0d 0a) present | - |
+
+## Next Steps
+
+1. **Merge fix/amd64-only-build to main** - includes debug diagnostics
+2. **Trigger Software Update workflow** - `gh workflow run "AI Assistant Container Software Update"`
+3. **Analyze debug output** to determine actual root cause
+4. **If architecture issue confirmed**: Implement separate single-arch builds (see issue #243)
+5. **If script issue**: Fix the script handling
+6. **Clean up**: Remove debug steps once issue is resolved
+
+## Changes to Undo After Resolution
+
+Once the issue is fixed, consider reverting:
+- [ ] Debug diagnostic steps in `ai-assistant-container-software-version-update.yml`
+- [ ] (Maybe) Re-enable ARM64 builds once proper multi-arch solution is implemented (issue #243)
 
 ## Key Files
 
@@ -157,28 +180,37 @@ docker run --rm --entrypoint file ghcr.io/rise8-us/xpai-ai-assistant-container/p
 |------|---------|
 | `.github/workflows/build-project-container.yml` | Builds project container |
 | `.github/workflows/build-ai-assistant-container.yml` | Builds base AI assistant container |
+| `.github/workflows/ai-assistant-container-software-version-update.yml` | Runs Claude Code to update versions (failing) |
+| `.github/scripts/update-software-versions.sh` | Extracted script for version updates |
 | `.github/actions/setup-container-build/action.yml` | Sets up QEMU + buildx |
-| `.github/actions/container-script-executor/action.yml` | Runs scripts in containers |
-| `.github/workflows/software-update-container.yml` | Uses container-script-executor (fails) |
+
+## Related Issues & PRs
+
+- **Issue #243**: Implement proper multi-architecture container builds (future work)
+- **PR #236**: Temporarily disable ARM64 builds (merged)
+- **docker/buildx#1044**: Known bug - registry cache only uploads from one node
 
 ## Relevant Commits
 
 ```bash
-# View commits on fix/multi-arch-manifest branch
-git log main..fix/multi-arch-manifest --oneline
+# AMD64-only fix
+git show adc5554  # "fix(ci): temporarily disable ARM64 builds to fix exec format error"
 
-# View the fix that was merged
-git show 55c9c5b  # "fix(ci): ensure correct multi-arch image handling in CI workflows"
+# Debug diagnostics
+git show dccfffc  # "refactor(ci): extract update script and add debug diagnostics"
 ```
 
 ## Verification Commands
 
 ```bash
-# Check if pulled image has correct architecture binaries
-docker run --rm --platform linux/amd64 \
-  ghcr.io/rise8-us/xpai-ai-assistant-container/project-container:latest \
-  file /bin/bash
+# Trigger the debug run
+gh workflow run "AI Assistant Container Software Update" --ref main
 
-# Expected: ELF 64-bit LSB executable, x86-64
-# Actual (broken): ELF 64-bit LSB executable, ARM aarch64
+# Watch the run
+gh run list --workflow="AI Assistant Container Software Update" --limit 1
+gh run view <RUN_ID> --log
+
+# Check debug output specifically
+gh run view <RUN_ID> --log | grep -A20 "Container Diagnostics"
+gh run view <RUN_ID> --log | grep -A20 "Script Diagnostics"
 ```
