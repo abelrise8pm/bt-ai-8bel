@@ -48,6 +48,8 @@ jobs:
           registry-username: ${{ github.actor }}
           registry-password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Build for both AMD64 (GitHub runners, Intel Macs) and ARM64 (Apple Silicon Macs)
+      # AMD64 listed first as it's the CI priority architecture
       - name: Build and push staging image
         id: build
         uses: docker/build-push-action@v5
@@ -56,11 +58,12 @@ jobs:
           file: ./image/Dockerfile
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
           labels: ${{ steps.setup.outputs.labels }}
-          platforms: linux/arm64,linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
+      # Explicitly pull with --platform to ensure correct architecture variant
       - name: Test container functionality
         id: test
         env:
@@ -68,8 +71,15 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           cd image
-          # Test using the staging image (AMD64 variant on GitHub runners)
-          export DOCKER_DEFAULT_PLATFORM=linux/amd64
+          # Explicitly pull AMD64 variant to ensure we test the correct architecture
+          docker pull --platform linux/amd64 "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}"
+          # Verify we got the correct architecture
+          ARCH=$(docker inspect "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}" --format '{{.Architecture}}')
+          echo "Pulled image architecture: $ARCH"
+          if [ "$ARCH" != "amd64" ]; then
+            echo "❌ ERROR: Expected amd64 architecture but got $ARCH"
+            exit 1
+          fi
           CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}" ./scripts/test.sh
 
       - name: Security scan

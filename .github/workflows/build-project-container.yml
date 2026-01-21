@@ -60,7 +60,8 @@ jobs:
             type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
-      # Build for both ARM64 (Apple Silicon Macs) and AMD64 (GitHub runners, Intel Macs)
+      # Build for both AMD64 (GitHub runners, Intel Macs) and ARM64 (Apple Silicon Macs)
+      # AMD64 listed first as it's the CI priority architecture
       # Images are pushed to registry for testing since multi-arch builds can't be loaded locally
       - name: Build and push test image
         id: build
@@ -68,7 +69,7 @@ jobs:
         with:
           context: project-container
           file: project-container/Dockerfile
-          platforms: linux/arm64,linux/amd64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.IMAGE }}:test-${{ github.sha }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -76,11 +77,19 @@ jobs:
           cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
 
       # Test the AMD64 variant (GitHub Actions runners are AMD64)
+      # Explicitly pull with --platform to ensure correct architecture variant
       - name: Test container functionality
         run: |
           cd project-container
-          # Test using the test image (AMD64 variant on GitHub runners)
-          export DOCKER_DEFAULT_PLATFORM=linux/amd64
+          # Explicitly pull AMD64 variant to ensure we test the correct architecture
+          docker pull --platform linux/amd64 "${{ env.IMAGE }}:test-${{ github.sha }}"
+          # Verify we got the correct architecture
+          ARCH=$(docker inspect "${{ env.IMAGE }}:test-${{ github.sha }}" --format '{{.Architecture}}')
+          echo "Pulled image architecture: $ARCH"
+          if [ "$ARCH" != "amd64" ]; then
+            echo "❌ ERROR: Expected amd64 architecture but got $ARCH"
+            exit 1
+          fi
           CONTAINER_RUNTIME=docker IMAGE_TAG="${{ env.IMAGE }}:test-${{ github.sha }}" ./test.sh
 
       # Scan for security vulnerabilities

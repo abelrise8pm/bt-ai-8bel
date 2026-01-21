@@ -44,6 +44,22 @@ runs:
       run: |
         echo "${{ inputs.github-token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+    # Explicitly pull AMD64 variant to ensure correct architecture
+    # docker run --platform doesn't always pull the correct variant if cached
+    - name: Pull container image (AMD64)
+      shell: bash
+      run: |
+        echo "Pulling AMD64 variant of ${{ inputs.container-image }}..."
+        docker pull --platform linux/amd64 "${{ inputs.container-image }}"
+        # Verify architecture
+        ARCH=$(docker inspect "${{ inputs.container-image }}" --format '{{.Architecture}}')
+        echo "Pulled image architecture: $ARCH"
+        if [ "$ARCH" != "amd64" ]; then
+          echo "❌ ERROR: Expected amd64 architecture but got $ARCH"
+          exit 1
+        fi
+        echo "✅ Verified AMD64 architecture"
+
     - name: Execute script in container
       id: script-exec
       shell: bash
@@ -51,8 +67,6 @@ runs:
         echo "Starting script execution..."
 
         # Run script in container with timeout, capturing all output
-        # Explicitly request linux/amd64 to ensure correct architecture on GitHub runners
-        # (multi-arch images may default to wrong arch depending on runner image version)
         timeout ${{ inputs.timeout-seconds }}s docker run --rm \
           --platform linux/amd64 \
           -e ANTHROPIC_API_KEY="${{ inputs.anthropic-api-key }}" \
