@@ -37,6 +37,17 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## January 22, 2026
+
+### Added
+- macOS notification hooks for user attention alerts - get notified when Claude Code needs input (permission dialogs, questions) or finishes working
+  - `.claude/hooks/notify-attention.sh` - fires on PermissionRequest and AskUserQuestion events
+  - `.claude/hooks/notify-stop.sh` - fires when Claude Code session stops
+  - `scripts/osxStopListener/` - macOS LaunchAgent listener with install/uninstall scripts
+  - Different sounds distinguish events: "Ping" for attention needed, "Glass" for completion
+
+---
+
 ## January 20, 2026
 
 ### Added
