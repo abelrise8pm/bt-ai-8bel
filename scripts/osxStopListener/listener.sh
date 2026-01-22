@@ -18,19 +18,34 @@ while true; do
 
   log "Received request: $request"
 
-  # Extract repo name from JSON payload
+  # Extract event type and repo name from JSON payload
+  event=$(echo "$request" | grep -ao '"event":"[^"]*"' | head -1 | cut -d'"' -f4)
   repo=$(echo "$request" | grep -ao '"repo":"[^"]*"' | head -1 | cut -d'"' -f4)
 
-  log "Parsed repo: ${repo:-<empty>}"
+  log "Parsed event: ${event:-<empty>}, repo: ${repo:-<empty>}"
 
-  if [[ -n "$repo" ]]; then
-    message="Finished: $repo"
-  else
-    message="Claude Code stopped"
-  fi
+  # Determine message and sound based on event type
+  case "$event" in
+    attention)
+      if [[ -n "$repo" ]]; then
+        message="Needs input: $repo"
+      else
+        message="Claude Code needs input"
+      fi
+      sound="Ping"
+      ;;
+    stop|*)
+      if [[ -n "$repo" ]]; then
+        message="Finished: $repo"
+      else
+        message="Claude Code stopped"
+      fi
+      sound="Glass"
+      ;;
+  esac
 
-  log "Showing notification: $message"
+  log "Showing notification: $message (sound: $sound)"
 
   # Show macOS notification
-  osascript -e "display notification \"$message\" with title \"Claude Code\" sound name \"Glass\""
+  osascript -e "display notification \"$message\" with title \"Claude Code\" sound name \"$sound\""
 done
