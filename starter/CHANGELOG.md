@@ -40,11 +40,28 @@ Since your project doesn't share git history with this template, you'll need to 
 ## January 22, 2026
 
 ### Added
-- macOS notification hooks for user attention alerts - get notified when Claude Code needs input (permission dialogs, questions) or finishes working
+- macOS notification hooks for user attention alerts - get notified when Claude Code needs input (permission dialogs, questions) or finishes working ([49ddf56](https://github.com/rise8-us/xpai-ai-assistant-container/commit/49ddf56))
   - `.claude/hooks/notify-attention.sh` - fires on PermissionRequest and AskUserQuestion events
   - `.claude/hooks/notify-stop.sh` - fires when Claude Code session stops
   - `scripts/osxStopListener/` - macOS LaunchAgent listener with install/uninstall scripts
   - Different sounds distinguish events: "Ping" for attention needed, "Glass" for completion
+
+### Changed
+- Updated base container with multi-arch image fixes and latest software versions ([ee763f9](https://github.com/rise8-us/xpai-ai-assistant-container/commit/ee763f9))
+
+---
+
+## January 21, 2026
+
+### Changed
+- Updated firewall manager to latest version with security improvements ([12048e1](https://github.com/rise8-us/xpai-ai-assistant-container/commit/12048e1))
+
+### Fixed
+- Resolved multi-architecture container build issues that caused "exec format error" on AMD64 systems ([1d0e84f](https://github.com/rise8-us/xpai-ai-assistant-container/commit/1d0e84f))
+  - Reordered platform build priority to AMD64 first for CI reliability
+  - Added explicit platform verification before container tests
+  - Fixed architecture detection to fail fast with clear error messages
+  - Ensured AMD64 images are correctly pulled on GitHub Actions runners
 
 ---
 
