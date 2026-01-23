@@ -15,7 +15,7 @@ services:
     container_name: cui-firewall-manager
     # Prebuilt firewall manager image with baked-in dependencies
     # Digest is auto-updated by GitHub Actions on new builds
-    image: ghcr.io/rise8-us/xpai/firewall-manager@sha256:d648c8b0f18618566ffd60f59ee28a0159cab7952e06c62d5789867c07bf7418
+    image: ghcr.io/rise8-us/xpai/firewall-manager@sha256:c1b342ee9a558d65cdd302051572c4ec93a92f29f38d7f9ba0996caa6d400c74
     cap_add:
       - NET_ADMIN
     volumes:
