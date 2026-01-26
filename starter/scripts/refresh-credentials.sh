@@ -1,0 +1,350 @@
+#!/bin/bash
+################################################################################
+# AWS Credential Refresh Script
+#
+# Purpose: Automate AWS Bedrock credential refresh and dev container rebuild
+# Target: Host machine (macOS/Linux)
+# Scope: CUI projects using AWS Bedrock with dev containers
+#
+# This script handles the complete lifecycle of updating AWS credentials:
+# 1. Stop existing dev containers
+# 2. Refresh AWS SSO credentials
+# 3. Export credentials to .env.bedrock
+# 4. Rebuild dev containers with new credentials
+# 5. Exec into the rebuilt container
+#
+# Usage: Run from host machine (outside container):
+#   ./scripts/refresh-credentials.sh
+#
+# Requirements:
+# - AWS CLI with configured claude-bedrock profile
+# - DevContainer CLI (@devcontainers/cli)
+# - Podman running
+# - Git repository
+#
+################################################################################
+
+set -euo pipefail  # Exit on error, undefined variables, pipe failures
+
+################################################################################
+# CONSTANTS & CONFIGURATION
+################################################################################
+
+readonly AWS_PROFILE="claude-bedrock"
+readonly COMPOSE_FILE=".devcontainer/docker-compose.firewall.yml"
+readonly ENV_FILE=".env.bedrock"
+readonly FIREWALL_CONTAINER="retrospect-firewall-manager"
+readonly AI_CONTAINER="retrospect-ai-assistant"
+
+# Color codes for output
+readonly COLOR_RESET='\033[0m'
+readonly COLOR_GREEN='\033[0;32m'
+readonly COLOR_YELLOW='\033[1;33m'
+readonly COLOR_RED='\033[0;31m'
+readonly COLOR_CYAN='\033[0;36m'
+
+################################################################################
+# LOGGING FUNCTIONS
+################################################################################
+
+log_info() {
+    echo -e "${COLOR_GREEN}[INFO]${COLOR_RESET} $*"
+}
+
+log_warn() {
+    echo -e "${COLOR_YELLOW}[WARN]${COLOR_RESET} $*"
+}
+
+log_error() {
+    echo -e "${COLOR_RED}[ERROR]${COLOR_RESET} $*"
+}
+
+log_step() {
+    echo ""
+    echo -e "${COLOR_GREEN}==>${COLOR_RESET} $*"
+    echo ""
+}
+
+################################################################################
+# ERROR HANDLING
+################################################################################
+
+cleanup_on_error() {
+    local exit_code=$?
+    local line_number=$1
+
+    log_error "Script failed at line ${line_number} with exit code ${exit_code}"
+    log_error "Please check the error message above for details"
+
+    exit "${exit_code}"
+}
+
+trap 'cleanup_on_error ${LINENO}' ERR
+
+################################################################################
+# VALIDATION FUNCTIONS
+################################################################################
+
+validate_prerequisites() {
+    log_step "Phase 1: Validating prerequisites"
+
+    # Check if we're in a git repository
+    if ! git rev-parse --git-dir &>/dev/null; then
+        log_error "Not a git repository"
+        log_error "Please run this script from within the project directory"
+        exit 1
+    fi
+
+    log_info "Git repository: OK"
+
+    # Check AWS CLI
+    if ! command -v aws &>/dev/null; then
+        log_error "AWS CLI not found"
+        log_error "Install with: brew install awscli"
+        exit 1
+    fi
+
+    log_info "AWS CLI: $(aws --version 2>&1 | head -n1)"
+
+    # Check DevContainer CLI
+    if ! command -v devcontainer &>/dev/null; then
+        log_error "DevContainer CLI not found"
+        log_error "Install with: npm install -g @devcontainers/cli"
+        exit 1
+    fi
+
+    log_info "DevContainer CLI: $(devcontainer --version)"
+
+    # Check Podman
+    if ! command -v podman &>/dev/null; then
+        log_error "Podman not found"
+        log_error "Install with: brew install podman"
+        exit 1
+    fi
+
+    log_info "Podman: $(podman --version)"
+
+    log_info "All prerequisites validated"
+}
+
+find_project_root() {
+    local project_root
+    project_root=$(git rev-parse --show-toplevel)
+
+    if [[ -z "${project_root}" ]]; then
+        log_error "Failed to determine project root"
+        exit 1
+    fi
+
+    echo "${project_root}"
+}
+
+################################################################################
+# CONTAINER MANAGEMENT
+################################################################################
+
+stop_and_remove_containers() {
+    log_step "Phase 2: Stopping and removing dev containers"
+
+    log_info "Stopping ai-assistant and firewall containers..."
+    log_info "Note: Named volumes will be preserved"
+
+    # Stop containers in order: ai-assistant first, then firewall
+    # This ensures ai-assistant is always stopped before or at the same time as firewall
+    podman stop "${AI_CONTAINER}" "${FIREWALL_CONTAINER}" 2>/dev/null || log_warn "Failed to stop some containers (continuing anyway)"
+
+    log_info "Removing ai-assistant and firewall containers..."
+    # Remove containers in the same order
+    podman rm "${AI_CONTAINER}" "${FIREWALL_CONTAINER}" 2>/dev/null || log_warn "Failed to remove some containers (continuing anyway)"
+
+    log_info "Checking for any remaining retrospect containers..."
+
+    # Get list of any other retrospect-related containers
+    local containers
+    containers=$(podman ps -a --format "{{.Names}}" | grep "retrospect" || true)
+
+    if [[ -n "${containers}" ]]; then
+        log_warn "Found additional retrospect containers:"
+        while IFS= read -r container; do
+            log_info "Removing container: ${container}"
+            podman rm -f "${container}" 2>/dev/null || log_warn "Failed to remove ${container} (may already be removed)"
+        done <<< "${containers}"
+        log_info "All retrospect containers removed"
+    else
+        log_info "No additional retrospect containers found"
+    fi
+}
+
+################################################################################
+# AWS CREDENTIAL MANAGEMENT
+################################################################################
+
+refresh_aws_credentials() {
+    log_step "Phase 3: Refreshing AWS credentials"
+
+    # Logout first to clear cached credentials
+    log_info "Logging out of AWS SSO (profile: ${AWS_PROFILE})"
+    if ! aws sso logout --profile "${AWS_PROFILE}" 2>/dev/null; then
+        log_warn "Logout failed or no active session (continuing anyway)"
+    else
+        log_info "Logged out successfully"
+    fi
+
+    log_info "Logging in to AWS SSO (profile: ${AWS_PROFILE})"
+    log_info "This will open your browser for authentication"
+
+    # Run AWS SSO login - this is blocking and will wait for user to complete auth
+    if ! aws sso login --profile "${AWS_PROFILE}"; then
+        log_error "AWS SSO login failed or was cancelled"
+        log_error "Please complete the browser authentication and try again"
+        exit 1
+    fi
+
+    log_info "AWS SSO login successful"
+
+    # Verify login succeeded by checking caller identity
+    log_info "Verifying AWS credentials..."
+    if ! aws sts get-caller-identity --profile "${AWS_PROFILE}" &>/dev/null; then
+        log_error "Failed to verify AWS credentials"
+        log_error "Please check your AWS configuration"
+        exit 1
+    fi
+
+    log_info "AWS credentials verified"
+
+    # Export credentials to .env.bedrock
+    log_info "Exporting credentials to ${ENV_FILE}"
+    if ! aws configure export-credentials --profile "${AWS_PROFILE}" --format env-no-export > "${ENV_FILE}"; then
+        log_error "Failed to export credentials to ${ENV_FILE}"
+        log_error "Please check AWS CLI configuration"
+        exit 1
+    fi
+
+    # Verify the file was created and is non-empty
+    if [[ ! -s "${ENV_FILE}" ]]; then
+        log_error "${ENV_FILE} is empty or does not exist"
+        exit 1
+    fi
+
+    log_info "Credentials exported successfully to ${ENV_FILE}"
+
+    # Display credential expiration if available
+    if grep -q "AWS_CREDENTIAL_EXPIRATION" "${ENV_FILE}"; then
+        local expiration
+        expiration=$(grep "AWS_CREDENTIAL_EXPIRATION" "${ENV_FILE}" | cut -d'=' -f2)
+        log_info "Credentials expire at: ${expiration}"
+    fi
+}
+
+################################################################################
+# CONTAINER REBUILD
+################################################################################
+
+rebuild_containers() {
+    log_step "Phase 4: Rebuilding dev containers"
+
+    log_info "Starting devcontainer rebuild..."
+    log_info "This may take 2-5 minutes depending on cached layers"
+
+    # Use devcontainer up to rebuild and start containers
+    # Containers were already manually removed in Phase 2
+    # This sources the new .env.bedrock file automatically
+    if ! devcontainer up --workspace-folder .; then
+        log_error "DevContainer rebuild failed"
+        log_error "Check the error messages above"
+        log_error "You may need to manually inspect the container logs"
+        exit 1
+    fi
+
+    log_info "Containers rebuilt successfully"
+
+    # Verify containers are running
+    log_info "Verifying containers are running..."
+
+    local running_containers
+    running_containers=$(podman ps --format "{{.Names}}" | grep "retrospect" || true)
+
+    if [[ -z "${running_containers}" ]]; then
+        log_error "No retrospect containers found running"
+        log_error "Check container status with: podman ps -a"
+        exit 1
+    fi
+
+    log_info "Running containers:"
+    echo "${running_containers}" | while read -r container; do
+        log_info "  - ${container}"
+    done
+}
+
+################################################################################
+# CONTAINER ACCESS
+################################################################################
+
+exec_into_container() {
+    log_step "Phase 5: Accessing container"
+
+    log_info "Waiting for container stabilization..."
+    sleep 5
+
+    log_info "Verifying ${AI_CONTAINER} is running..."
+    if ! podman ps --format "{{.Names}}" | grep -q "^${AI_CONTAINER}$"; then
+        log_error "Container ${AI_CONTAINER} is not running"
+        log_error "Check status with: podman ps -a"
+        exit 1
+    fi
+
+    log_info "Executing shell in ${AI_CONTAINER} via devcontainer exec"
+    log_info "This will respect devcontainer.json lifecycle hooks (e.g., postAttachCommand)"
+    log_info "You will be dropped into an interactive bash session"
+    echo ""
+
+    # Use devcontainer exec to properly respect devcontainer.json configuration
+    # This ensures postAttachCommand and other lifecycle hooks are executed
+    exec devcontainer exec --workspace-folder . /bin/bash
+}
+
+################################################################################
+# MAIN EXECUTION
+################################################################################
+
+main() {
+    local start_time
+    start_time=$(date +%s)
+
+    echo ""
+    echo "╔═══════════════════════════════════════════════════════════╗"
+    echo "║  AWS Credential Refresh & Container Rebuild               ║"
+    echo "╚═══════════════════════════════════════════════════════════╝"
+    echo ""
+
+    log_info "Started at: $(date '+%Y-%m-%d %H:%M:%S')"
+
+    # Find and change to project root
+    local project_root
+    project_root=$(find_project_root)
+    log_info "Project root: ${project_root}"
+
+    cd "${project_root}" || {
+        log_error "Failed to change to project root: ${project_root}"
+        exit 1
+    }
+
+    # Execute phases
+    validate_prerequisites
+    stop_and_remove_containers
+    refresh_aws_credentials
+    rebuild_containers
+    exec_into_container
+
+    # Calculate duration (won't actually reach here due to exec)
+    local end_time
+    end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+
+    echo ""
+    log_info "Completed in ${duration} seconds"
+    log_info "Finished at: $(date '+%Y-%m-%d %H:%M:%S')"
+}
+
+# Run main function
+main "$@"
