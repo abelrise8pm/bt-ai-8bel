@@ -33,8 +33,10 @@ set -euo pipefail  # Exit on error, undefined variables, pipe failures
 readonly AWS_PROFILE="claude-bedrock"
 readonly COMPOSE_FILE=".devcontainer/docker-compose.firewall.yml"
 readonly ENV_FILE=".env.bedrock"
-readonly FIREWALL_CONTAINER="retrospect-firewall-manager"
-readonly AI_CONTAINER="retrospect-ai-assistant"
+
+# Auto-detected from docker-compose file at runtime
+FIREWALL_CONTAINER=""
+AI_CONTAINER=""
 
 # Color codes for output
 readonly COLOR_RESET='\033[0m'
@@ -42,6 +44,76 @@ readonly COLOR_GREEN='\033[0;32m'
 readonly COLOR_YELLOW='\033[1;33m'
 readonly COLOR_RED='\033[0;31m'
 readonly COLOR_CYAN='\033[0;36m'
+
+################################################################################
+# CONTAINER NAME DETECTION
+################################################################################
+
+# Parse container_name from docker-compose file for a given service
+# Args: $1 = compose file path, $2 = service name
+# Returns: container_name value or empty string if not found
+parse_container_name() {
+    local compose_file=$1
+    local service_name=$2
+
+    awk -v service="${service_name}" '
+        # Track if we are inside the target service block
+        $0 ~ "^[[:space:]]*" service ":" { in_service=1; next }
+
+        # Exit service block when we hit another service or end of services section
+        in_service && /^[[:space:]]*[a-zA-Z_-]+:/ && !/^[[:space:]]+/ { in_service=0 }
+
+        # Extract container_name when inside the service block
+        in_service && /^[[:space:]]+container_name:/ {
+            # Remove leading whitespace and "container_name:"
+            sub(/^[[:space:]]+container_name:[[:space:]]*/, "")
+            # Remove quotes if present
+            gsub(/["'\'']/, "")
+            print $0
+            exit
+        }
+    ' "${compose_file}"
+}
+
+# Detect container names from docker-compose file
+# Args: $1 = compose file path
+# Sets: FIREWALL_CONTAINER and AI_CONTAINER globals
+detect_container_names() {
+    local compose_file=$1
+
+    if [[ ! -f "${compose_file}" ]]; then
+        log_error "Compose file not found: ${compose_file}"
+        exit 1
+    fi
+
+    log_info "Detecting container names from ${compose_file}"
+
+    FIREWALL_CONTAINER=$(parse_container_name "${compose_file}" "firewall-manager")
+    AI_CONTAINER=$(parse_container_name "${compose_file}" "ai-assistant")
+
+    if [[ -z "${FIREWALL_CONTAINER}" ]]; then
+        log_error "Failed to detect firewall-manager container name from ${compose_file}"
+        log_error "Ensure the compose file has a 'firewall-manager' service with 'container_name' defined"
+        exit 1
+    fi
+
+    if [[ -z "${AI_CONTAINER}" ]]; then
+        log_error "Failed to detect ai-assistant container name from ${compose_file}"
+        log_error "Ensure the compose file has an 'ai-assistant' service with 'container_name' defined"
+        exit 1
+    fi
+
+    log_info "Detected firewall container: ${FIREWALL_CONTAINER}"
+    log_info "Detected ai-assistant container: ${AI_CONTAINER}"
+}
+
+# Extract container name prefix (e.g., "cui" from "cui-firewall-manager")
+# Args: $1 = container name
+# Returns: prefix before first hyphen
+get_container_prefix() {
+    local container_name=$1
+    echo "${container_name}" | cut -d'-' -f1
+}
 
 ################################################################################
 # LOGGING FUNCTIONS
@@ -146,6 +218,10 @@ find_project_root() {
 stop_and_remove_containers() {
     log_step "Phase 2: Stopping and removing dev containers"
 
+    # Get container prefix for grep pattern matching
+    local prefix
+    prefix=$(get_container_prefix "${FIREWALL_CONTAINER}")
+
     log_info "Stopping ai-assistant and firewall containers..."
     log_info "Note: Named volumes will be preserved"
 
@@ -157,21 +233,21 @@ stop_and_remove_containers() {
     # Remove containers in the same order
     podman rm "${AI_CONTAINER}" "${FIREWALL_CONTAINER}" 2>/dev/null || log_warn "Failed to remove some containers (continuing anyway)"
 
-    log_info "Checking for any remaining retrospect containers..."
+    log_info "Checking for any remaining ${prefix} containers..."
 
-    # Get list of any other retrospect-related containers
+    # Get list of any other project-related containers
     local containers
-    containers=$(podman ps -a --format "{{.Names}}" | grep "retrospect" || true)
+    containers=$(podman ps -a --format "{{.Names}}" | grep "^${prefix}-" || true)
 
     if [[ -n "${containers}" ]]; then
-        log_warn "Found additional retrospect containers:"
+        log_warn "Found additional ${prefix} containers:"
         while IFS= read -r container; do
             log_info "Removing container: ${container}"
             podman rm -f "${container}" 2>/dev/null || log_warn "Failed to remove ${container} (may already be removed)"
         done <<< "${containers}"
-        log_info "All retrospect containers removed"
+        log_info "All ${prefix} containers removed"
     else
-        log_info "No additional retrospect containers found"
+        log_info "No additional ${prefix} containers found"
     fi
 }
 
@@ -243,6 +319,10 @@ refresh_aws_credentials() {
 rebuild_containers() {
     log_step "Phase 4: Rebuilding dev containers"
 
+    # Get container prefix for grep pattern matching
+    local prefix
+    prefix=$(get_container_prefix "${FIREWALL_CONTAINER}")
+
     log_info "Starting devcontainer rebuild..."
     log_info "This may take 2-5 minutes depending on cached layers"
 
@@ -262,10 +342,10 @@ rebuild_containers() {
     log_info "Verifying containers are running..."
 
     local running_containers
-    running_containers=$(podman ps --format "{{.Names}}" | grep "retrospect" || true)
+    running_containers=$(podman ps --format "{{.Names}}" | grep "^${prefix}-" || true)
 
     if [[ -z "${running_containers}" ]]; then
-        log_error "No retrospect containers found running"
+        log_error "No ${prefix} containers found running"
         log_error "Check container status with: podman ps -a"
         exit 1
     fi
@@ -328,6 +408,9 @@ main() {
         log_error "Failed to change to project root: ${project_root}"
         exit 1
     }
+
+    # Detect container names from docker-compose file
+    detect_container_names "${COMPOSE_FILE}"
 
     # Execute phases
     validate_prerequisites
