@@ -107,12 +107,14 @@ detect_container_names() {
     log_info "Detected ai-assistant container: ${AI_CONTAINER}"
 }
 
-# Extract container name prefix (e.g., "cui" from "cui-firewall-manager")
+# Extract container name prefix (e.g., "my-project" from "my-project-firewall-manager")
 # Args: $1 = container name
-# Returns: prefix before first hyphen
+# Returns: project prefix with known service suffixes removed
 get_container_prefix() {
     local container_name=$1
-    echo "${container_name}" | cut -d'-' -f1
+    # Remove known service suffixes to get full project prefix
+    # Handles multi-word prefixes with dashes (e.g., "my-project")
+    echo "${container_name}" | sed -E 's/-(firewall-manager|ai-assistant)$//'
 }
 
 ################################################################################
