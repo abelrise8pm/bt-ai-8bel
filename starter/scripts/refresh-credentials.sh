@@ -11,10 +11,14 @@
 # 2. Refresh AWS SSO credentials
 # 3. Export credentials to .env.bedrock
 # 4. Rebuild dev containers with new credentials
-# 5. Exec into the rebuilt container
+# 5. Access the container (CLI exec or VS Code)
 #
 # Usage: Run from host machine (outside container):
-#   ./scripts/refresh-credentials.sh
+#   ./scripts/refresh-credentials.sh [OPTIONS]
+#
+# Options:
+#   --vscode    Open VS Code after rebuild (instead of exec into container)
+#   --help      Show this help message
 #
 # Requirements:
 # - AWS CLI with configured claude-bedrock profile
@@ -38,12 +42,66 @@ readonly ENV_FILE=".env.bedrock"
 FIREWALL_CONTAINER=""
 AI_CONTAINER=""
 
+# Mode: "cli" (default) or "vscode"
+MODE="cli"
+
 # Color codes for output
 readonly COLOR_RESET='\033[0m'
 readonly COLOR_GREEN='\033[0;32m'
 readonly COLOR_YELLOW='\033[1;33m'
 readonly COLOR_RED='\033[0;31m'
 readonly COLOR_CYAN='\033[0;36m'
+
+################################################################################
+# USAGE & ARGUMENT PARSING
+################################################################################
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") [OPTIONS]
+
+Refresh AWS Bedrock credentials and rebuild dev containers for CUI projects.
+
+OPTIONS:
+    --vscode    After rebuilding, open VS Code instead of exec'ing into container.
+                Use this if you develop with VS Code's "Reopen in Container" feature.
+    --help      Show this help message and exit.
+
+EXAMPLES:
+    # Default: rebuild and exec into container (for devcontainer CLI users)
+    $(basename "$0")
+
+    # For VS Code users: rebuild and open VS Code
+    $(basename "$0") --vscode
+
+REQUIREMENTS:
+    - AWS CLI with configured 'claude-bedrock' profile
+    - DevContainer CLI (@devcontainers/cli)
+    - Podman running
+    - Git repository with .devcontainer/docker-compose.firewall.yml
+
+EOF
+    exit 0
+}
+
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --vscode)
+                MODE="vscode"
+                shift
+                ;;
+            --help|-h)
+                usage
+                ;;
+            *)
+                echo "Unknown option: $1"
+                echo "Use --help for usage information."
+                exit 1
+                ;;
+        esac
+    done
+}
 
 ################################################################################
 # CONTAINER NAME DETECTION
@@ -414,11 +472,70 @@ exec_into_container() {
     exec devcontainer exec --workspace-folder . /bin/bash
 }
 
+open_in_vscode() {
+    log_step "Phase 5: Opening VS Code"
+
+    log_info "Waiting for container to be ready..."
+
+    local max_attempts=30
+    local attempt=1
+
+    while [[ ${attempt} -le ${max_attempts} ]]; do
+        if podman ps --format "{{.Names}}" | grep -q "^${AI_CONTAINER}$"; then
+            # Container exists, check if it's running
+            local status
+            status=$(podman inspect "${AI_CONTAINER}" --format "{{.State.Status}}" 2>/dev/null || echo "unknown")
+
+            if [[ "${status}" == "running" ]]; then
+                log_info "Container ${AI_CONTAINER} is ready (attempt ${attempt}/${max_attempts})"
+                break
+            fi
+        fi
+
+        if [[ ${attempt} -eq ${max_attempts} ]]; then
+            log_error "Container ${AI_CONTAINER} failed to start after ${max_attempts} attempts"
+            log_error "Check status with: podman ps -a"
+            log_error "Check logs with: podman logs ${AI_CONTAINER}"
+            exit 1
+        fi
+
+        log_info "Waiting for container... (attempt ${attempt}/${max_attempts})"
+        sleep 1
+        attempt=$((attempt + 1))
+    done
+
+    log_info "Opening VS Code..."
+
+    # Check if VS Code is available
+    if ! command -v code &>/dev/null; then
+        log_warn "VS Code 'code' command not found in PATH"
+        log_info "Please open VS Code manually and use 'Reopen in Container'"
+    else
+        code .
+        log_info "VS Code opened"
+    fi
+
+    echo ""
+    echo "╔═══════════════════════════════════════════════════════════╗"
+    echo "║  Container is ready! Next steps:                          ║"
+    echo "║                                                           ║"
+    echo "║  1. In VS Code, press Cmd+Shift+P (Mac) or Ctrl+Shift+P   ║"
+    echo "║  2. Type: 'Reopen in Container'                           ║"
+    echo "║  3. Select it to attach to the running container          ║"
+    echo "╚═══════════════════════════════════════════════════════════╝"
+    echo ""
+
+    log_info "Credential refresh complete!"
+}
+
 ################################################################################
 # MAIN EXECUTION
 ################################################################################
 
 main() {
+    # Parse command line arguments
+    parse_args "$@"
+
     echo ""
     echo "╔═══════════════════════════════════════════════════════════╗"
     echo "║  AWS Credential Refresh & Container Rebuild               ║"
@@ -426,6 +543,7 @@ main() {
     echo ""
 
     log_info "Started at: $(date '+%Y-%m-%d %H:%M:%S')"
+    log_info "Mode: ${MODE}"
 
     # Find and change to project root
     local project_root
@@ -440,14 +558,20 @@ main() {
     # Detect container names from docker-compose file
     detect_container_names "${COMPOSE_FILE}"
 
-    # Execute phases
+    # Execute phases 1-4
     validate_prerequisites
     stop_and_remove_containers
     refresh_aws_credentials
     rebuild_containers
-    exec_into_container
-    # Note: exec_into_container uses 'exec' which replaces this process,
-    # so execution never returns here
+
+    # Phase 5: Access container based on mode
+    if [[ "${MODE}" == "vscode" ]]; then
+        open_in_vscode
+    else
+        exec_into_container
+        # Note: exec_into_container uses 'exec' which replaces this process,
+        # so execution never returns here
+    fi
 }
 
 # Run main function
