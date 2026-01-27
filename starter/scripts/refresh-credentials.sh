@@ -290,13 +290,23 @@ refresh_aws_credentials() {
 
     log_info "AWS credentials verified"
 
-    # Export credentials to .env.bedrock
+    # Export credentials to .env.bedrock with restrictive permissions
     log_info "Exporting credentials to ${ENV_FILE}"
+
+    # Set restrictive umask before creating credentials file (600 = owner read/write only)
+    local old_umask
+    old_umask=$(umask)
+    umask 077
+
     if ! aws configure export-credentials --profile "${AWS_PROFILE}" --format env-no-export > "${ENV_FILE}"; then
+        umask "${old_umask}"
         log_error "Failed to export credentials to ${ENV_FILE}"
         log_error "Please check AWS CLI configuration"
         exit 1
     fi
+
+    # Restore original umask
+    umask "${old_umask}"
 
     # Verify the file was created and is non-empty
     if [[ ! -s "${ENV_FILE}" ]]; then
@@ -365,15 +375,34 @@ rebuild_containers() {
 exec_into_container() {
     log_step "Phase 5: Accessing container"
 
-    log_info "Waiting for container stabilization..."
-    sleep 5
+    log_info "Waiting for container to be ready..."
 
-    log_info "Verifying ${AI_CONTAINER} is running..."
-    if ! podman ps --format "{{.Names}}" | grep -q "^${AI_CONTAINER}$"; then
-        log_error "Container ${AI_CONTAINER} is not running"
-        log_error "Check status with: podman ps -a"
-        exit 1
-    fi
+    local max_attempts=30
+    local attempt=1
+
+    while [[ ${attempt} -le ${max_attempts} ]]; do
+        if podman ps --format "{{.Names}}" | grep -q "^${AI_CONTAINER}$"; then
+            # Container exists, check if it's running
+            local status
+            status=$(podman inspect "${AI_CONTAINER}" --format "{{.State.Status}}" 2>/dev/null || echo "unknown")
+
+            if [[ "${status}" == "running" ]]; then
+                log_info "Container ${AI_CONTAINER} is ready (attempt ${attempt}/${max_attempts})"
+                break
+            fi
+        fi
+
+        if [[ ${attempt} -eq ${max_attempts} ]]; then
+            log_error "Container ${AI_CONTAINER} failed to start after ${max_attempts} attempts"
+            log_error "Check status with: podman ps -a"
+            log_error "Check logs with: podman logs ${AI_CONTAINER}"
+            exit 1
+        fi
+
+        log_info "Waiting for container... (attempt ${attempt}/${max_attempts})"
+        sleep 1
+        attempt=$((attempt + 1))
+    done
 
     log_info "Executing shell in ${AI_CONTAINER} via devcontainer exec"
     log_info "This will respect devcontainer.json lifecycle hooks (e.g., postAttachCommand)"
@@ -390,9 +419,6 @@ exec_into_container() {
 ################################################################################
 
 main() {
-    local start_time
-    start_time=$(date +%s)
-
     echo ""
     echo "╔═══════════════════════════════════════════════════════════╗"
     echo "║  AWS Credential Refresh & Container Rebuild               ║"
@@ -420,15 +446,8 @@ main() {
     refresh_aws_credentials
     rebuild_containers
     exec_into_container
-
-    # Calculate duration (won't actually reach here due to exec)
-    local end_time
-    end_time=$(date +%s)
-    local duration=$((end_time - start_time))
-
-    echo ""
-    log_info "Completed in ${duration} seconds"
-    log_info "Finished at: $(date '+%Y-%m-%d %H:%M:%S')"
+    # Note: exec_into_container uses 'exec' which replaces this process,
+    # so execution never returns here
 }
 
 # Run main function
