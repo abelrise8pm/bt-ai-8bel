@@ -241,7 +241,7 @@ validate_prerequisites() {
     # Check DevContainer CLI
     if ! command -v devcontainer &>/dev/null; then
         log_error "DevContainer CLI not found"
-        log_error "Install with: npm install -g @devcontainers/cli"
+        log_error "Install with: brew install devcontainer"
         exit 1
     fi
 
