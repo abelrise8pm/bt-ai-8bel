@@ -37,6 +37,30 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## January 29, 2026
+
+### Added
+- AWS credential refresh script (`scripts/refresh-credentials.sh`) for CUI projects using AWS Bedrock ([5533821](https://github.com/rise8-us/xpai-ai-assistant-container/commit/5533821), [3b0175c](https://github.com/rise8-us/xpai-ai-assistant-container/commit/3b0175c), [dd1e2f6](https://github.com/rise8-us/xpai-ai-assistant-container/commit/dd1e2f6)):
+  - Automates complete AWS credential lifecycle: stop containers, refresh SSO, export to .env.bedrock, rebuild
+  - `--vscode` flag for VS Code users (opens VS Code instead of exec)
+  - `--help` flag for usage information
+  - Restrictive file permissions (600) for credential files
+  - Health check polling instead of magic sleep for reliability
+
+### Changed
+- Replaced Gemini CLI and Goose with OpenCode in base container ([7cd6de7](https://github.com/rise8-us/xpai-ai-assistant-container/commit/7cd6de7)):
+  - **OpenCode 1.1.42** ([changelog](https://github.com/anomalyco/opencode/releases)): Alternative AI assistant with multi-provider support
+  - Removed Node.js dependency (~150MB+ image size reduction)
+  - Claude Code now uses binary install with SHA256 verification instead of npm
+  - Removed Gemini CLI and Goose (neither support GovCloud)
+- Updated base container with latest security patches and software versions ([5ae3611](https://github.com/rise8-us/xpai-ai-assistant-container/commit/5ae3611))
+- Updated firewall manager to latest version ([d63ef69](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d63ef69))
+
+### Fixed
+- Use Claude 3 Haiku for subagents in GovCloud - Claude Haiku 4.5 is not available in AWS GovCloud Bedrock, causing Explore tool failures ([19c08e4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/19c08e4))
+
+---
+
 ## January 22, 2026
 
 ### Added
