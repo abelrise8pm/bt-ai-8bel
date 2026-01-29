@@ -55,6 +55,7 @@ Since your project doesn't share git history with this template, you'll need to 
   - Removed Gemini CLI and Goose (neither support GovCloud)
 - Updated base container with latest security patches and software versions ([5ae3611](https://github.com/rise8-us/xpai-ai-assistant-container/commit/5ae3611))
 - Updated firewall manager to latest version ([d63ef69](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d63ef69))
+- Split publish-release.sh into separate check and push scripts for better workflow integration ([020180c](https://github.com/rise8-us/xpai-ai-assistant-container/commit/020180c))
 
 ### Fixed
 - Use Claude 3 Haiku for subagents in GovCloud - Claude Haiku 4.5 is not available in AWS GovCloud Bedrock, causing Explore tool failures ([19c08e4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/19c08e4))
