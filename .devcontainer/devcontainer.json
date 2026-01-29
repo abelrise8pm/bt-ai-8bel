@@ -1,5 +1,5 @@
 {
-  "image": "ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@sha256:90686e8c98d04b5f5e8ac38af505510bf7f35727532e6ea6bf79f1dbdd832fe5",
+  "image": "ghcr.io/rise8-us/xpai-ai-assistant-container/project-container@sha256:eeaf9773f9bb236c85cfea6fa2d4fff389ed00cc5e8dc2067b0039947d25419c",
   "postCreateCommand": "echo 'Container ready for Non-CUI projects with AI assistants pre-installed'",
   "mounts": [
     "source=xpai-ai-assistant-container-claude-config,target=/home/aiAssistant/.claude,type=volume"
