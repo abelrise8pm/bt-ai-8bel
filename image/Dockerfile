@@ -19,10 +19,10 @@ FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:cd1dba651b3080c3686ecf4e3c42
 # Version definitions
 # curl https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
 # curl https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md for changelog information.
-ARG CLAUDE_CODE_VERSION=2.1.14
+ARG CLAUDE_CODE_VERSION=2.1.23
 # curl https://www.npmjs.com/package/@google/gemini-cli for latest version
 # curl https://github.com/google-gemini/gemini-cli/releases for changelog information
-ARG GEMINI_CLI_VERSION=0.25.0
+ARG GEMINI_CLI_VERSION=0.26.0
 # curl https://github.com/block/goose/releases for latest version
 # curl https://github.com/block/goose/releases for changelog information
 ARG GOOSE_VERSION=1.20.1
