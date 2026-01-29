@@ -20,10 +20,6 @@ check_env_vars() {
         missing_vars+=("ANTHROPIC_API_KEY")
     fi
 
-    if [[ -z "${GEMINI_API_KEY:-}" ]]; then
-        missing_vars+=("GEMINI_API_KEY")
-    fi
-
     # If variables are missing, try to load from .env file
     if [[ ${#missing_vars[@]} -gt 0 ]]; then
         echo "⚠️  Some environment variables not found. Attempting to load from .env file..."
@@ -51,10 +47,6 @@ check_env_vars() {
             if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
                 missing_vars+=("ANTHROPIC_API_KEY")
             fi
-
-            if [[ -z "${GEMINI_API_KEY:-}" ]]; then
-                missing_vars+=("GEMINI_API_KEY")
-            fi
         fi
 
         # If still missing after trying .env file, fail
@@ -67,10 +59,9 @@ check_env_vars() {
             echo "Please either:"
             echo "  1. Set environment variables directly:"
             echo "     export ANTHROPIC_API_KEY=your_anthropic_key_here"
-            echo "     export GEMINI_API_KEY=your_gemini_key_here"
             echo "  2. Or create a .env file with these variables"
             echo ""
-            echo "These are required for testing Claude Code, Goose, and Gemini CLI functionality."
+            echo "This is required for testing Claude Code functionality."
             exit 1
         fi
     fi
@@ -121,14 +112,6 @@ fi
 echo "🧪 Testing installed tools..."
 
 # Test each tool and capture output
-echo "Testing Node.js..."
-NODE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "node --version" 2>&1)
-if [[ ! "$NODE_VERSION" =~ ^v22\. ]]; then
-    echo "❌ ERROR: Node.js version incorrect. Expected v22.x, got: $NODE_VERSION"
-    exit 1
-fi
-echo "✅ Node.js: $NODE_VERSION"
-
 echo "Testing Claude Code..."
 CLAUDE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "claude --version" 2>&1) || {
     echo "❌ ERROR: Claude Code not installed or not working: $CLAUDE_VERSION"
@@ -136,26 +119,12 @@ CLAUDE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "claude --v
 }
 echo "✅ Claude Code: $CLAUDE_VERSION"
 
-echo "Testing Gemini CLI..."
-GEMINI_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "gemini --version" 2>&1) || {
-    echo "❌ ERROR: Gemini CLI not installed or not working: $GEMINI_VERSION"
+echo "Testing OpenCode..."
+OPENCODE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "opencode --version" 2>&1) || {
+    echo "❌ ERROR: OpenCode not installed or not working: $OPENCODE_VERSION"
     exit 1
 }
-echo "✅ Gemini CLI: $GEMINI_VERSION"
-
-echo "Testing Goose..."
-GOOSE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "goose --version" 2>&1) || {
-    echo "❌ ERROR: Goose not installed or not working: $GOOSE_VERSION"
-    exit 1
-}
-echo "✅ Goose: $GOOSE_VERSION"
-
-echo "Testing Goose configuration..."
-GOOSE_INFO=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "goose run -t 'Say hello'" 2>&1) || {
-    echo "❌ ERROR: Goose run command failed: $GOOSE_INFO"
-    exit 1
-}
-echo "✅ Goose run command working. Configuration file tested."
+echo "✅ OpenCode: $OPENCODE_VERSION"
 
 echo "Testing Claude Code functional integration..."
 CLAUDE_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "claude -p 'Say hello'" 2>&1) || {
@@ -164,13 +133,12 @@ CLAUDE_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC
 }
 echo "✅ Claude Code functional integration working."
 
-echo "Testing Gemini CLI functional integration..."
-GEMINI_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm -e GEMINI_API_KEY="$GEMINI_API_KEY" $IMAGE_TAG /bin/bash -c "gemini -p 'Say hello'" 2>&1) || {
-    echo "❌ ERROR: Gemini CLI functional test failed: $GEMINI_FUNCTIONAL"
+echo "Testing OpenCode functional integration..."
+OPENCODE_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "opencode run 'Say hello'" 2>&1) || {
+    echo "❌ ERROR: OpenCode functional test failed: $OPENCODE_FUNCTIONAL"
     exit 1
 }
-echo "✅ Gemini CLI functional integration working."
-
+echo "✅ OpenCode functional integration working."
 
 echo "Testing Git..."
 GIT_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "git --version" 2>&1)

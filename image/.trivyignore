@@ -5,53 +5,24 @@
 # ##################### Example ################################
 # This example shows the documentation format for npm package vulnerabilities
 
-# CVE-2025-64756 - glob CLI command injection [HISTORICAL EXAMPLE - RESOLVED]
-# Affects: glob package (transitive dependency of Gemini CLI)
-# Issue: Command injection via -c/--cmd flag with shell:true
-# Risk: LOW - Requires explicit use of glob CLI with -c flag, which is rare in dev workflows
-# Status: RESOLVED - Gemini CLI 0.17.0 upgraded to glob@12.0.0 (patched)
-# Fixed Versions: glob@10.5.0+ and glob@11.1.0+
+# CVE-YYYY-NNNNN - Brief vulnerability description [STATUS]
+# Affects: package@version (dependency of tool)
+# Issue: Technical description of the vulnerability
+# Risk: LOW/MEDIUM/HIGH - Risk assessment with justification
+# Status: ACTIVE/RESOLVED - Current status with explanation
+# Fixed Versions: version range that fixes the issue
 # Timeline:
-#   - 2025-11-18: CVE added to ignore list (Gemini CLI 0.15.4 used vulnerable glob@10.4.5)
-#   - 2025-11-20: Gemini CLI 0.17.0 released with glob@12.0.0
-#   - 2025-11-21: Container updated to Gemini CLI 0.17.0, CVE removed
+#   - YYYY-MM-DD: Initial discovery or CVE added
+#   - YYYY-MM-DD: Status update or resolution
 # Tracking:
-#   - Monitor: https://www.npmjs.com/package/@google/gemini-cli
-#   - Verify: npm view @google/gemini-cli@<version> dependencies.glob
-# Review: Check for updates when new versions are released
-# DO NOT UNCOMMENT - This is a resolved example for documentation purposes
-# CVE-2025-64756
+#   - Monitor: URL to package or tracking issue
+#   - Verify: Command to check version
+# Review: When/how to re-evaluate
+# DO NOT UNCOMMENT - This is an example for documentation purposes
+# CVE-YYYY-NNNNN
 
 # ############################## End of example ##################################
 
-# Last reviewed: 2026-01-29 (CVE-2026-24842 resolved: tar@7.5.7 via Gemini CLI 0.26.0; Versions: Claude Code 2.1.23, Gemini CLI 0.26.0, Goose 1.20.1)
+# Last reviewed: 2026-01-29 (Versions: Claude Code 2.1.23 binary, OpenCode 1.1.42 binary)
 
-# CVE-2026-0621 - MCP SDK ReDoS vulnerability [RESOLVED]
-# Status: RESOLVED - Fixed in MCP SDK 1.25.2+, Gemini CLI ^1.23.0 now resolves to 1.25.3
-# Timeline:
-#   - 2025-12-16: MCP SDK 1.25.1 published with vulnerability
-#   - 2026-01-07: CVE detected during Gemini CLI 0.23.0 update, added to ignore list
-#   - 2026-01-20: MCP SDK 1.25.2 released with fix, CVE removed from ignore list
-# Tracking issue: https://github.com/rise8-us/xpai-ai-assistant-container/issues/172
-
-# CVE-2026-22817, CVE-2026-22818 - Hono JWT algorithm confusion vulnerabilities [RESOLVED]
-# Status: RESOLVED - Fixed in Hono 4.11.4+, MCP SDK 1.25.3 now resolves to patched version
-# Issue: JWT algorithm confusion in Hono's JWT and JWK/JWKS middleware
-# Fixed Versions: hono@4.11.4+
-# Timeline:
-#   - 2026-01-13: CVEs disclosed, Hono 4.11.4 released with fix
-#   - 2026-01-14: CVEs detected during nightly Trivy scan, added to ignore list
-#   - 2026-01-20: MCP SDK 1.25.3 published with @hono/node-server@^1.19.9
-#   - 2026-01-21: Container updated to Gemini CLI 0.25.0, CVEs removed (resolved by Hono 4.11.4 via MCP SDK 1.25.3)
-# Tracking issue: https://github.com/rise8-us/xpai-ai-assistant-container/issues/[TBD]
-# DO NOT UNCOMMENT - Resolved and removed from active ignore list
-
-# CVE-2026-24842 - node-tar vulnerability [RESOLVED]
-# Status: RESOLVED - Fixed in tar@7.5.7, Gemini CLI 0.26.0 resolves to patched version
-# Issue: Vulnerability in node-tar package versions prior to 7.5.7
-# Affects: tar@7.5.6 (direct dependency of Gemini CLI)
-# Fixed Versions: tar@7.5.7+
-# Timeline:
-#   - 2026-01-29: CVE detected during nightly Trivy scan (Gemini CLI 0.25.0 used tar@7.5.6)
-#   - 2026-01-29: Container updated to Gemini CLI 0.26.0 (resolves to tar@7.5.7)
-# DO NOT UNCOMMENT - Resolved and removed from active ignore list
+# No active CVE exceptions at this time

@@ -61,7 +61,7 @@ This applies beyond code: documentation sections should be self-contained, scrip
 ## Project Structure
 
 ```
-image/              # Base AI assistant container (Claude Code, Gemini CLI, Goose)
+image/              # Base AI assistant container (Claude Code, OpenCode)
 firewall-manager/   # Alpine-based iptables firewall for CUI/CMMC compliance
 starter/            # Template for project teams (published to external repo)
 project-container/  # Extended container with additional tools (gh, skopeo, uv)
@@ -92,7 +92,7 @@ cd project-container && docker build -t project-container:latest .
 ## Test Commands
 
 ```bash
-# Base container tests (requires ANTHROPIC_API_KEY, GEMINI_API_KEY)
+# Base container tests (requires ANTHROPIC_API_KEY)
 cd image && ./scripts/test.sh
 
 # Firewall integration tests
@@ -228,8 +228,7 @@ Apply principle of least access (least privilege) to all generated code:
 ## Environment Variables
 
 ### Required for Testing
-- `ANTHROPIC_API_KEY` - Claude Code and Goose tests
-- `GEMINI_API_KEY` - Gemini CLI tests
+- `ANTHROPIC_API_KEY` - Claude Code tests
 
 ### Optional
 - `CONTAINER_RUNTIME` - Force docker or podman

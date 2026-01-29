@@ -28,27 +28,11 @@ podman build -t localhost/ai-assistant-home:latest .
 podman run --env-file .env -it localhost/ai-assistant-home:latest /bin/bash
 ```
 
-## Updating Package Versions
+## Updating Tool Versions
 
-The Dockerfile uses pinned version numbers for npm packages to ensure reproducible builds. npm version numbers are immutable - once published, they cannot be changed or moved.
+Tool versions are automatically updated weekly by the GitHub Action in `.github/workflows/ai-assistant-container-software-version-update.yml`. The workflow uses Claude Code's `release-engineer-beta:update-versions` skill to check for updates and create PRs.
 
-To update package versions:
-
-1. Check for new versions:
-```shell
-npm view @anthropic-ai/claude-code versions --json
-npm view @google/gemini-cli versions --json
-```
-
-2. Update the Dockerfile with new version numbers:
-```dockerfile
-RUN npm install -g \
-    @anthropic-ai/claude-code@NEW_VERSION \
-    @google/gemini-cli@NEW_VERSION && \
-    npm cache clean --force
-```
-
-3. Test the build locally with `./scripts/test.sh` before committing changes.
+To trigger an update manually, run the workflow from the Actions tab in GitHub.
 
 ## Testing
 
@@ -71,8 +55,7 @@ The test script automatically determines how to obtain the image:
 #### Required API Keys for Functional Testing
 The test script requires the following API keys to test AI assistant functionality:
 
-- `ANTHROPIC_API_KEY`: Required for testing Claude Code and Goose functionality
-- `GEMINI_API_KEY`: Required for testing Gemini CLI functionality
+- `ANTHROPIC_API_KEY`: Required for testing Claude Code functionality
 
 **For Local Development**: The test script will automatically attempt to load these from `../.env` if not found in the environment.
 
@@ -119,8 +102,7 @@ This prevents registry pollution by ensuring only tested and scanned images reac
 
 For the functional tests to pass in CI/CD pipelines, the following environment variables must be set as GitHub repository secrets:
 
-- `ANTHROPIC_API_KEY`: Required for testing Claude Code and Goose functionality
-- `GEMINI_API_KEY`: Required for testing Gemini CLI functionality
+- `ANTHROPIC_API_KEY`: Required for testing Claude Code functionality
 
 These variables are automatically passed to the test container during the CI/CD pipeline. The test script will first check for these environment variables, and if not found, attempt to load them from a local `.env` file (for local development).
 

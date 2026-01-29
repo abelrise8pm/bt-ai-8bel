@@ -17,15 +17,11 @@ ARG TARGETPLATFORM
 FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f200828b2b
 
 # Version definitions
-# curl https://www.npmjs.com/package/@anthropic-ai/claude-code for latest version
-# curl https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md for changelog information.
+# To check latest Claude Code version: curl -s https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/latest
+# Changelog: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
 ARG CLAUDE_CODE_VERSION=2.1.23
-# curl https://www.npmjs.com/package/@google/gemini-cli for latest version
-# curl https://github.com/google-gemini/gemini-cli/releases for changelog information
-ARG GEMINI_CLI_VERSION=0.26.0
-# curl https://github.com/block/goose/releases for latest version
-# curl https://github.com/block/goose/releases for changelog information
-ARG GOOSE_VERSION=1.20.1
+# curl https://github.com/anomalyco/opencode/releases for latest version and changelog
+ARG OPENCODE_VERSION=1.1.42
 
 # Copy certificate and install in single layer
 COPY src/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
@@ -52,8 +48,7 @@ RUN chmod 1777 /tmp && \
 
 # Set SSL certificate environment variables for all tools
 ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
-    NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
+    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Install security-focused minimal utilities and tool dependencies
 RUN apt-get update && \
@@ -63,76 +58,68 @@ RUN apt-get update && \
         jq \
         ca-certificates \
         openssh-client \
-        gnupg2 \
-        bzip2 \
-        libxcb1 && \
+        gnupg2 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Dependencies explanation:
-# git: Version control system (Claude Code, Goose)
-# curl: HTTP client for downloads and API calls (Claude Code, Goose, system)
-# jq: JSON processor for CLI operations (Claude Code, Goose)
+# git: Version control system (Claude Code)
+# curl: HTTP client for downloads and API calls (Claude Code, system)
+# jq: JSON processor for CLI operations (Claude Code)
 # ca-certificates: SSL/TLS certificate bundle (all tools)
-# openssh-client: SSH client for git operations (Claude Code, Goose)
+# openssh-client: SSH client for git operations (Claude Code)
 # gnupg2: GPG cryptographic tools for verification (system security)
-# bzip2: Compression utility for Goose installation archive (Goose)
-# libxcb1: X11 client library required by Goose (Goose GUI framework dependency)
 
-# Install Node.js v22.21.0 (pinned version for Claude Code and Gemini CLI)
-# To update: Check NodeSource repo for latest 22.21.x patch before bumping minor version
-# Verify availability: curl -s https://deb.nodesource.com/node_22.x/dists/nodistro/main/binary-amd64/Packages | grep "Version: 22.21"
-RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && \
-    apt-get install -y nodejs=22.21.0* && \
-    rm -f /etc/apt/sources.list.d/nodesource.list && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Create aiAssistant user and setup npm user-global directory
+# Create aiAssistant user
 RUN useradd -m -s /bin/bash aiAssistant && \
-    mkdir -p /home/aiAssistant/.claude /home/aiAssistant/.npm-global
+    mkdir -p /home/aiAssistant/.claude
 
 # Setup Claude Code initialization and commands
 COPY src/claude_code_init.sh /home/aiAssistant/.claude/claude_code_init.sh
 COPY src/commands/ /home/aiAssistant/.claude/commands/
 RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
-    chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude /home/aiAssistant/.npm-global && \
-    echo 'export PATH=/home/aiAssistant/.npm-global/bin:$PATH' >> /home/aiAssistant/.bashrc
+    chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude
 
-# Set PATH environment variable for the container
-ENV PATH="/home/aiAssistant/.npm-global/bin:$PATH"
-
-# Install Goose (AI-powered developer toolkit)
-# Goose provides AI-assisted development workflows and integrates with Claude
+# Install Claude Code (binary distribution with checksum verification)
+# Downloads from Anthropic's GCS bucket and verifies SHA256 checksum from manifest
+ARG CLAUDE_GCS_BUCKET=https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases
 RUN ARCH=$(dpkg --print-architecture) && \
     if [ "$ARCH" = "arm64" ]; then \
-        GOOSE_ARCH="aarch64"; \
+        CLAUDE_PLATFORM="linux-arm64"; \
     else \
-        GOOSE_ARCH="x86_64"; \
+        CLAUDE_PLATFORM="linux-x64"; \
     fi && \
-    curl -fsSL https://github.com/block/goose/releases/download/v${GOOSE_VERSION}/goose-${GOOSE_ARCH}-unknown-linux-gnu.tar.bz2 -o /tmp/goose.tar.bz2 && \
-    tar -xjf /tmp/goose.tar.bz2 -C /tmp && \
-    mv /tmp/goose /usr/local/bin/goose && \
-    chmod +x /usr/local/bin/goose && \
-    rm -f /tmp/goose.tar.bz2
+    # Download manifest and extract checksum for platform
+    MANIFEST=$(curl -fsSL "${CLAUDE_GCS_BUCKET}/${CLAUDE_CODE_VERSION}/manifest.json") && \
+    CHECKSUM=$(echo "$MANIFEST" | jq -r ".platforms[\"$CLAUDE_PLATFORM\"].checksum") && \
+    if [ -z "$CHECKSUM" ] || [ "$CHECKSUM" = "null" ]; then \
+        echo "Platform $CLAUDE_PLATFORM not found in manifest" >&2; \
+        exit 1; \
+    fi && \
+    # Download and verify binary
+    curl -fsSL "${CLAUDE_GCS_BUCKET}/${CLAUDE_CODE_VERSION}/${CLAUDE_PLATFORM}/claude" -o /tmp/claude && \
+    ACTUAL=$(sha256sum /tmp/claude | cut -d' ' -f1) && \
+    if [ "$ACTUAL" != "$CHECKSUM" ]; then \
+        echo "Checksum verification failed: expected $CHECKSUM, got $ACTUAL" >&2; \
+        rm -f /tmp/claude; \
+        exit 1; \
+    fi && \
+    mv /tmp/claude /usr/local/bin/claude && \
+    chmod +x /usr/local/bin/claude
 
-# Set up Goose configuration
-RUN mkdir -p /home/aiAssistant/.config/goose
-COPY src/goose-config.yaml /home/aiAssistant/.config/goose/config.yaml
-
-# Install AI development tools via npm
-# @anthropic-ai/claude-code: Official Anthropic CLI for Claude AI assistant
-# @google/gemini-cli: Google's CLI for Gemini AI models
-RUN npm config set prefix /home/aiAssistant/.npm-global && \
-    npm install -g \
-        @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} \
-        @google/gemini-cli@${GEMINI_CLI_VERSION} && \
-    # Clean up npm cache
-    rm -rf /root/.npm && \
-    rm -rf /tmp/* /var/tmp/*
-
-# Set proper ownership and switch to aiAssistant user
-RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.config /home/aiAssistant/.npm-global
+# Install OpenCode (AI-powered terminal coding assistant)
+# OpenCode provides AI-assisted development workflows with support for multiple LLM providers
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ]; then \
+        OPENCODE_ARCH="arm64"; \
+    else \
+        OPENCODE_ARCH="x64"; \
+    fi && \
+    curl -fsSL https://github.com/anomalyco/opencode/releases/download/v${OPENCODE_VERSION}/opencode-linux-${OPENCODE_ARCH}.tar.gz -o /tmp/opencode.tar.gz && \
+    tar -xzf /tmp/opencode.tar.gz -C /tmp && \
+    mv /tmp/opencode /usr/local/bin/opencode && \
+    chmod +x /usr/local/bin/opencode && \
+    rm -f /tmp/opencode.tar.gz
 
 USER aiAssistant
 
