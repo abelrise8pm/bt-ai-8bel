@@ -131,6 +131,17 @@ aws configure export-credentials --profile claude-bedrock --format env-no-export
 aws configure sso --profile claude-bedrock
 ```
 
+### Explore tool fails with "model identifier is invalid":
+
+Claude Code's Explore tool uses a fast/cheap model (Haiku) for subagent tasks. Claude Haiku 4.5 is not available in AWS GovCloud, so you must configure Claude Code to use Claude 3 Haiku instead.
+
+**Solution:** Ensure your `.env` has this line uncommented:
+```bash
+ANTHROPIC_SMALL_FAST_MODEL=anthropic.claude-3-haiku-20240307-v1:0
+```
+
+Then rebuild the container to apply the change.
+
 ## Features
 
 🔒 **Security Compliance** - Meets CMMC Level 2 and government security standards
