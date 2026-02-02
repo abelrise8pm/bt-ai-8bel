@@ -111,11 +111,84 @@ CVE-2025-66564
 CVE-2026-22817
 CVE-2026-22818
 
+# CVE-2025-61726 - Golang net/url DoS vulnerability
+# Affects: GitHub CLI with Go stdlib 1.25.3 (embedded binary dependency)
+# Severity: HIGH (CVSS 7.5)
+# Issue: Denial of Service via excessive URL query parameters causing memory exhaustion
+#        The net/http.Request.ParseForm method processes large URL-encoded forms without
+#        limits on the number of unique parameters, leading to uncontrolled memory allocation
+# Risk: LOW - Requires user to explicitly invoke gh commands with malicious URLs
+#       - No automatic URL processing or network listeners
+#       - CLI tool usage pattern limits exposure to untrusted input
+#       - DoS only (no confidentiality or integrity impact)
+#       - Container usage: developer workstation, not internet-facing service
+# Status: AWAITING UPSTREAM - GitHub CLI v2.86.0 uses Go 1.25.3
+# Fixed Versions: Go 1.25.6, 1.24.12 (released 2026-01-15)
+#                 Waiting for gh CLI v2.87.0+ to incorporate Go 1.25.6+
+# Mitigation: Upgraded to gh CLI v2.86.0 (latest available)
+#             Users should only run gh commands with trusted GitHub repositories
+# Timeline:
+#   - 2026-01-15: Go 1.25.6 released with fix
+#   - 2026-02-02: CVE discovered in nightly Trivy scan
+#   - 2026-02-02: Added to ignore list (upstream patch not yet in gh CLI)
+#   - 2026-02-02: Upgraded gh CLI from v2.83.1 to v2.86.0
+#   - Review: 2026-02-16 (check for gh CLI with Go 1.25.6+)
+# Tracking:
+#   - NVD: https://nvd.nist.gov/vuln/detail/CVE-2025-61726
+#   - Go Advisory: GO-2026-4341
+#   - Go Issue: https://go.dev/issue/77101
+#   - Go Change: CL/736712
+#   - Monitor: https://github.com/cli/cli/releases
+#   - POA&M: .claude/context/cybersecurity/poam/poam-2026-02-02-trivy-golang-stdlib.md
+# CVSS: 7.5 HIGH (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H)
+# CWE: CWE-400 (Uncontrolled Resource Consumption)
+# CISA KEV: Not listed (no known active exploitation)
+# Review: 2026-02-16
+CVE-2025-61726
+
+# CVE-2025-61728 - Golang archive/zip DoS vulnerability
+# Affects: GitHub CLI with Go stdlib 1.25.3 (embedded binary dependency)
+# Severity: HIGH (CVSS 6.5)
+# Issue: Excessive CPU consumption when building archive index in archive/zip
+#        Super-linear file name indexing algorithm invoked when opening ZIP files
+#        Maliciously constructed archives with specific filename patterns trigger
+#        computational exhaustion, causing denial of service
+# Risk: LOW - Requires user to explicitly download and process malicious ZIP archives
+#       - gh CLI may process ZIPs for release artifacts (`gh release download`)
+#       - Primary use case: trusted GitHub.com repositories (high trust context)
+#       - Requires user action (not passive background processing)
+#       - DoS only (no confidentiality or integrity impact)
+#       - Container usage: developer workstation, not internet-facing service
+# Status: AWAITING UPSTREAM - GitHub CLI v2.86.0 uses Go 1.25.3
+# Fixed Versions: Go 1.25.6, 1.24.12 (released 2026-01-15)
+#                 Waiting for gh CLI v2.87.0+ to incorporate Go 1.25.6+
+# Mitigation: Upgraded to gh CLI v2.86.0 (latest available)
+#             Users should only download releases from trusted GitHub repositories
+# Timeline:
+#   - 2026-01-15: Go 1.25.6 released with fix
+#   - 2026-02-02: CVE discovered in nightly Trivy scan
+#   - 2026-02-02: Added to ignore list (upstream patch not yet in gh CLI)
+#   - 2026-02-02: Upgraded gh CLI from v2.83.1 to v2.86.0
+#   - Review: 2026-02-16 (check for gh CLI with Go 1.25.6+)
+# Tracking:
+#   - NVD: https://nvd.nist.gov/vuln/detail/CVE-2025-61728
+#   - Go Issue: https://go.dev/issue/77102
+#   - Researcher: Jakub Ciolek
+#   - Monitor: https://github.com/cli/cli/releases
+#   - POA&M: .claude/context/cybersecurity/poam/poam-2026-02-02-trivy-golang-stdlib.md
+# CVSS: 6.5 HIGH (CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:N/A:H)
+# CWE: CWE-407 (Inefficient Algorithmic Complexity)
+# CISA KEV: Not listed (no known active exploitation)
+# Review: 2026-02-16
+CVE-2025-61728
+
 # ==================== NOTES ====================
-# Current scan (2026-01-14) shows:
+# Current scan (2026-02-02) shows:
 # - 0 CRITICAL, 0 HIGH (✅ Pipeline passes with ignores)
 # - Ignored HIGH: CVE-2025-66564 (awaiting upstream gh CLI update)
 # - Ignored HIGH: CVE-2025-61729 (awaiting upstream gh CLI update)
+# - Ignored HIGH: CVE-2025-61726 (awaiting upstream gh CLI update - Go stdlib)
+# - Ignored HIGH: CVE-2025-61728 (awaiting upstream gh CLI update - Go stdlib)
 # - Ignored HIGH: CVE-2026-22817 (awaiting base image update with hono@4.11.4+)
 # - Ignored HIGH: CVE-2026-22818 (awaiting base image update with hono@4.11.4+)
 # - MEDIUM and LOW vulnerabilities not tracked in this file
@@ -126,4 +199,4 @@ CVE-2026-22818
 # - CVE-2024-52308 (gh false positive) - Resolved/not present
 # - CVE-2025-64756 (glob) - Resolved/not present
 
-# Last reviewed: 2026-01-14
+# Last reviewed: 2026-02-02
