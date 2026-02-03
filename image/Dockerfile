@@ -82,6 +82,12 @@ RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
 
 # Install Claude Code (binary distribution with checksum verification)
 # Downloads from Anthropic's GCS bucket and verifies SHA256 checksum from manifest
+#
+# IMPORTANT: Install to /usr/local/bin, NOT user home directories (~/.local/bin, ~/.npm-global/bin, etc.)
+# User home directories are often mounted as persistent volumes in devcontainers.
+# If a tool is installed to a home directory and later moved to a system path,
+# the old version in the persistent volume will shadow the new system version
+# (home paths typically come before system paths in $PATH).
 ARG CLAUDE_GCS_BUCKET=https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases
 RUN ARCH=$(dpkg --print-architecture) && \
     if [ "$ARCH" = "arm64" ]; then \
