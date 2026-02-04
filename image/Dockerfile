@@ -74,7 +74,7 @@ RUN apt-get update && \
 
 # Create aiAssistant user
 RUN useradd -m -s /bin/bash aiAssistant && \
-    mkdir -p /home/aiAssistant/.claude
+    mkdir -p /home/aiAssistant/.claude /home/aiAssistant/.local/bin
 
 # Setup Claude Code initialization script (in system path so volume mounts don't shadow it)
 COPY src/claude_code_init.sh /usr/local/bin/claude-code-init.sh
@@ -82,7 +82,7 @@ RUN chmod +x /usr/local/bin/claude-code-init.sh
 
 # Setup Claude Code custom commands
 COPY src/commands/ /home/aiAssistant/.claude/commands/
-RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude
+RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude /home/aiAssistant/.local
 
 # Install Claude Code (binary distribution with checksum verification)
 # Downloads from Anthropic's GCS bucket and verifies SHA256 checksum from manifest
@@ -144,6 +144,10 @@ RUN ARCH=$(dpkg --print-architecture) && \
     chmod +x /usr/local/bin/rg && \
     rm -rf /tmp/ripgrep.tar.gz "/tmp/ripgrep-${RIPGREP_VERSION}-${RG_ARCH}"
 
+# Symlink Claude Code into ~/.local/bin so the native install self-check passes
+# (Claude Code verifies: directory exists, binary present, directory in PATH)
+RUN ln -s /usr/local/bin/claude /home/aiAssistant/.local/bin/claude
+
 USER aiAssistant
 
 # Run Claude Code initialization on every login
@@ -152,7 +156,10 @@ USER aiAssistant
 # doesn't already exist (preserving user customizations in the volume).
 # Runs every login because ~/.claude.json needs to be recreated after rebuilds
 # and ANTHROPIC_API_KEY is only available at runtime, not build time.
-RUN echo '# Claude Code initialization (idempotent)' >> /home/aiAssistant/.bashrc && \
+# Add ~/.local/bin to PATH so Claude Code's native install self-check passes.
+# Without this, Claude Code warns: "~/.local/bin is not in your PATH"
+RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/aiAssistant/.bashrc && \
+    echo '# Claude Code initialization (idempotent)' >> /home/aiAssistant/.bashrc && \
     echo 'claude-code-init.sh' >> /home/aiAssistant/.bashrc
 
 # ==================================================================
