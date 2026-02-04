@@ -44,6 +44,9 @@ services:
     volumes:
       # Mount workspace (adjust path as needed)
       - ../:/workspace:cached
+      # Persist Claude Code config (settings, history, init marker) across rebuilds
+      # Replace "YOURPROJECT" with your project name (no spaces/dashes)
+      - YOURPROJECT-claude-config:/home/aiAssistant/.claude
       # ========================================================================
       # PERFORMANCE OPTIMIZATION: Cache Persistence (Optional)
       # ========================================================================
@@ -64,13 +67,18 @@ services:
     # Keep container running
     command: sleep infinity
 
+# Claude Code config persistence
+# Replace "YOURPROJECT" with your project name (no spaces/dashes)
+volumes:
+  YOURPROJECT-claude-config:
+
 # ============================================================================
 # PERFORMANCE OPTIMIZATION: Named Volumes (Optional)
 # ============================================================================
 # Uncomment to enable cache persistence. Replace "YOURPROJECT" with your
 # project name, then uncomment corresponding mounts in ai-assistant.volumes.
+# Add these under the 'volumes:' section above.
 # ============================================================================
-# volumes:
 #   YOURPROJECT-node-modules:
 #   YOURPROJECT-npm-cache:
 #   YOURPROJECT-pnpm-store:

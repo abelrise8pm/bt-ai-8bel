@@ -76,11 +76,13 @@ RUN apt-get update && \
 RUN useradd -m -s /bin/bash aiAssistant && \
     mkdir -p /home/aiAssistant/.claude
 
-# Setup Claude Code initialization and commands
-COPY src/claude_code_init.sh /home/aiAssistant/.claude/claude_code_init.sh
+# Setup Claude Code initialization script (in system path so volume mounts don't shadow it)
+COPY src/claude_code_init.sh /usr/local/bin/claude-code-init.sh
+RUN chmod +x /usr/local/bin/claude-code-init.sh
+
+# Setup Claude Code custom commands
 COPY src/commands/ /home/aiAssistant/.claude/commands/
-RUN chmod +x /home/aiAssistant/.claude/claude_code_init.sh && \
-    chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude
+RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude
 
 # Install Claude Code (binary distribution with checksum verification)
 # Downloads from Anthropic's GCS bucket and verifies SHA256 checksum from manifest
@@ -144,15 +146,14 @@ RUN ARCH=$(dpkg --print-architecture) && \
 
 USER aiAssistant
 
-# Set up first-login initialization for Claude Code
-# Note: We run this at first login rather than build time because the ANTHROPIC_API_KEY
-# environment variable is not available during the build process - it's only available
-# at runtime when the container starts. The initialization script needs this API key
-# to configure Claude Code's authentication and approve the API key for use.
-RUN echo '# Run Claude Code initialization once at first login' >> /home/aiAssistant/.bashrc && \
-    echo 'if [ ! -f ~/.claude_code_initialized ]; then' >> /home/aiAssistant/.bashrc && \
-    echo '  /home/aiAssistant/.claude/claude_code_init.sh && touch ~/.claude_code_initialized' >> /home/aiAssistant/.bashrc && \
-    echo 'fi' >> /home/aiAssistant/.bashrc
+# Run Claude Code initialization on every login
+# The init script is idempotent: it merges keys into ~/.claude.json (ephemeral,
+# outside the persisted volume) and only writes ~/.claude/settings.json if it
+# doesn't already exist (preserving user customizations in the volume).
+# Runs every login because ~/.claude.json needs to be recreated after rebuilds
+# and ANTHROPIC_API_KEY is only available at runtime, not build time.
+RUN echo '# Claude Code initialization (idempotent)' >> /home/aiAssistant/.bashrc && \
+    echo 'claude-code-init.sh' >> /home/aiAssistant/.bashrc
 
 # ==================================================================
 # CLAUDE CODE OPENTELEMETRY CONFIGURATION

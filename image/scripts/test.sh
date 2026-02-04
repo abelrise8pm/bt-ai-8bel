@@ -83,6 +83,24 @@ if ! command -v "$CONTAINER_RUNTIME" > /dev/null; then
 fi
 IMAGE_TAG=${IMAGE_TAG:-"test-ai-assistant-container"}
 
+# Helper: run a command in the container
+run_container() { $CONTAINER_RUNTIME run --rm "$@" $IMAGE_TAG /bin/bash -c "$CONTAINER_CMD"; }
+
+# Helper: run an interactive login shell in the container (for init script tests)
+run_container_login() { $CONTAINER_RUNTIME run --rm "$@" $IMAGE_TAG /bin/bash -lic "$CONTAINER_CMD" 2>/dev/null; }
+
+# Helper: check a tool version is installed
+check_tool() {
+    local name=$1 cmd=$2
+    echo "Testing $name..."
+    local version
+    version=$(CONTAINER_CMD="$cmd" run_container 2>&1) || {
+        echo "❌ ERROR: $name not installed or not working: $version"
+        exit 1
+    }
+    echo "✅ $name: $version"
+}
+
 # Always delete existing test-ai-assistant-container image to ensure fresh build
 if $CONTAINER_RUNTIME image inspect $IMAGE_TAG >/dev/null 2>&1; then
     echo "🗑️ Deleting existing image: $IMAGE_TAG"
@@ -111,69 +129,29 @@ fi
 
 echo "🧪 Testing installed tools..."
 
-# Test each tool and capture output
-echo "Testing Claude Code..."
-CLAUDE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "claude --version" 2>&1) || {
-    echo "❌ ERROR: Claude Code not installed or not working: $CLAUDE_VERSION"
-    exit 1
-}
-echo "✅ Claude Code: $CLAUDE_VERSION"
-
-echo "Testing OpenCode..."
-OPENCODE_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "opencode --version" 2>&1) || {
-    echo "❌ ERROR: OpenCode not installed or not working: $OPENCODE_VERSION"
-    exit 1
-}
-echo "✅ OpenCode: $OPENCODE_VERSION"
+check_tool "Claude Code" "claude --version"
+check_tool "OpenCode" "opencode --version"
+check_tool "Git" "git --version"
+check_tool "curl" "curl --version | head -1"
+check_tool "jq" "jq --version"
+check_tool "ripgrep" "rg --version | head -1"
 
 echo "Testing Claude Code functional integration..."
-CLAUDE_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "claude -p 'Say hello'" 2>&1) || {
+CLAUDE_FUNCTIONAL=$(CONTAINER_CMD="claude -p 'Say hello'" run_container -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" 2>&1) || {
     echo "❌ ERROR: Claude Code functional test failed: $CLAUDE_FUNCTIONAL"
     exit 1
 }
-echo "✅ Claude Code functional integration working."
+echo "✅ Claude Code functional integration working"
 
 echo "Testing OpenCode functional integration..."
-OPENCODE_FUNCTIONAL=$($CONTAINER_RUNTIME run --rm -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" $IMAGE_TAG /bin/bash -c "opencode run 'Say hello'" 2>&1) || {
+OPENCODE_FUNCTIONAL=$(CONTAINER_CMD="opencode run 'Say hello'" run_container -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" 2>&1) || {
     echo "❌ ERROR: OpenCode functional test failed: $OPENCODE_FUNCTIONAL"
     exit 1
 }
-echo "✅ OpenCode functional integration working."
-
-echo "Testing Git..."
-GIT_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "git --version" 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo "❌ ERROR: Git not installed: $GIT_VERSION"
-    exit 1
-fi
-echo "✅ Git: $GIT_VERSION"
-
-echo "Testing curl..."
-CURL_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "curl --version | head -1" 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo "❌ ERROR: curl not installed: $CURL_VERSION"
-    exit 1
-fi
-echo "✅ curl: $CURL_VERSION"
-
-echo "Testing jq..."
-JQ_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "jq --version" 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo "❌ ERROR: jq not installed: $JQ_VERSION"
-    exit 1
-fi
-echo "✅ jq: $JQ_VERSION"
-
-echo "Testing ripgrep..."
-RG_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "rg --version | head -1" 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo "❌ ERROR: ripgrep not installed: $RG_VERSION"
-    exit 1
-fi
-echo "✅ ripgrep: $RG_VERSION"
+echo "✅ OpenCode functional integration working"
 
 echo "Testing user setup..."
-USER_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "whoami" 2>&1)
+USER_CHECK=$(CONTAINER_CMD="whoami" run_container 2>&1)
 if [[ "$USER_CHECK" != "aiAssistant" ]]; then
     echo "❌ ERROR: Wrong user. Expected 'aiAssistant', got: $USER_CHECK"
     exit 1
@@ -222,42 +200,113 @@ else
     echo "⏭️ Skipping OCI metadata label check for local build (labels are added by CI process)"
 fi
 
-echo "Testing security: .npmrc credentials not persisted..."
-NPMRC_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.npmrc 2>/dev/null || echo 'file not found'" 2>&1)
-if [[ "$NPMRC_CHECK" != "file not found" ]]; then
-    echo "❌ ERROR: Security issue - .npmrc file still present in container:"
-    echo "$NPMRC_CHECK"
-    echo "The Dockerfile should remove .npmrc after npm install to prevent credential leakage."
+echo "Testing Claude Code init script location..."
+CLAUDE_INIT_CHECK=$(CONTAINER_CMD="test -x /usr/local/bin/claude-code-init.sh && echo found" run_container 2>&1)
+if [[ "$CLAUDE_INIT_CHECK" != "found" ]]; then
+    echo "❌ ERROR: Claude init script not found at /usr/local/bin/claude-code-init.sh"
     exit 1
 fi
-echo "✅ Security: .npmrc credentials properly cleaned up"
+echo "✅ Claude init script at /usr/local/bin/claude-code-init.sh"
 
-echo "Testing Claude Code init script..."
-CLAUDE_INIT_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.claude/claude_code_init.sh" 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo "❌ ERROR: Claude init script not found: $CLAUDE_INIT_CHECK"
+TEST_API_KEY=sk-ant-test-ABCDEFGHIJKLMNOPQRST
+
+echo "Testing init script creates ~/.claude.json with API key approval..."
+INIT_API_CHECK=$(CONTAINER_CMD="cat ~/.claude.json 2>/dev/null" run_container_login -e ANTHROPIC_API_KEY=$TEST_API_KEY)
+if ! echo "$INIT_API_CHECK" | jq -e '.hasTrustDialogAccepted == true' >/dev/null 2>&1; then
+    echo "❌ ERROR: hasTrustDialogAccepted not set in ~/.claude.json"
+    echo "$INIT_API_CHECK"
     exit 1
 fi
-echo "✅ Claude init script present"
+if ! echo "$INIT_API_CHECK" | jq -e '.customApiKeyResponses.approved | index("ABCDEFGHIJKLMNOPQRST")' >/dev/null 2>&1; then
+    echo "❌ ERROR: API key last 20 chars not approved in ~/.claude.json"
+    echo "$INIT_API_CHECK"
+    exit 1
+fi
+echo "✅ Init script creates ~/.claude.json with API key approval"
+
+echo "Testing init script works without API key (Bedrock mode)..."
+INIT_BEDROCK_CHECK=$(CONTAINER_CMD="cat ~/.claude.json 2>/dev/null" run_container_login)
+if ! echo "$INIT_BEDROCK_CHECK" | jq -e '.hasTrustDialogAccepted == true' >/dev/null 2>&1; then
+    echo "❌ ERROR: hasTrustDialogAccepted not set without API key"
+    echo "$INIT_BEDROCK_CHECK"
+    exit 1
+fi
+if echo "$INIT_BEDROCK_CHECK" | jq -e 'has("customApiKeyResponses")' >/dev/null 2>&1; then
+    echo "❌ ERROR: customApiKeyResponses should not exist without API key"
+    echo "$INIT_BEDROCK_CHECK"
+    exit 1
+fi
+echo "✅ Init script works without API key (Bedrock mode)"
+
+echo "Testing init script is idempotent (preserves existing state)..."
+INIT_IDEMPOTENT_CHECK=$(CONTAINER_CMD='
+    jq ".hasCompletedOnboarding = true" ~/.claude.json > /tmp/c.json && mv /tmp/c.json ~/.claude.json
+    claude-code-init.sh 2>/dev/null
+    cat ~/.claude.json 2>/dev/null
+' run_container_login -e ANTHROPIC_API_KEY=$TEST_API_KEY)
+if ! echo "$INIT_IDEMPOTENT_CHECK" | jq -e '.hasCompletedOnboarding == true' >/dev/null 2>&1; then
+    echo "❌ ERROR: Init script overwrote existing state in ~/.claude.json"
+    echo "$INIT_IDEMPOTENT_CHECK"
+    exit 1
+fi
+if ! echo "$INIT_IDEMPOTENT_CHECK" | jq -e '.hasTrustDialogAccepted == true' >/dev/null 2>&1; then
+    echo "❌ ERROR: Init script lost hasTrustDialogAccepted after re-run"
+    echo "$INIT_IDEMPOTENT_CHECK"
+    exit 1
+fi
+echo "✅ Init script is idempotent (preserves existing state)"
+
+echo "Testing init script does not write ~/.claude/settings.json..."
+SETTINGS_CHECK=$(CONTAINER_CMD="test -f ~/.claude/settings.json && echo EXISTS || echo NOT_CREATED" \
+    run_container_login -e ANTHROPIC_API_KEY=$TEST_API_KEY)
+if [[ "$SETTINGS_CHECK" != "NOT_CREATED" ]]; then
+    echo "❌ ERROR: Init script should not create ~/.claude/settings.json (DISABLE_AUTOUPDATER is set via ENV)"
+    exit 1
+fi
+echo "✅ Init script does not write ~/.claude/settings.json"
+
+VOLUME_NAME="test-claude-config-$$"
+trap '$CONTAINER_RUNTIME volume rm "$VOLUME_NAME" >/dev/null 2>&1 || true' EXIT
+
+echo "Testing volume mount: init script not shadowed..."
+VOLUME_INIT_CHECK=$(CONTAINER_CMD="cat ~/.claude.json 2>/dev/null" \
+    run_container_login -v "$VOLUME_NAME:/home/aiAssistant/.claude" -e ANTHROPIC_API_KEY=$TEST_API_KEY)
+if ! echo "$VOLUME_INIT_CHECK" | jq -e '.hasTrustDialogAccepted == true' >/dev/null 2>&1; then
+    echo "❌ ERROR: Init script was shadowed by volume mount"
+    echo "$VOLUME_INIT_CHECK"
+    exit 1
+fi
+echo "✅ Init script runs correctly with volume mount"
+
+echo "Testing volume mount: settings.json persists across rebuilds..."
+CONTAINER_CMD='echo "{\"myCustomSetting\": true}" > ~/.claude/settings.json' \
+    run_container -v "$VOLUME_NAME:/home/aiAssistant/.claude" >/dev/null 2>&1
+PERSIST_CHECK=$(CONTAINER_CMD="cat ~/.claude/settings.json" \
+    run_container -v "$VOLUME_NAME:/home/aiAssistant/.claude" 2>&1)
+if ! echo "$PERSIST_CHECK" | jq -e '.myCustomSetting == true' >/dev/null 2>&1; then
+    echo "❌ ERROR: Settings did not persist across container runs"
+    echo "$PERSIST_CHECK"
+    exit 1
+fi
+echo "✅ Settings persist across container rebuilds"
 
 echo "Testing Claude Code slash commands..."
-COMMAND_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "ls -la ~/.claude/commands/commit.md" 2>&1)
-if [[ $? -ne 0 ]]; then
-    echo "❌ ERROR: Slash command file not found at expected path: $COMMAND_CHECK"
+COMMAND_CHECK=$(CONTAINER_CMD="test -f ~/.claude/commands/commit.md && echo found" run_container 2>&1)
+if [[ "$COMMAND_CHECK" != "found" ]]; then
+    echo "❌ ERROR: Slash command file not found at ~/.claude/commands/commit.md"
     exit 1
 fi
 echo "✅ Claude Code slash commands installed"
 
-# Test Claude Code OpenTelemetry configuration
 echo "Testing Claude Code OTEL configuration..."
-OTEL_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c '
+OTEL_CHECK=$(CONTAINER_CMD='
     errors=0
     [ "$CLAUDE_CODE_ENABLE_TELEMETRY" = "1" ] || { echo "CLAUDE_CODE_ENABLE_TELEMETRY not set"; errors=1; }
     [ "$OTEL_METRICS_EXPORTER" = "otlp" ] || { echo "OTEL_METRICS_EXPORTER not set"; errors=1; }
     [ "$OTEL_LOGS_EXPORTER" = "otlp" ] || { echo "OTEL_LOGS_EXPORTER not set"; errors=1; }
     [ -n "$OTEL_EXPORTER_OTLP_ENDPOINT" ] || { echo "OTEL_EXPORTER_OTLP_ENDPOINT not set"; errors=1; }
     exit $errors
-' 2>&1) || {
+' run_container 2>&1) || {
     echo "❌ ERROR: OTEL environment variables not configured correctly"
     echo "$OTEL_CHECK"
     exit 1

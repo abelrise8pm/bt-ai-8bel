@@ -1,74 +1,46 @@
 #!/usr/bin/env bash
+set -eu
 
-# !!! This script may overwrite your current config. Don't blindly execute !!!
-
-# https://ainativedev.io/news/configuring-claude-code
-# https://gist.github.com/jedi4ever/762ca6746ef22b064550ad7c04f3bd2f
-
-# Script to automate Claude Code after installation
-# install via `npm install -g @anthropic-ai/claude-code`
-
-# Key features:
-# - gets the onboarding wizard out of the way
-# - configure API keys
-# - trust current directory
-# - configure MCP and permission
-#  -set timeouts and opt out on things
-
-
-##################################
-# Setting up the API access :
-# - claude code has two modes : either via Claude Max or using an API
-# - claude max opens an oauth flow, which we can't use
-# - we use the ANTHROPIC_API_KEY environment variable directly
-# - this is the standard approach and avoids auth conflicts
-##################################
-
-##################################
-# Configuring claude code
-##################################
-# - on the one hand claude code wants us to use claude config
-# - but for example I was not able to configure the theme using it:
-# the command executed with no errors, but kept asking for the theme
-# also see https://github.com/anthropics/claude-code/issues/434
-# and https://github.com/anthropics/claude-code/issues/441
-
+# Claude Code non-interactive initialization
+# Idempotent — safe to run on every login (merges config, never overwrites user state)
 #
+# References:
+# - https://ainativedev.io/news/configuring-claude-code
+# - https://gist.github.com/jedi4ever/762ca6746ef22b064550ad7c04f3bd2f
 # - https://docs.anthropic.com/en/docs/claude-code/settings#settings-files
-# - on the other hand the docs mentions it'd deprecating that command
-# - we resort to creating a skeleton json file
-#
 
-# for the API key to work without prompts, we need to mark it as approved
-# - the approval is based on the last 20 chars of the key
-# - we use the ANTHROPIC_API_KEY environment variable directly
 ##################################
-ANTHROPIC_API_KEY_LAST_20_CHARS=${ANTHROPIC_API_KEY: -20}
+# ~/.claude.json — global config (outside ~/.claude/ volume)
+##################################
+# This file is ephemeral (not in the persisted volume) but may accumulate
+# state during a session (tool approvals, onboarding flags). We merge keys
+# instead of overwriting to preserve any existing state.
+#
+# hasTrustDialogAccepted: skip the "trust this directory?" prompt
+# customApiKeyResponses: pre-approve ANTHROPIC_API_KEY (non-CUI only)
 
-# We write the global config to ~/.claude.json
-# Warning this overwrites your existing
-# Trust the current dir/project
-# - when you enter a new directoy, claude asks it you trust it
-# - we use the claude config to trust it
-cat <<EOM > ~/.claude.json
-{
-    "customApiKeyResponses": {
-        "approved": [ "$ANTHROPIC_API_KEY_LAST_20_CHARS"],
-        "rejected": [  ]
-    },
-    "hasTrustDialogAccepted": true
-}
-EOM
+CLAUDE_JSON=~/.claude.json
 
-# We turn off autoupdates because we want to control the
-# versions people are using for security.
-cat <<EOM > ~/.claude/settings.json
-{
-    "env": {
-        "DISABLE_AUTOUPDATER": "1"
-    }
-}
-EOM
+# Ensure the file exists with valid JSON
+if [ ! -f "$CLAUDE_JSON" ]; then
+    echo '{}' > "$CLAUDE_JSON"
+fi
+
+# Always set trust dialog accepted
+CLAUDE_JSON_CONTENT=$(jq '.hasTrustDialogAccepted = true' "$CLAUDE_JSON")
+
+# Approve API key if ANTHROPIC_API_KEY is set (non-CUI/direct API mode)
+if [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+    LAST20=${ANTHROPIC_API_KEY: -20}
+    CLAUDE_JSON_CONTENT=$(echo "$CLAUDE_JSON_CONTENT" | jq \
+        --arg key "$LAST20" \
+        '.customApiKeyResponses.approved = ((.customApiKeyResponses.approved // []) + [$key] | unique)')
+fi
+
+echo "$CLAUDE_JSON_CONTENT" > "$CLAUDE_JSON"
+
+# Note: DISABLE_AUTOUPDATER is set via ENV in the Dockerfile.
+# No need to write ~/.claude/settings.json — user owns that file.
 
 #################################
 # Configuring MCP servers
