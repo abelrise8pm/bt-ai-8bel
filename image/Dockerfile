@@ -146,6 +146,10 @@ RUN echo '# Run Claude Code initialization once at first login' >> /home/aiAssis
 # This does NOT affect API calls to Claude or Rise8's OTEL telemetry collection
 # See https://code.claude.com/docs/en/data-usage
 ENV CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+# Explicitly disable the auto-updater as a secondary control
+# CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC should cover this, but has had
+# reliability issues across versions — belt and suspenders
+ENV DISABLE_AUTOUPDATER=1
 
 # Enables telemetry export to Rise8's OTEL collector for monitoring
 # Claude Code usage metrics (tokens, cost, sessions, commits, PRs).
