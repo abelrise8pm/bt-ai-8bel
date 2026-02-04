@@ -164,6 +164,14 @@ if [[ $? -ne 0 ]]; then
 fi
 echo "✅ jq: $JQ_VERSION"
 
+echo "Testing ripgrep..."
+RG_VERSION=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "rg --version | head -1" 2>&1)
+if [[ $? -ne 0 ]]; then
+    echo "❌ ERROR: ripgrep not installed: $RG_VERSION"
+    exit 1
+fi
+echo "✅ ripgrep: $RG_VERSION"
+
 echo "Testing user setup..."
 USER_CHECK=$($CONTAINER_RUNTIME run --rm $IMAGE_TAG /bin/bash -c "whoami" 2>&1)
 if [[ "$USER_CHECK" != "aiAssistant" ]]; then

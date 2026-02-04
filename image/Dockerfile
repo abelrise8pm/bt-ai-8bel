@@ -22,6 +22,8 @@ FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:cd1dba651b3080c3686ecf4e3c42
 ARG CLAUDE_CODE_VERSION=2.1.29
 # curl https://github.com/anomalyco/opencode/releases for latest version and changelog
 ARG OPENCODE_VERSION=1.1.49
+# https://github.com/BurntSushi/ripgrep/releases for latest version and changelog
+ARG RIPGREP_VERSION=15.1.0
 
 # Copy certificate and install in single layer
 COPY src/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
@@ -126,6 +128,19 @@ RUN ARCH=$(dpkg --print-architecture) && \
     mv /tmp/opencode /usr/local/bin/opencode && \
     chmod +x /usr/local/bin/opencode && \
     rm -f /tmp/opencode.tar.gz
+
+# Install ripgrep (fast recursive search tool used by Claude Code's Grep tool)
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ]; then \
+        RG_ARCH="aarch64-unknown-linux-gnu"; \
+    else \
+        RG_ARCH="x86_64-unknown-linux-musl"; \
+    fi && \
+    curl -fsSL "https://github.com/BurntSushi/ripgrep/releases/download/${RIPGREP_VERSION}/ripgrep-${RIPGREP_VERSION}-${RG_ARCH}.tar.gz" -o /tmp/ripgrep.tar.gz && \
+    tar -xzf /tmp/ripgrep.tar.gz -C /tmp && \
+    mv "/tmp/ripgrep-${RIPGREP_VERSION}-${RG_ARCH}/rg" /usr/local/bin/rg && \
+    chmod +x /usr/local/bin/rg && \
+    rm -rf /tmp/ripgrep.tar.gz "/tmp/ripgrep-${RIPGREP_VERSION}-${RG_ARCH}"
 
 USER aiAssistant
 
