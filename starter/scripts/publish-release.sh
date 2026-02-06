@@ -86,27 +86,27 @@ fi
 echo "Fetching origin/main..."
 git fetch origin main
 
-# TODO: Re-enable after testing. Verify branch contains ONLY changelog changes
-# echo "Verifying branch contains only changelog changes..."
-# CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
-# NON_CHANGELOG_FILES=$(echo "$CHANGED_FILES" | grep -v 'CHANGELOG.md$' || true)
-#
-# if [ -z "$CHANGED_FILES" ]; then
-#     echo "Error: Branch has no changes compared to origin/main."
-#     echo "Update the CHANGELOG.md before publishing."
-#     exit 1
-# fi
-#
-# if [ -n "$NON_CHANGELOG_FILES" ]; then
-#     echo "Error: Branch contains non-changelog changes:"
-#     echo "$NON_CHANGELOG_FILES" | sed 's/^/  - /'
-#     echo ""
-#     echo "This script only allows branches with CHANGELOG.md updates."
-#     echo "Create a dedicated changelog branch for publishing."
-#     exit 1
-# fi
-#
-# echo "Branch contains only changelog changes: OK"
+# Verify branch contains ONLY changelog changes
+echo "Verifying branch contains only changelog changes..."
+CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+NON_CHANGELOG_FILES=$(echo "$CHANGED_FILES" | grep -v 'CHANGELOG.md$' || true)
+
+if [ -z "$CHANGED_FILES" ]; then
+    echo "Error: Branch has no changes compared to origin/main."
+    echo "Update the CHANGELOG.md before publishing."
+    exit 1
+fi
+
+if [ -n "$NON_CHANGELOG_FILES" ]; then
+    echo "Error: Branch contains non-changelog changes:"
+    echo "$NON_CHANGELOG_FILES" | sed 's/^/  - /'
+    echo ""
+    echo "This script only allows branches with CHANGELOG.md updates."
+    echo "Create a dedicated changelog branch for publishing."
+    exit 1
+fi
+
+echo "Branch contains only changelog changes: OK"
 
 # Check for uncommitted changes
 # Refresh the index to avoid race conditions with stale stat info
