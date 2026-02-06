@@ -57,6 +57,7 @@ EXCLUDE_ITEMS=(
     "DEVELOPMENT.md"
     "scripts/publish-release.sh"
     "scripts/check-changelog.sh"
+    "scripts/prepare-release.py"
     "docs/PRD-AUTOMATED-ONBOARDING.md"
 )
 
