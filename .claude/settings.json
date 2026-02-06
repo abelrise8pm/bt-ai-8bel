@@ -1,4 +1,24 @@
 {
+  "permissions": {
+     "allow": [
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(gh issue view:*)"
+    ],
+    "deny": [
+      "Read(./.env*)",
+      "Read(**/.env*)",
+      "Edit(./.env*)",
+      "Edit(**/.env*)",
+      "Bash(env)",
+      "Bash(printenv)",
+      "Bash(export)",
+      "Bash(cat /proc/*/environ)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p12)",
+      "Read(**/*credentials*)"
+    ]
+  },
   "enabledPlugins": {
     "plugin-dev@claude-plugins-official": true
   },
