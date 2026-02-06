@@ -37,6 +37,22 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## February 6, 2026
+
+### Changed
+- Persist Claude Code configuration (`~/.claude/`) across container rebuilds ([4ceef0e](https://github.com/rise8-us/xpai-ai-assistant-container/commit/4ceef0e)):
+  - Settings, conversation history, and preferences now survive container restarts
+  - Non-CUI: volume auto-namespaced per project folder (`${localWorkspaceFolderBasename}-claude-config`)
+  - CUI: follows existing naming pattern (`YOURPROJECT-claude-config`)
+  - Init script now idempotent - safely merges config instead of overwriting
+- Updated base container to latest image ([034c4c4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/034c4c4), [d48c86a](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d48c86a))
+- Refactored publish-release.sh for branch-based workflow ([f1d4f58](https://github.com/rise8-us/xpai-ai-assistant-container/commit/f1d4f58)):
+  - Must run from feature branch (not main)
+  - Creates temporary merge of origin/main + branch before publishing
+  - Ensures published content always includes latest origin/main
+
+---
+
 ## January 29, 2026
 
 ### Added
