@@ -45,11 +45,20 @@ Since your project doesn't share git history with this template, you'll need to 
   - Non-CUI: volume auto-namespaced per project folder (`${localWorkspaceFolderBasename}-claude-config`)
   - CUI: follows existing naming pattern (`YOURPROJECT-claude-config`)
   - Init script now idempotent - safely merges config instead of overwriting
-- Updated base container to latest image ([034c4c4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/034c4c4), [d48c86a](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d48c86a))
-- Refactored publish-release.sh for branch-based workflow ([f1d4f58](https://github.com/rise8-us/xpai-ai-assistant-container/commit/f1d4f58)):
-  - Must run from feature branch (not main)
-  - Creates temporary merge of origin/main + branch before publishing
-  - Ensures published content always includes latest origin/main
+- Updated AI assistant container software with new capabilities ([034c4c4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/034c4c4), [d48c86a](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d48c86a)):
+  - **Claude Code 2.1.23 → 2.1.34** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): Claude Opus 4.6 model support, agent teams (research preview) for multi-agent collaboration, automatic memory recording and recall, PDF page-range reading, `/debug` command, PR-linked sessions (`--from-pr` flag, auto-link via `gh pr create`), partial conversation summarization, improved sandbox security, mTLS/proxy fixes, performance improvements
+  - **OpenCode 1.1.42 → 1.1.53** ([changelog](https://github.com/anomalyco/opencode/releases)): Skills invokable as slash commands, prompt caching for Claude Opus on AWS Bedrock, session search and restore across restarts, file tree kept in sync with filesystem, plugin system improvements (user plugins override built-ins), reasoning support for Copilot and SAP AI Core providers
+  - Add ripgrep 15.1.0 for Claude Code's Grep tool
+  - Suppress autoupdater and native install self-check warnings
+- Rewrite release scripts as Python with improved error handling and consolidated workflow ([3d5465b](https://github.com/rise8-us/xpai-ai-assistant-container/commit/3d5465b), [8180254](https://github.com/rise8-us/xpai-ai-assistant-container/commit/8180254), [f35f0ae](https://github.com/rise8-us/xpai-ai-assistant-container/commit/f35f0ae), [ae7302c](https://github.com/rise8-us/xpai-ai-assistant-container/commit/ae7302c), [bd4ebe6](https://github.com/rise8-us/xpai-ai-assistant-container/commit/bd4ebe6)):
+  - Consolidated release workflow into single prepare-release.py + publish-release.py pipeline
+  - Internal tooling only - does not affect published template
+
+### Fixed
+- Use Sonnet for subagent model in GovCloud Bedrock ([9df6247](https://github.com/rise8-us/xpai-ai-assistant-container/commit/9df6247)):
+  - Haiku is not available as an inference profile in AWS GovCloud, causing the Explore tool to fail with "model identifier is invalid"
+  - Both `ANTHROPIC_SMALL_FAST_MODEL` and `ANTHROPIC_DEFAULT_HAIKU_MODEL` now point to the Sonnet inference profile
+  - Both variables set for compatibility across Claude Code versions
 
 ---
 
