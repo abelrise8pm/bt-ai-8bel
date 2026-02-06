@@ -133,12 +133,15 @@ aws configure sso --profile claude-bedrock
 
 ### Explore tool fails with "model identifier is invalid":
 
-Claude Code's Explore tool uses a fast/cheap model (Haiku) for subagent tasks. Claude Haiku 4.5 is not available in AWS GovCloud, so you must configure Claude Code to use Claude 3 Haiku instead.
+Claude Code's Explore tool uses a small/fast model (Haiku) for subagent tasks. Haiku is not available as an inference profile in AWS GovCloud, so you must point the small model to Sonnet instead.
 
-**Solution:** Ensure your `.env` has this line uncommented:
+**Solution:** Ensure your `.env` has both lines uncommented:
 ```bash
-ANTHROPIC_SMALL_FAST_MODEL=anthropic.claude-3-haiku-20240307-v1:0
+ANTHROPIC_SMALL_FAST_MODEL=us-gov.anthropic.claude-sonnet-4-5-20250929-v1:0
+ANTHROPIC_DEFAULT_HAIKU_MODEL=us-gov.anthropic.claude-sonnet-4-5-20250929-v1:0
 ```
+
+Both variables are set for compatibility across Claude Code versions (`ANTHROPIC_SMALL_FAST_MODEL` is deprecated but still read by older versions).
 
 Then rebuild the container to apply the change.
 
