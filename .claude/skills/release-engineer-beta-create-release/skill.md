@@ -111,7 +111,7 @@ git commit -m "docs({directory}): update CHANGELOG.md with {date} changes"
 ### 6. Publish
 
 ```bash
-./{directory}/scripts/publish-release.sh
+./{directory}/scripts/publish-release.py
 ```
 
 ### 7. Push and Report
