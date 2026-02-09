@@ -34,7 +34,7 @@ If the script completes successfully and you're still having issues, continue to
 - [Podman Networking Issues on macOS](#podman-networking-issues-on-macos-infrastructure-containers)
 - [Devcontainer Fails to Open or Rebuild](#devcontainer-fails-to-open-or-rebuild)
 - [File Permission Issues in Devcontainer](#file-permission-issues-in-devcontainer)
-- [VS Code Window Crashed (Too Many File Handles)](#vs-code-window-crashed-too-many-file-handles)
+- [VS Code Window Crashed (Code 5)](#vs-code-window-crashed-code-5)
 - [Claude Code Prompts for Login Instead of Using API Key](#claude-code-prompts-for-login-instead-of-using-api-key)
 - [403 Errors During Build Project Container Workflow Run](#403-errors-during-build-project-container-workflow-run)
 - [Getting Help](#assistance)
@@ -431,7 +431,7 @@ After recreating the machine, rebuild your devcontainer in VSCode.
 
 Then rebuild the devcontainer.
 
-## VS Code Window Crashed (Too Many File Handles)
+## VS Code Window Crashed (Code 5)
 
 **Symptom:**
 
@@ -443,17 +443,31 @@ VS Code crashes with a dialog showing:
 The window terminated unexpectedly (reason: 'crashed', code: '5')
 ```
 
+The crash may happen immediately on opening the workspace, or hours later. macOS crash reports (found in `~/Library/Logs/DiagnosticReports/`, files named `Code Helper (Renderer)-*.ips`) show the crash in `Code Helper (Renderer)` with exception type `EXC_BREAKPOINT` / `SIGTRAP` on the `CrRendererMain` thread.
+
 **Cause:**
 
-VS Code's file watcher is monitoring too many files, exhausting system file handle limits. This commonly happens in projects with large `node_modules` directories, build outputs (`dist/`, `build/`, `.next/`), or other generated files.
+VS Code's renderer process exhausts system resources -- either file handle limits or V8 heap memory -- from monitoring and indexing too many files. This commonly happens in projects with large `node_modules` directories, build outputs (`dist/`, `build/`, `.next/`), or other generated files.
+
+Two factors typically combine to cause this:
+
+- **`node_modules` directories on the workspace filesystem** -- VS Code watches and indexes these directories. In monorepo projects (using npm/pnpm/yarn workspaces), each sub-project may have its own `node_modules` that needs to be moved off the workspace.
+- **Large generated files** -- Test coverage reports, mutation testing output (e.g., `stryker-incremental.json`), and other generated artifacts that VS Code loads into memory for indexing and search.
 
 **Solution:**
 
-Enable both performance optimizations in `.devcontainer/devcontainer.json`. The template includes commented-out sections for this purpose.
+Apply all three steps in `.devcontainer/devcontainer.json`, then rebuild the devcontainer.
 
-**Step 1: Enable cache volumes** (moves `node_modules` out of watched workspace)
+**Step 1: Move `node_modules` to volumes** (removes them from the watched workspace entirely)
 
-Find the `mounts` section and uncomment it, replacing `YOURPROJECT` with your project name:
+Add volume mounts for every `node_modules` directory in the project. To find them:
+
+```bash
+# Run inside the devcontainer to find all node_modules directories
+find /workspaces/$(basename "$PWD") -name node_modules -type d -maxdepth 3
+```
+
+For a single-package project, mount the root `node_modules`:
 
 ```json
 "mounts": [
@@ -462,9 +476,20 @@ Find the `mounts` section and uncomment it, replacing `YOURPROJECT` with your pr
 ]
 ```
 
-**Step 2: Enable file watcher exclusions** (prevents watching remaining large directories)
+For monorepo projects, add a volume for each sub-project's `node_modules` as well:
 
-Find the `settings` block inside `customizations.vscode` and uncomment it:
+```json
+"mounts": [
+  "source=YOURPROJECT-node-modules,target=/workspaces/${localWorkspaceFolderBasename}/node_modules,type=volume",
+  "source=YOURPROJECT-backend-node-modules,target=/workspaces/${localWorkspaceFolderBasename}/backend/node_modules,type=volume",
+  "source=YOURPROJECT-frontend-node-modules,target=/workspaces/${localWorkspaceFolderBasename}/frontend/node_modules,type=volume",
+  "source=YOURPROJECT-npm-cache,target=/home/aiAssistant/.npm,type=volume"
+]
+```
+
+**Step 2: Enable file watcher and indexing exclusions** (reduces resource usage for remaining files)
+
+Add both `files.watcherExclude` (prevents filesystem monitoring) and `files.exclude` (prevents indexing and loading into memory) in the `settings` block inside `customizations.vscode`:
 
 ```json
 "settings": {
@@ -477,25 +502,55 @@ Find the `settings` block inside `customizations.vscode` and uncomment it:
     "**/.next/**": true,
     "**/.pnpm-store/**": true,
     "**/target/**": true,
-    "**/__pycache__/**": true
+    "**/__pycache__/**": true,
+    "**/reports/**": true,
+    "**/coverage/**": true
+  },
+  "files.exclude": {
+    "**/reports/mutation/**": true,
+    "**/stryker-incremental.json": true,
+    "**/coverage/**": true
   },
   "search.exclude": {
     "**/node_modules": true,
     "**/dist": true,
     "**/build": true,
     "**/.next": true,
-    "**/target": true
+    "**/target": true,
+    "**/reports": true,
+    "**/coverage": true
   }
 }
+```
+
+To identify additional large files in your workspace that should be excluded:
+
+```bash
+# Find files over 1MB in the workspace (excluding node_modules and .git)
+find . -not -path '*/node_modules/*' -not -path '*/.git/*' -size +1M -exec ls -lh {} \;
 ```
 
 **Step 3: Rebuild the devcontainer**
 
 - Press `Cmd + Shift + P` (macOS) or `Ctrl + Shift + P` (Windows/Linux)
 - Type "Dev Containers: Rebuild Container"
-- After rebuild, run `npm install` to populate the volume
+- After rebuild, run your package manager's install command to populate the volumes
 
-**Why both?** Volumes move `node_modules` entirely out of the workspace so VS Code doesn't watch it at all. File watcher exclusions handle any remaining large directories (build outputs, caches) that stay in the workspace.
+**Why volumes and exclusions together?** Volumes move `node_modules` entirely out of the workspace so VS Code never sees them. Watcher and indexing exclusions handle remaining large directories (build outputs, generated reports, caches) that stay in the workspace. Both are needed -- exclusions alone still allow initial directory scans that accumulate memory over time.
+
+**Diagnosing persistent crashes:**
+
+If the crash continues after applying all steps, identify what is consuming memory:
+
+1. Press `Cmd + Shift + P` (macOS) or `Ctrl + Shift + P` (Windows/Linux)
+2. Type "Developer: Open Process Explorer"
+3. Monitor the memory column for `extensionHost`, `renderer`, and individual processes
+4. Note which process is growing over time
+
+**Finding crash reports on the host machine:**
+
+- **macOS:** `~/Library/Logs/DiagnosticReports/` (files named `Code Helper (Renderer)-*.ips`)
+- **Linux:** `~/.config/Code/logs/` or system journal (`journalctl --user`)
 
 ## Claude Code Prompts for Login Instead of Using API Key
 
