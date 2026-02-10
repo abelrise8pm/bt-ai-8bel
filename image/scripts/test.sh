@@ -298,6 +298,41 @@ if [[ "$COMMAND_CHECK" != "found" ]]; then
 fi
 echo "✅ Claude Code slash commands installed"
 
+echo "Testing clock skew script exists and is executable..."
+CLOCK_SCRIPT_CHECK=$(CONTAINER_CMD="test -x /usr/local/bin/check-clock-skew.sh && echo found" run_container 2>&1)
+if [[ "$CLOCK_SCRIPT_CHECK" != "found" ]]; then
+    echo "❌ ERROR: Clock skew script not found at /usr/local/bin/check-clock-skew.sh"
+    exit 1
+fi
+echo "✅ Clock skew script at /usr/local/bin/check-clock-skew.sh"
+
+echo "Testing clock skew script exits cleanly when disabled..."
+CLOCK_DISABLED_CHECK=$(CONTAINER_CMD="CLOCK_CHECK_DISABLED=1 check-clock-skew.sh && echo ok" run_container 2>&1)
+if [[ "$CLOCK_DISABLED_CHECK" != "ok" ]]; then
+    echo "❌ ERROR: Clock skew script failed when CLOCK_CHECK_DISABLED=1"
+    echo "$CLOCK_DISABLED_CHECK"
+    exit 1
+fi
+echo "✅ Clock skew script exits cleanly when disabled"
+
+echo "Testing clock skew script exits cleanly when endpoint unreachable..."
+CLOCK_UNREACHABLE_CHECK=$(CONTAINER_CMD="CLOCK_CHECK_URL=https://192.0.2.1:9999 check-clock-skew.sh && echo ok" run_container 2>&1)
+if [[ "$CLOCK_UNREACHABLE_CHECK" != "ok" ]]; then
+    echo "❌ ERROR: Clock skew script failed with unreachable endpoint"
+    echo "$CLOCK_UNREACHABLE_CHECK"
+    exit 1
+fi
+echo "✅ Clock skew script exits cleanly when endpoint unreachable"
+
+echo "Testing date binary has cap_sys_time file capability..."
+DATE_CAP_CHECK=$(CONTAINER_CMD="apt-get update -qq >/dev/null 2>&1 && apt-get install -y -qq libcap2-bin >/dev/null 2>&1 && getcap /usr/bin/date" run_container --user root 2>&1)
+if [[ "$DATE_CAP_CHECK" != *"cap_sys_time"* ]]; then
+    echo "❌ ERROR: /usr/bin/date missing cap_sys_time capability"
+    echo "  Got: $DATE_CAP_CHECK"
+    exit 1
+fi
+echo "✅ date binary has cap_sys_time file capability"
+
 echo "Testing Claude Code OTEL configuration..."
 OTEL_CHECK=$(CONTAINER_CMD='
     errors=0

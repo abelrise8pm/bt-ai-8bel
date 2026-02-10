@@ -53,6 +53,7 @@ ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Install security-focused minimal utilities and tool dependencies
+# libcap2-bin: installed transiently to setcap on /usr/bin/date, then purged
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         git \
@@ -60,7 +61,10 @@ RUN apt-get update && \
         jq \
         ca-certificates \
         openssh-client \
-        gnupg2 && \
+        gnupg2 \
+        libcap2-bin && \
+    setcap cap_sys_time+eip /usr/bin/date && \
+    apt-get purge -y libcap2-bin && apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
@@ -79,6 +83,12 @@ RUN useradd -m -s /bin/bash aiAssistant && \
 # Setup Claude Code initialization script (in system path so volume mounts don't shadow it)
 COPY src/claude_code_init.sh /usr/local/bin/claude-code-init.sh
 RUN chmod +x /usr/local/bin/claude-code-init.sh
+
+# Setup clock skew detection and auto-fix script
+# Detects Podman VM clock drift from macOS sleep/wake and corrects it when
+# the container has SYS_TIME capability. Falls back to a warning otherwise.
+COPY src/check_clock_skew.sh /usr/local/bin/check-clock-skew.sh
+RUN chmod +x /usr/local/bin/check-clock-skew.sh
 
 # Setup Claude Code custom commands
 COPY src/commands/ /home/aiAssistant/.claude/commands/
@@ -159,6 +169,8 @@ USER aiAssistant
 # Add ~/.local/bin to PATH so Claude Code's native install self-check passes.
 # Without this, Claude Code warns: "~/.local/bin is not in your PATH"
 RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/aiAssistant/.bashrc && \
+    echo '# Clock skew detection and auto-fix (silent on failure)' >> /home/aiAssistant/.bashrc && \
+    echo 'check-clock-skew.sh || true' >> /home/aiAssistant/.bashrc && \
     echo '# Claude Code initialization (idempotent)' >> /home/aiAssistant/.bashrc && \
     echo 'claude-code-init.sh' >> /home/aiAssistant/.bashrc
 

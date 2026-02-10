@@ -394,6 +394,26 @@ test_blocked_multiple_domains() {
     fi
 }
 
+# Test 7: Firewall manager attempted NTP clock sync at startup
+test_clock_sync_attempted() {
+    test_info "Test 7: Firewall manager attempted NTP clock sync at startup"
+
+    local runtime=$(get_runtime)
+
+    local logs
+    logs=$("$runtime" logs "$FIREWALL_CONTAINER" 2>&1)
+
+    if echo "$logs" | grep -q "\[Firewall Manager\] Clock synchronized"; then
+        test_pass "NTP clock sync succeeded at startup"
+    elif echo "$logs" | grep -q "\[Firewall Manager\] Clock sync skipped"; then
+        test_pass "NTP clock sync attempted but skipped (non-critical)"
+    elif echo "$logs" | grep -q "\[Firewall Manager\] Syncing system clock"; then
+        test_pass "NTP clock sync was attempted"
+    else
+        test_fail "No clock sync log messages found in firewall-manager startup"
+    fi
+}
+
 #############################################################################
 # Main execution
 #############################################################################
@@ -427,6 +447,7 @@ test_whitelisted_domain
 test_blocked_direct_ip
 test_blocked_http_port
 test_blocked_multiple_domains
+test_clock_sync_attempted
 
 echo ""
 echo "========================================="

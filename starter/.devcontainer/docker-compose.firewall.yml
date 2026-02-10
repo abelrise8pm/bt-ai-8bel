@@ -18,6 +18,7 @@ services:
     image: ghcr.io/rise8-us/xpai/firewall-manager@sha256:d157de4a87a9d50d066d284a6180f46a0348f4b3e214ca4517ac523c29c3e97f
     cap_add:
       - NET_ADMIN
+      - SYS_TIME
     volumes:
       # Only whitelist needs to be mounted - everything else is baked into image
       - ../firewall/whitelist.txt:/firewall/whitelist.txt:ro

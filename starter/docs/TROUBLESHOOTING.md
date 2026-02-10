@@ -35,6 +35,7 @@ If the script completes successfully and you're still having issues, continue to
 - [Devcontainer Fails to Open or Rebuild](#devcontainer-fails-to-open-or-rebuild)
 - [File Permission Issues in Devcontainer](#file-permission-issues-in-devcontainer)
 - [VS Code Window Crashed (Code 5)](#vs-code-window-crashed-code-5)
+- [Container Clock Drift (SSL Failures After Sleep/Wake)](#container-clock-drift-ssl-failures-after-sleepwake)
 - [Claude Code Prompts for Login Instead of Using API Key](#claude-code-prompts-for-login-instead-of-using-api-key)
 - [403 Errors During Build Project Container Workflow Run](#403-errors-during-build-project-container-workflow-run)
 - [Getting Help](#assistance)
@@ -239,6 +240,52 @@ gh auth token | podman login ghcr.io -u $(gh api user --jq .login) --password-st
   - Output of `security find-certificate -c "Zscaler" /Library/Keychains/System.keychain`
   - Output of `ls -lh ~/.config/containers/certs.d/ghcr.io/`
   - Full error message from `podman pull` command
+
+### Container Clock Drift (SSL Failures After Sleep/Wake)
+
+**Symptom:**
+
+SSL/TLS certificate validation errors when running `curl`, `git`, Claude Code, or other tools that make HTTPS requests. You may also see a warning banner when opening a new terminal:
+
+```
+================================================================
+  WARNING: Container clock is off by 3542 seconds
+================================================================
+```
+
+Common error messages include:
+- `curl: (60) SSL certificate problem: certificate is not yet valid`
+- `fatal: unable to access 'https://...': SSL certificate problem`
+- Claude Code API calls failing with certificate errors
+
+**Cause:**
+
+When macOS laptops sleep and wake, the Podman VM's clock drifts from wall-clock time. Containers inherit the VM's stale clock, causing SSL/TLS certificates to appear "not yet valid" because the container thinks it's in the past.
+
+**How auto-fix works:**
+
+The container includes a login-time clock check that runs every time you open a terminal:
+
+- **Non-CUI containers** (with `--cap-add=SYS_TIME` in devcontainer.json): The container automatically corrects the clock. You'll see a brief message: `[Clock Sync] Corrected container clock (was off by Ns)`
+- **CUI containers** (firewall mode): The firewall-manager sidecar syncs the clock via NTP at startup. If drift occurs after startup (e.g., another sleep/wake cycle), you'll see the warning banner because the ai-assistant container cannot self-fix (`cap_drop: ALL`).
+
+**Manual fix if auto-fix didn't catch it:**
+
+Run on your **host machine** (outside the container):
+
+```bash
+podman machine stop && podman machine start
+```
+
+Then reopen your terminal in the container.
+
+**Opt-out:**
+
+To disable the clock check, add to your `.env` file:
+
+```
+CLOCK_CHECK_DISABLED=1
+```
 
 ### `code` command not found after setup
 
