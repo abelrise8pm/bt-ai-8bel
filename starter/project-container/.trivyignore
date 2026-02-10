@@ -65,5 +65,10 @@ CVE-2026-22818
 # When you customize your container, review scan results and add
 # entries here only for CRITICAL/HIGH vulnerabilities that need
 # to be suppressed with documented justification.
+#
+# If you enable GitHub CLI (gh) in your Dockerfile, expect Go stdlib
+# CVEs from the embedded Go runtime. See the upstream project-container
+# .trivyignore for reference suppressions with risk assessments:
+# https://github.com/rise8-us/xpai-ai-assistant-container/blob/main/project-container/.trivyignore
 
 # Last reviewed: 2026-01-14
