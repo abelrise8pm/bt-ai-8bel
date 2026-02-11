@@ -53,15 +53,20 @@ ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 # Install security-focused minimal utilities and tool dependencies
+# tzdata: pre-installed to prevent failures in derived container builds.
+#   The setcap cap_sys_time on /usr/bin/date causes tzdata's postinst to fail
+#   in Docker build environments lacking SYS_TIME capability. Installing here
+#   ensures derived containers skip tzdata configuration.
 # libcap2-bin: installed transiently to setcap on /usr/bin/date, then purged
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         git \
         curl \
         jq \
         ca-certificates \
         openssh-client \
         gnupg2 \
+        tzdata \
         libcap2-bin && \
     setcap cap_sys_time+eip /usr/bin/date && \
     apt-get purge -y libcap2-bin && apt-get autoremove -y && \
@@ -75,6 +80,7 @@ RUN apt-get update && \
 # ca-certificates: SSL/TLS certificate bundle (all tools)
 # openssh-client: SSH client for git operations (Claude Code)
 # gnupg2: GPG cryptographic tools for verification (system security)
+# tzdata: Timezone data (pre-installed to avoid postinst failures in derived builds)
 
 # Create aiAssistant user
 RUN useradd -m -s /bin/bash aiAssistant && \
