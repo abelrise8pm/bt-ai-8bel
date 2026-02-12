@@ -37,6 +37,27 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## February 12, 2026
+
+### Added
+- Container clock drift detection and auto-fix for Podman on macOS ([be6ffba](https://github.com/rise8-us/xpai-ai-assistant-container/commit/be6ffba)):
+  - Detects Podman VM clock skew on terminal login and auto-corrects when possible
+  - Fixes SSL/TLS certificate validation failures caused by macOS sleep/wake clock drift
+  - **Migration required** to enable auto-fix:
+    - **Non-CUI users**: add `"--cap-add=SYS_TIME"` to `runArgs` in devcontainer.json, then rebuild container
+    - **CUI users**: add `SYS_TIME` to `cap_add` for firewall-manager in docker-compose.firewall.yml, then pull latest images and restart
+
+### Changed
+- Updated AI assistant container software ([297ba4e](https://github.com/rise8-us/xpai-ai-assistant-container/commit/297ba4e), [a52ed85](https://github.com/rise8-us/xpai-ai-assistant-container/commit/a52ed85)):
+  - **Claude Code 2.1.34 → 2.1.39** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): Fast mode for Opus 4.6, Agent Teams fixes for Bedrock/Vertex/Foundry users, guard against nested Claude Code sessions, improved model error messages with fallback suggestions, sandbox security improvements (blocked writes to `.claude/skills`, heredoc delimiter parsing), terminal rendering performance improvements, process hang and crash fixes
+  - **OpenCode 1.1.53 → 1.1.56** ([changelog](https://github.com/anomalyco/opencode/releases)): Claude agent SDK structured outputs, custom API URLs per model, MCP listTools performance improvement via Promise.all, memory leak fix for platform event fetching, task tool rendering fix, free usage limit messaging
+  - Pre-install tzdata to prevent derived container build failures
+- Updated firewall manager to latest version with NTP sync at startup for clock drift correction ([15d0294](https://github.com/rise8-us/xpai-ai-assistant-container/commit/15d0294))
+- Consolidate VS Code crash troubleshooting into single "VS Code Window Crashed (Code 5)" section covering both file handle exhaustion and V8 heap memory exhaustion, with guidance for monorepo sub-project node_modules volumes and crash report diagnostics ([2ab26ae](https://github.com/rise8-us/xpai-ai-assistant-container/commit/2ab26ae))
+- Add reference to upstream project-container .trivyignore for Go stdlib CVE suppressions when enabling GitHub CLI ([97dc0b9](https://github.com/rise8-us/xpai-ai-assistant-container/commit/97dc0b9))
+
+---
+
 ## February 6, 2026
 
 ### Changed
