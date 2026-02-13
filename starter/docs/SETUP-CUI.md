@@ -145,6 +145,19 @@ Both variables are set for compatibility across Claude Code versions (`ANTHROPIC
 
 Then rebuild the container to apply the change.
 
+### API Error: 400 "x-anthropic-billing-header is a reserved keyword"
+
+Claude Code injects an `x-anthropic-billing-header` text block into the system prompt. Bedrock rejects this as a reserved keyword, causing a `400 Bad Request` error. This is an upstream bug ([anthropics/claude-code#24168](https://github.com/anthropics/claude-code/issues/24168)) introduced in Claude Code v2.1.36.
+
+**Solution:** Ensure your `.env` has this line uncommented:
+```bash
+CLAUDE_CODE_ATTRIBUTION_HEADER=0
+```
+
+Then rebuild the container to apply the change.
+
+> **Note:** This uses an undocumented env var as a workaround. It will be removed once the upstream bug is fixed.
+
 ## Features
 
 🔒 **Security Compliance** - Meets CMMC Level 2 and government security standards
