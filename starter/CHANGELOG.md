@@ -37,6 +37,16 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## February 13, 2026
+
+### Fixed
+- Add workaround for Bedrock 400 error caused by `x-anthropic-billing-header` reserved keyword ([539fe01](https://github.com/rise8-us/xpai-ai-assistant-container/commit/539fe01), [8957412](https://github.com/rise8-us/xpai-ai-assistant-container/commit/8957412)):
+  - Claude Code v2.1.36+ unconditionally injects billing header text into the system prompt, which Bedrock rejects as a reserved keyword ([upstream bug](https://github.com/anthropics/claude-code/issues/24168))
+  - `CLAUDE_CODE_ATTRIBUTION_HEADER=0` added to `.env.example` CUI section so new projects get the fix automatically
+  - Troubleshooting entry added to CUI setup docs for existing projects
+
+---
+
 ## February 12, 2026
 
 ### Added
