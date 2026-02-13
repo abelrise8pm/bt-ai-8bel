@@ -147,19 +147,16 @@ Then rebuild the container to apply the change.
 
 ### API Error: 400 "x-anthropic-billing-header is a reserved keyword"
 
-When running the Claude CUI container via **AWS Bedrock**, requests may fail with a `400 Bad Request` error. This is caused by the Bedrock Runtime flagging `x-anthropic-billing-header` as a reserved keyword when it is passed within the system prompt context.
+Claude Code injects an `x-anthropic-billing-header` text block into the system prompt. Bedrock rejects this as a reserved keyword, causing a `400 Bad Request` error. This is an upstream bug ([anthropics/claude-code#24168](https://github.com/anthropics/claude-code/issues/24168)) introduced in Claude Code v2.1.36.
 
-**Solution:**  Open your `.claude/settings.json` file and:
-
-Add or update the CLAUDE_CODE_ATTRIBUTION_HEADER key within the env object:
-
-```JSON
-{
-  "env": {
-    "CLAUDE_CODE_ATTRIBUTION_HEADER": "0"
-  }
-}
+**Solution:** Ensure your `.env` has this line uncommented:
+```bash
+CLAUDE_CODE_ATTRIBUTION_HEADER=0
 ```
+
+Then rebuild the container to apply the change.
+
+> **Note:** This uses an undocumented env var as a workaround. It will be removed once the upstream bug is fixed.
 
 ## Features
 
