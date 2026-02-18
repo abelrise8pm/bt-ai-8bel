@@ -5,7 +5,8 @@
     "source=xpai-ai-assistant-container-claude-config,target=/home/aiAssistant/.claude,type=volume"
   ],
   "runArgs": [
-    "--env-file",".env"
+    "--env-file",".env",
+    "--cap-add=SYS_TIME"
   ],
   "customizations": {
     "vscode": {
