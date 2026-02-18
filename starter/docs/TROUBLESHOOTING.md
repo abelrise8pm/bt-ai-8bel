@@ -38,6 +38,7 @@ If the script completes successfully and you're still having issues, continue to
 - [Container Clock Drift (SSL Failures After Sleep/Wake)](#container-clock-drift-ssl-failures-after-sleepwake)
 - [Claude Code Prompts for Login Instead of Using API Key](#claude-code-prompts-for-login-instead-of-using-api-key)
 - [403 Errors During Build Project Container Workflow Run](#403-errors-during-build-project-container-workflow-run)
+- [SSH Keys Not Working in Container (1Password)](#ssh-keys-not-working-in-container-1password)
 - [Getting Help](#assistance)
 
 ---
@@ -700,6 +701,37 @@ You need to grant the repository's workflow write access to the container packag
    - The workflow should now successfully push the container image
 
 **Note:** This is typically a one-time setup step. Once the repository has write access to the package, all subsequent workflow runs will succeed.
+
+## SSH Keys Not Working in Container (1Password)
+
+**Symptom:**
+
+Running `ssh -T git@github.com` (or another Git host) inside the container fails with "Permission denied (publickey)" even though SSH works on your host machine.
+
+**Cause:**
+
+VS Code Dev Containers forward your SSH agent automatically, but only if `SSH_AUTH_SOCK` is set in the terminal session that launched VS Code. The most common cause is that VS Code or your terminal was already open when you added the `SSH_AUTH_SOCK` export to your shell profile.
+
+**Solution:**
+
+1. Confirm `SSH_AUTH_SOCK` is in your `~/.zshrc` (or `~/.bashrc`):
+   ```bash
+   export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+   ```
+
+2. **Fully quit everything** — closing windows is not enough:
+   - Quit VS Code (`Cmd+Q`)
+   - Quit Terminal.app (`Cmd+Q`) — every terminal window must be gone
+   - Open a **fresh** terminal (GitHub Desktop → right-click repo → "Open in Terminal")
+   - Run `code .`
+   - Rebuild the container (`Cmd+Shift+P` → "Dev Containers: Rebuild Container")
+
+3. Test inside the container:
+   ```bash
+   ssh -T git@github.com
+   ```
+
+For full setup instructions (including 1Password agent configuration), see [Using SSH Keys from 1Password](ADVANCED-TOPICS.md#using-ssh-keys-from-1password).
 
 ## Assistance
 

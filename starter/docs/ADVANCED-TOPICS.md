@@ -14,6 +14,7 @@ This guide covers advanced configuration and customization options for the AI As
 - [Recruiting Specialized Agents](#recruiting-specialized-agents-for-your-team)
 - [GitHub Workflows for CI/CD Pipelines](#github-workflows-for-cicd-pipelines)
 - [Using Claude Code Commands](#using-claude-code-commands)
+- [Using SSH Keys from 1Password](#using-ssh-keys-from-1password)
 
 ---
 
@@ -210,6 +211,59 @@ This allows teams to:
 - Standardize workflows across the team (commit via base image)
 - Customize for specific project needs (project-level overrides)
 - Share and version control custom commands (in project repo)
+
+---
+
+## Using SSH Keys from 1Password
+
+If your team uses 1Password to manage SSH keys, you can forward the 1Password SSH agent into the container. This lets you use `git` over SSH (e.g., `git clone git@github.com:...`) from inside the container without copying private keys.
+
+VS Code Dev Containers automatically forward your host's SSH agent into the container when `SSH_AUTH_SOCK` is set in the terminal session that launches VS Code.
+
+### Prerequisites
+
+1. **Enable the 1Password SSH agent** in the 1Password desktop app:
+   - Open 1Password → Settings → Developer
+   - Enable "Use the SSH agent"
+   - See [1Password SSH agent docs](https://developer.1password.com/docs/ssh/agent/) for details
+
+2. **Configure your SSH client** to use the 1Password agent. Add to `~/.ssh/config` on your host machine:
+   ```
+   Host *
+     IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+   ```
+
+3. **Set `SSH_AUTH_SOCK`** in your shell profile (`~/.zshrc` or `~/.bashrc`):
+   ```bash
+   export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+   ```
+
+### Setup Steps
+
+1. **Verify the agent is working on your host** (outside the container):
+   ```bash
+   # Confirm the socket path matches 1Password's agent
+   less ~/.ssh/config
+
+   # Test SSH connectivity to your Git host
+   ssh -T git@github.com
+   ```
+   You should see a success message (e.g., "Hi username! You've authenticated...").
+
+2. **Fully quit everything and reopen** — this is the critical step:
+   - Quit VS Code completely (`Cmd+Q`)
+   - Quit **all** terminal windows (`Cmd+Q` Terminal.app — not just close the window, fully quit the application)
+   - Open a **fresh** terminal (GitHub Desktop → right-click repo → "Open in Terminal")
+   - Run `code .` to launch VS Code
+   - Rebuild the container (`Cmd+Shift+P` → "Dev Containers: Rebuild Container")
+
+   **Why?** `SSH_AUTH_SOCK` is captured when a process starts. Existing terminal windows and VS Code still have the old environment even after you edit `.zshrc`. Fully quitting everything ensures the new value propagates: fresh terminal → VS Code → container.
+
+3. **Verify inside the container**:
+   ```bash
+   # Open a terminal inside the container and test
+   ssh -T git@github.com
+   ```
 
 ---
 

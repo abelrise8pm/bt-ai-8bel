@@ -356,6 +356,7 @@ This is safe to re-run and will validate/fix your configuration automatically.
 | Container won't start / rebuild fails | [Devcontainer Troubleshooting](docs/TROUBLESHOOTING.md#devcontainer-fails-to-open-or-rebuild) |
 | `code` command not found | [Restart terminal](docs/TROUBLESHOOTING.md#code-command-not-found-after-setup) |
 | Can't pull container images | [Authentication Fix](docs/TROUBLESHOOTING.md#authentication-to-pull-containers) |
+| SSH keys not working in container | [1Password SSH Setup](docs/TROUBLESHOOTING.md#ssh-keys-not-working-in-container-1password) |
 
 **Still stuck?** Check the [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) guide or ask in **#r-and-d** Slack channel.
 
