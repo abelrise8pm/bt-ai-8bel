@@ -37,6 +37,22 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## February 18, 2026
+
+### Added
+- 1Password SSH agent setup and troubleshooting documentation ([adae1ce](https://github.com/rise8-us/xpai-ai-assistant-container/commit/adae1ce)):
+  - SSH agent forwarding configuration for using 1Password-stored SSH keys inside the container
+  - Critical "fully quit everything" restart step for reliable agent forwarding
+  - Verification steps and troubleshooting for common SSH agent issues
+
+### Changed
+- Updated AI assistant container software ([c77d563](https://github.com/rise8-us/xpai-ai-assistant-container/commit/c77d563), [b576151](https://github.com/rise8-us/xpai-ai-assistant-container/commit/b576151)):
+  - **Claude Code 2.1.39 → 2.1.45** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): Claude Sonnet 4.6 support, `claude auth` CLI subcommands (login/status/logout), `/rename` auto-generates session names from conversation context, guard against launching nested Claude Code sessions, Agent Teams fixes for Bedrock/Vertex/Foundry users, startup and memory performance improvements, sandbox "operation not permitted" fix on macOS, AWS auth refresh timeout fix, improved model error messages with fallback suggestions
+  - **OpenCode 1.1.56 → 1.2.6** ([changelog](https://github.com/anomalyco/opencode/releases)): SQLite database migration for improved session management (auto-migrated on first run), adaptive reasoning for Claude Opus 4.6, `--continue` and `--fork` flags for session attach, show all project sessions from any working directory, database inspection command, improved Amazon Bedrock variant handling, PartDelta SDK events for incremental streaming
+  - Updated Ubuntu 24.04 base image to latest security patches
+
+---
+
 ## February 13, 2026
 
 ### Fixed
