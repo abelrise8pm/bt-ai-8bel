@@ -19,9 +19,9 @@ FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:d1e2e92c075e5ca139d51a140fff
 # Version definitions
 # To check latest Claude Code version: curl -s https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/latest
 # Changelog: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
-ARG CLAUDE_CODE_VERSION=2.1.45
+ARG CLAUDE_CODE_VERSION=2.1.55
 # curl https://github.com/anomalyco/opencode/releases for latest version and changelog
-ARG OPENCODE_VERSION=1.2.6
+ARG OPENCODE_VERSION=1.2.11
 # https://github.com/BurntSushi/ripgrep/releases for latest version and changelog
 ARG RIPGREP_VERSION=15.1.0
 
