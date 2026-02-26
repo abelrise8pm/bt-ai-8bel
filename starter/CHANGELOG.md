@@ -37,6 +37,15 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## February 26, 2026
+
+### Changed
+- Updated AI assistant container software ([676264f](https://github.com/rise8-us/xpai-ai-assistant-container/commit/676264f), [18f6341](https://github.com/rise8-us/xpai-ai-assistant-container/commit/18f6341)):
+  - **Claude Code 2.1.45 → 2.1.55** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): `--worktree` flag for isolated git worktree sessions, `claude remote-control` subcommand for external builds, Opus 4.6 fast mode now includes full 1M context window, `claude agents` CLI command, WorktreeCreate/WorktreeRemove hook events, `isolation: worktree` support in agent definitions, background agent support with Ctrl+F kill, plugin marketplace improvements (custom npm registries, configurable git timeout), managed settings via macOS plist or Windows Registry, MCP OAuth step-up auth, multiple memory leak and performance fixes (long sessions, agent teams, LSP diagnostics, compaction cache cleanup), security fix for statusLine/fileSuggestion hook commands executing without workspace trust
+  - **OpenCode 1.2.6 → 1.2.11** ([changelog](https://github.com/anomalyco/opencode/releases)): Adaptive thinking support for Claude Sonnet 4.6, Julia language server support, Kilo as native provider, custom tool and MCP call responses now visible and collapsible, performance improvements (structuredClone replacing deep clones), Windows compatibility fixes
+
+---
+
 ## February 18, 2026
 
 ### Added
