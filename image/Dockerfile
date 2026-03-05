@@ -19,9 +19,9 @@ FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:d1e2e92c075e5ca139d51a140fff
 # Version definitions
 # To check latest Claude Code version: curl -s https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/latest
 # Changelog: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
-ARG CLAUDE_CODE_VERSION=2.1.55
+ARG CLAUDE_CODE_VERSION=2.1.66
 # curl https://github.com/anomalyco/opencode/releases for latest version and changelog
-ARG OPENCODE_VERSION=1.2.11
+ARG OPENCODE_VERSION=1.2.16
 # https://github.com/BurntSushi/ripgrep/releases for latest version and changelog
 ARG RIPGREP_VERSION=15.1.0
 
@@ -142,10 +142,11 @@ RUN ARCH=$(dpkg --print-architecture) && \
         OPENCODE_ARCH="x64"; \
     fi && \
     curl -fsSL https://github.com/anomalyco/opencode/releases/download/v${OPENCODE_VERSION}/opencode-linux-${OPENCODE_ARCH}.tar.gz -o /tmp/opencode.tar.gz && \
-    tar -xzf /tmp/opencode.tar.gz -C /tmp && \
-    mv /tmp/opencode /usr/local/bin/opencode && \
+    mkdir -p /tmp/opencode-extract && \
+    tar -xzf /tmp/opencode.tar.gz -C /tmp/opencode-extract && \
+    mv /tmp/opencode-extract/opencode /usr/local/bin/opencode && \
     chmod +x /usr/local/bin/opencode && \
-    rm -f /tmp/opencode.tar.gz
+    rm -rf /tmp/opencode.tar.gz /tmp/opencode-extract
 
 # Install ripgrep (fast recursive search tool used by Claude Code's Grep tool)
 RUN ARCH=$(dpkg --print-architecture) && \
