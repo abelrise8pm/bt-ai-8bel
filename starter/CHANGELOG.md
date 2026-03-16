@@ -37,6 +37,16 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## March 16, 2026
+
+### Changed
+- Update AI assistant container software ([d31356e](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d31356e), [e924a21](https://github.com/rise8-us/xpai-ai-assistant-container/commit/e924a21)):
+  - **Claude Code 2.1.55 → 2.1.72** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): `/loop` command for recurring prompts on intervals, cron scheduling tools, `/plan` with description argument, `ExitWorktree` tool, `modelOverrides` setting for custom provider model IDs, `autoMemoryDirectory` setting, `/effort` slash command, `/color` command for prompt-bar customization, `/reload-plugins` command, `${CLAUDE_SKILL_DIR}` variable for skills, `PostCompact` hook event, `Elicitation` and `ElicitationResult` hooks, MCP elicitation support, `worktree.sparsePaths` for monorepos, 1M context window for Opus 4.6 by default on Max/Team/Enterprise, multiple memory leak fixes (streaming buffers, REPL render scopes, in-process teammates, hook events), security fixes (symlink bypass in acceptEdits mode, nested skill discovery loading from gitignored directories), improved compaction with image preservation, RTL text rendering fix, voice mode improvements (10 new languages, push-to-talk rebinding)
+  - **OpenCode 1.2.11 → 1.2.24** ([changelog](https://github.com/anomalyco/opencode/releases)): Initial workspace support in TUI, GPT-5.4 model support, GitLab 1M context window enablement, SIGHUP signal handling, desktop deep link support, line ending preservation in edit tool, memory leak fixes (fsmonitor daemons), MCP toggling restored in TUI, Windows compatibility improvements
+- Update firewall manager to latest build ([c3dda05](https://github.com/rise8-us/xpai-ai-assistant-container/commit/c3dda05))
+
+---
+
 ## February 26, 2026
 
 ### Changed
