@@ -71,7 +71,27 @@ jobs:
           echo "latest_sha=$LATEST_SHA" >> $GITHUB_OUTPUT
           echo "Found latest base container SHA: $LATEST_SHA"
 
+      - name: Check for existing open PR
+        id: existing-pr
+        env:
+          GITHUB_TOKEN: ${{ steps.pr-bot-token.outputs.token }}
+        run: |
+          # Derive the branch name the same way the "Prepare branch name" step does
+          BRANCH_NAME="base-container-sha-$(echo ${{ steps.current-sha.outputs.latest_sha }} | cut -d: -f2 | cut -c1-12)"
+          echo "Checking for existing open PR on branch: $BRANCH_NAME"
+
+          PR_NUMBER=$(gh pr list --head "$BRANCH_NAME" --state open --json number --jq '.[0].number // empty')
+
+          if [ -n "$PR_NUMBER" ]; then
+            echo "pr_exists=true" >> $GITHUB_OUTPUT
+            echo "PR #$PR_NUMBER already open for this SHA — skipping"
+          else
+            echo "pr_exists=false" >> $GITHUB_OUTPUT
+            echo "No existing open PR found for branch $BRANCH_NAME"
+          fi
+
       - name: Check if SHA has changed
+        if: steps.existing-pr.outputs.pr_exists != 'true'
         id: sha-check
         run: |
           LATEST_SHA="${{ steps.current-sha.outputs.latest_sha }}"
