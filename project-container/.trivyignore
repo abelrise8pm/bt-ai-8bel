@@ -2,17 +2,12 @@
 # GitHub workflows enforce: CRITICAL,HIGH severity only
 # See: .github/actions/trivy-scan/action.yml
 
-# CVE-2024-52308 - gh CLI SSH command injection (FALSE POSITIVE)
-# Trivy misidentifies gh v2.87.3 as vulnerable; fixed in v2.62.0
-# Review: 2026-04-01 (remove if Trivy stops flagging)
-CVE-2024-52308
-
-# CVE-2025-15558 - Docker CLI plugin search path privilege escalation (NOT APPLICABLE)
-# Windows-only (CWE-427). github.com/docker/cli is a transitive Go library in gh CLI,
-# not a standalone Docker install. Vulnerable code path unreachable on Linux.
-# Resolves when: gh CLI bumps docker/cli to v29.2.0+
-# Review: 2026-03-19
-CVE-2025-15558
+# CVE-2026-33186 - gRPC auth bypass via missing leading slash in :path (NOT APPLICABLE)
+# google.golang.org/grpc v1.79.2 transitive dep in gh CLI. gh is a CLI tool,
+# not a gRPC server - vulnerable code path (server-side request routing) is unreachable.
+# Resolves when: gh CLI bumps grpc to v1.79.3+
+# Review: 2026-04-02
+CVE-2026-33186
 
 # CVE-2026-22817, CVE-2026-22818 - Hono JWT algorithm confusion (NOT APPLICABLE)
 # hono@4.11.3 transitive dep via Claude Code/Gemini CLI in base image.
@@ -22,4 +17,4 @@ CVE-2025-15558
 CVE-2026-22817
 CVE-2026-22818
 
-# Last reviewed: 2026-03-05
+# Last reviewed: 2026-03-19
