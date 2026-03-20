@@ -9,6 +9,7 @@ on:
       - 'image/scripts/test.sh'
       - 'image/.trivyignore'
       - '.github/workflows/build-ai-assistant-container.yml'
+      - '.github/actions/**'
   pull_request:
     branches: [main]
     paths:
@@ -17,6 +18,7 @@ on:
       - 'image/scripts/test.sh'
       - 'image/.trivyignore'
       - '.github/workflows/build-ai-assistant-container.yml'
+      - '.github/actions/**'
   workflow_dispatch:
 
 env:
