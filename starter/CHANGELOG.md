@@ -37,6 +37,20 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## March 20, 2026
+
+### Changed
+- Update AI assistant container software ([0794d32](https://github.com/rise8-us/xpai-ai-assistant-container/commit/0794d32)):
+  - **Claude Code 2.1.72 → 2.1.78** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md))
+  - **OpenCode 1.2.24 → 1.2.27** ([changelog](https://github.com/anomalyco/opencode/releases))
+  - Ubuntu 24.04 base image updated to latest digest
+- Update firewall manager to latest build ([3ac40f3](https://github.com/rise8-us/xpai-ai-assistant-container/commit/3ac40f3))
+
+### Fixed
+- Update `aquasecurity/trivy-action` to v0.35.0 to fix nightly security scan failures ([a35a74b](https://github.com/rise8-us/xpai-ai-assistant-container/commit/a35a74b)): The previously pinned version internally referenced `aquasecurity/setup-trivy@v0.2.1` by tag, which was deleted upstream. The new version pins setup-trivy by commit SHA, preventing this class of breakage.
+
+---
+
 ## March 16, 2026
 
 ### Changed
