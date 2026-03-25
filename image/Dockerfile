@@ -14,14 +14,14 @@
 #
 # TARGETPLATFORM is automatically set by buildx - explicitly use it to ensure correct platform layers are pulled
 ARG TARGETPLATFORM
-FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:0d39fcc8335d6d74d5502f6df2d30119ff4790ebbb60b364818d5112d9e3e932
+FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:186072bba1b2f436cbb91ef2567abca677337cfc786c86e107d25b7072feef0c
 
 # Version definitions
 # To check latest Claude Code version: curl -s https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/latest
 # Changelog: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
-ARG CLAUDE_CODE_VERSION=2.1.78
+ARG CLAUDE_CODE_VERSION=2.1.81
 # curl https://github.com/anomalyco/opencode/releases for latest version and changelog
-ARG OPENCODE_VERSION=1.2.27
+ARG OPENCODE_VERSION=1.3.2
 # https://github.com/BurntSushi/ripgrep/releases for latest version and changelog
 ARG RIPGREP_VERSION=15.1.0
 
