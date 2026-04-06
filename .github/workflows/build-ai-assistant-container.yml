@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Setup container build environment
         id: setup
@@ -54,7 +54,7 @@ jobs:
       # AMD64 listed first as it's the CI priority architecture
       - name: Build and push staging image
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: ./image
           file: ./image/Dockerfile
