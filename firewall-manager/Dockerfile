@@ -5,6 +5,8 @@
 ARG TARGETPLATFORM
 FROM --platform=$TARGETPLATFORM alpine:latest@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
 
+# 2026-04-06: Trigger rebuild to pick up patched bind-tools/bind-libs (CVE-2026-1519, CVE-2026-3104)
+
 # Install required packages at build time
 RUN apk add --no-cache \
     ca-certificates \
