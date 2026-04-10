@@ -100,7 +100,7 @@ print_info "Integrating DevContainer configuration..."
 
 mkdir -p "$TARGET_DIR/.devcontainer"
 TARGET_DEVCONTAINER="$TARGET_DIR/.devcontainer/devcontainer.json"
-SOURCE_DEVCONTAINER="$STARTER_DIR/.devcontainer/devcontainer.cui.json"
+SOURCE_DEVCONTAINER="$STARTER_DIR/scripts/template/devcontainer_example.jsonc"
 
 if files_differ "$SOURCE_DEVCONTAINER" "$TARGET_DEVCONTAINER"; then
     if [ -f "$TARGET_DEVCONTAINER" ]; then
@@ -108,7 +108,7 @@ if files_differ "$SOURCE_DEVCONTAINER" "$TARGET_DEVCONTAINER"; then
         cp "$TARGET_DEVCONTAINER" "$TARGET_DEVCONTAINER.backup"
     fi
     cp "$SOURCE_DEVCONTAINER" "$TARGET_DEVCONTAINER"
-    print_success "DevContainer configuration updated (cui version)"
+    print_success "DevContainer configuration updated (non-CUI version)"
     INTEGRATED+=(".devcontainer")
     UPDATED+=(".devcontainer/devcontainer.json")
 else
