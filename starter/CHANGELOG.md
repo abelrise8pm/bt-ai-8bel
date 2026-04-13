@@ -37,6 +37,21 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## April 13, 2026
+
+### Changed
+- Update AI assistant container software ([afe970c](https://github.com/rise8-us/xpai-ai-assistant-container/commit/afe970c), [48741ed](https://github.com/rise8-us/xpai-ai-assistant-container/commit/48741ed), [8779da0](https://github.com/rise8-us/xpai-ai-assistant-container/commit/8779da0)):
+  - **Claude Code 2.1.78 → 2.1.96** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): PowerShell tool preview for Windows, Amazon Bedrock setup wizard, MCP elicitation dialogs for structured input, sandbox hardening (subprocess credential scrubbing, Linux PID namespace isolation, stricter network isolation), Bash tool permission bypass fixes (backslash-escaped flag and env-var prefix exploits), `--resume` performance improvements (up to 45% faster on fork-heavy sessions), 10 additional voice mode STT languages, MCP OAuth metadata discovery (RFC 9728), security fixes for managed settings `deny` rule downgrades and LSP `which` command injection
+  - **OpenCode 1.2.27 → 1.4.0** ([changelog](https://github.com/anomalyco/opencode/releases)): Fast mode variants for Claude and GPT models, PDF drag-and-drop attachments, OTLP observability export, full HTTP proxy support, macOS MDM managed preferences, Venice AI provider, TypeScript LSP memory leak fixes, auto-accept permissions moved to Settings. Note: SDK diff metadata format changed (`to`/`from` → `patch`)
+  - Ubuntu 24.04 base image updated to latest digest across updates
+- Update firewall manager to latest builds ([b50046b](https://github.com/rise8-us/xpai-ai-assistant-container/commit/b50046b), [7f06303](https://github.com/rise8-us/xpai-ai-assistant-container/commit/7f06303)): Patches bind CVE-2026-1519 and CVE-2026-3104, plus libssl3/libcrypto3 CVE-2026-28390 via Alpine package upgrades
+
+### Fixed
+- Pin all GitHub Actions in starter workflows by SHA and update to Node 24 runtime ([b460c11](https://github.com/rise8-us/xpai-ai-assistant-container/commit/b460c11)): Eliminates Node 20 deprecation warnings and protects against tag-based supply chain attacks. Updates `actions/checkout`, `actions/create-github-app-token`, and the full `docker/*` action suite (`setup-qemu-action`, `setup-buildx-action`, `login-action`, `metadata-action`, `build-push-action`) to their latest SHA-pinned releases
+- Skip starter base container update workflow when a PR already exists for the current SHA ([af60d2b](https://github.com/rise8-us/xpai-ai-assistant-container/commit/af60d2b)): Adds an early-exit check that prevents dirty working tree failures when `create-automated-pr` attempts to checkout an existing branch, matching the behavior already in the project-container workflow
+
+---
+
 ## March 20, 2026
 
 ### Changed
