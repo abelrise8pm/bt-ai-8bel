@@ -22,6 +22,8 @@ FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:84e77dee7d1bc93fb029a45e3c6c
 ARG CLAUDE_CODE_VERSION=2.1.96
 # curl https://github.com/anomalyco/opencode/releases for latest version and changelog
 ARG OPENCODE_VERSION=1.4.0
+# https://github.com/badlogic/pi-mono/releases for latest version and changelog
+ARG PI_VERSION=0.67.1
 # https://github.com/BurntSushi/ripgrep/releases for latest version and changelog
 ARG RIPGREP_VERSION=15.1.0
 
@@ -147,6 +149,23 @@ RUN ARCH=$(dpkg --print-architecture) && \
     mv /tmp/opencode-extract/opencode /usr/local/bin/opencode && \
     chmod +x /usr/local/bin/opencode && \
     rm -rf /tmp/opencode.tar.gz /tmp/opencode-extract
+
+# Install Pi coding agent (terminal-based AI coding agent supporting 15+ providers)
+# Pi ships as a Bun-compiled standalone binary with companion assets (themes, docs, etc.)
+# The binary resolves package.json relative to its own path, so the full distribution
+# must be kept together. Install to /usr/local/lib/pi and symlink the binary.
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ]; then \
+        PI_ARCH="arm64"; \
+    else \
+        PI_ARCH="x64"; \
+    fi && \
+    curl -fsSL "https://github.com/badlogic/pi-mono/releases/download/v${PI_VERSION}/pi-linux-${PI_ARCH}.tar.gz" -o /tmp/pi.tar.gz && \
+    tar -xzf /tmp/pi.tar.gz -C /tmp && \
+    mv /tmp/pi /usr/local/lib/pi && \
+    chmod +x /usr/local/lib/pi/pi && \
+    ln -s /usr/local/lib/pi/pi /usr/local/bin/pi && \
+    rm -f /tmp/pi.tar.gz
 
 # Install ripgrep (fast recursive search tool used by Claude Code's Grep tool)
 RUN ARCH=$(dpkg --print-architecture) && \

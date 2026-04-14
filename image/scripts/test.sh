@@ -131,6 +131,7 @@ echo "🧪 Testing installed tools..."
 
 check_tool "Claude Code" "claude --version"
 check_tool "OpenCode" "opencode --version"
+check_tool "Pi" "pi --version"
 check_tool "Git" "git --version"
 check_tool "curl" "curl --version | head -1"
 check_tool "jq" "jq --version"
@@ -149,6 +150,13 @@ OPENCODE_FUNCTIONAL=$(CONTAINER_CMD="opencode run 'Say hello'" run_container -e 
     exit 1
 }
 echo "✅ OpenCode functional integration working"
+
+echo "Testing Pi functional integration..."
+PI_FUNCTIONAL=$(CONTAINER_CMD="pi -p --provider anthropic --model claude-sonnet-4-20250514 'Say hello'" run_container -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" 2>&1) || {
+    echo "❌ ERROR: Pi functional test failed: $PI_FUNCTIONAL"
+    exit 1
+}
+echo "✅ Pi functional integration working"
 
 echo "Testing user setup..."
 USER_CHECK=$(CONTAINER_CMD="whoami" run_container 2>&1)
