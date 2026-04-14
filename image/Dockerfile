@@ -24,6 +24,8 @@ ARG CLAUDE_CODE_VERSION=2.1.96
 ARG OPENCODE_VERSION=1.4.0
 # https://github.com/badlogic/pi-mono/releases for latest version and changelog
 ARG PI_VERSION=0.67.1
+# https://github.com/sharkdp/fd/releases for latest version and changelog
+ARG FD_VERSION=10.4.2
 # https://github.com/BurntSushi/ripgrep/releases for latest version and changelog
 ARG RIPGREP_VERSION=15.1.0
 
@@ -179,6 +181,21 @@ RUN ARCH=$(dpkg --print-architecture) && \
     mv "/tmp/ripgrep-${RIPGREP_VERSION}-${RG_ARCH}/rg" /usr/local/bin/rg && \
     chmod +x /usr/local/bin/rg && \
     rm -rf /tmp/ripgrep.tar.gz "/tmp/ripgrep-${RIPGREP_VERSION}-${RG_ARCH}"
+
+# Install fd (fast filesystem search tool, used by Pi coding agent)
+# Pre-installed to prevent Pi from downloading it at runtime, which would
+# fail behind the firewall and write to the user's home directory.
+RUN ARCH=$(dpkg --print-architecture) && \
+    if [ "$ARCH" = "arm64" ]; then \
+        FD_ARCH="aarch64-unknown-linux-gnu"; \
+    else \
+        FD_ARCH="x86_64-unknown-linux-gnu"; \
+    fi && \
+    curl -fsSL "https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-${FD_ARCH}.tar.gz" -o /tmp/fd.tar.gz && \
+    tar -xzf /tmp/fd.tar.gz -C /tmp && \
+    mv "/tmp/fd-v${FD_VERSION}-${FD_ARCH}/fd" /usr/local/bin/fd && \
+    chmod +x /usr/local/bin/fd && \
+    rm -rf /tmp/fd.tar.gz "/tmp/fd-v${FD_VERSION}-${FD_ARCH}"
 
 # Symlink Claude Code into ~/.local/bin so the native install self-check passes
 # (Claude Code verifies: directory exists, binary present, directory in PATH)

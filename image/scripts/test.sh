@@ -136,6 +136,7 @@ check_tool "Git" "git --version"
 check_tool "curl" "curl --version | head -1"
 check_tool "jq" "jq --version"
 check_tool "ripgrep" "rg --version | head -1"
+check_tool "fd" "fd --version"
 
 echo "Testing Claude Code functional integration..."
 CLAUDE_FUNCTIONAL=$(CONTAINER_CMD="claude -p 'Say hello'" run_container -e ANTHROPIC_API_KEY="$ANTHROPIC_API_KEY" 2>&1) || {
