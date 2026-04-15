@@ -19,11 +19,11 @@ FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:84e77dee7d1bc93fb029a45e3c6c
 # Version definitions
 # To check latest Claude Code version: curl -s https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/latest
 # Changelog: https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md
-ARG CLAUDE_CODE_VERSION=2.1.96
+ARG CLAUDE_CODE_VERSION=2.1.109
 # curl https://github.com/anomalyco/opencode/releases for latest version and changelog
-ARG OPENCODE_VERSION=1.4.0
+ARG OPENCODE_VERSION=1.4.5
 # https://github.com/badlogic/pi-mono/releases for latest version and changelog
-ARG PI_VERSION=0.67.1
+ARG PI_VERSION=0.67.2
 # https://github.com/sharkdp/fd/releases for latest version and changelog
 ARG FD_VERSION=10.4.2
 # https://github.com/BurntSushi/ripgrep/releases for latest version and changelog
