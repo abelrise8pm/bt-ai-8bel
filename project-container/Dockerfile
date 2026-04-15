@@ -16,7 +16,7 @@ FROM ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:e090eb0a2c4e53257551fc87d04b
 # This helps both humans and AI assistants maintain the file.
 
 # curl https://github.com/cli/cli/releases to get latest version
-ARG GH_VERSION=2.88.1
+ARG GH_VERSION=2.89.0
 
 USER root
 # Fix /tmp permissions after USER switch - required even though base image has this fix
