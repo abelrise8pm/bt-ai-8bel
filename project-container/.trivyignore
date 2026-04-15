@@ -2,19 +2,17 @@
 # GitHub workflows enforce: CRITICAL,HIGH severity only
 # See: .github/actions/trivy-scan/action.yml
 
-# CVE-2026-33186 - gRPC auth bypass via missing leading slash in :path (NOT APPLICABLE)
-# google.golang.org/grpc v1.79.2 transitive dep in gh CLI. gh is a CLI tool,
-# not a gRPC server - vulnerable code path (server-side request routing) is unreachable.
-# Resolves when: gh CLI bumps grpc to v1.79.3+
-# Review: 2026-04-02
-CVE-2026-33186
-
-# CVE-2026-22817, CVE-2026-22818 - Hono JWT algorithm confusion (NOT APPLICABLE)
-# hono@4.11.3 transitive dep via Claude Code/Gemini CLI in base image.
-# No web server, no JWT processing, no HTTP endpoints - CLI tools only.
-# Resolves when: base image updates to hono@4.11.4+
+# CVE-2026-32280, CVE-2026-32282, CVE-2026-33810 - Go stdlib in gh CLI (LOW EXPLOITABILITY)
+# gh 2.89.0 built with Go v1.26.1; fixes are in Go 1.26.2+. Upstream cli/cli has not yet
+# rebuilt on 1.26.2+. In this codebase gh is a dev CLI calling GitHub over TLS:
+#   - 32280 (x509 chain-building DoS): CLI DoS = re-run command, no availability impact
+#   - 32282 (Root.Chmod symlink escape): gh does not use os.Root on attacker-controlled paths
+#   - 33810 (x509 DNS name-constraint bypass): defense-in-depth; standard root CA store,
+#     no name-constrained enterprise CAs in trust store
+# Resolves when: cli/cli ships a release built on Go 1.26.2+
 # Review: weekly
-CVE-2026-22817
-CVE-2026-22818
+CVE-2026-32280
+CVE-2026-32282
+CVE-2026-33810
 
-# Last reviewed: 2026-03-19
+# Last reviewed: 2026-04-15
