@@ -1425,16 +1425,47 @@ configure_devcontainer() {
 # ZSCALER CERTIFICATE CONFIGURATION (for Podman)
 ################################################################################
 
+# Check if Zscaler is installed on this machine
+check_zscaler_installed() {
+    # Check for Zscaler application in /Applications
+    if ls /Applications/Zscaler*.app &> /dev/null 2>&1 || [[ -d "/Applications/Zscaler" ]]; then
+        return 0
+    fi
+
+    # Check for Zscaler certificates in System keychain
+    if security find-certificate -c "Zscaler" /Library/Keychains/System.keychain &> /dev/null 2>&1; then
+        return 0
+    fi
+
+    # Check for running Zscaler process
+    if ps aux | grep -i "[Z]scaler" &> /dev/null; then
+        return 0
+    fi
+
+    return 1
+}
+
 # Configure Zscaler certificates for Podman machine
 # This installs certificates directly into the running Podman machine's trust store
+# Skips entirely if Zscaler is not installed on this machine
 configure_zscaler_certificates_for_podman() {
     echo ""
-    print_info "Configuring Zscaler certificates for Podman machine..."
-    log_info "Zscaler certificate configuration started"
+    print_info "Checking for Zscaler..."
+    log_info "Zscaler certificate configuration check started"
 
-    # Check if Zscaler is running - CRITICAL
+    # Check if Zscaler is installed on this machine
+    if ! check_zscaler_installed; then
+        print_info "Zscaler not detected on this machine - skipping certificate configuration"
+        log_info "Zscaler not installed - skipping certificate configuration"
+        return 0
+    fi
+
+    print_info "Zscaler detected - configuring certificates for Podman machine..."
+    log_info "Zscaler detected on machine"
+
+    # Check if Zscaler is running - required when Zscaler is installed
     if ! ps aux | grep -i "[Z]scaler" &> /dev/null; then
-        print_error "Zscaler is not running"
+        print_error "Zscaler is installed but not running"
         echo ""
         echo "ERROR: Zscaler must be running for Podman to access container registries"
         echo ""
@@ -1444,14 +1475,14 @@ configure_zscaler_certificates_for_podman() {
         echo "  3. Re-run this script"
         echo ""
         print_helpdesk_instructions
-        log_error "Zscaler not running - cannot configure certificates"
+        log_error "Zscaler installed but not running - cannot configure certificates"
         exit 1
     fi
 
     print_success "Zscaler is running"
     log_info "Zscaler process detected"
 
-    # Check if certificates exist in keychain - CRITICAL
+    # Check if certificates exist in keychain - required when Zscaler is installed
     if ! security find-certificate -c "Zscaler" /Library/Keychains/System.keychain &> /dev/null; then
         print_error "Zscaler certificates not found in System keychain"
         echo ""
