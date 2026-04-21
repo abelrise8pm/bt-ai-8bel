@@ -1331,6 +1331,15 @@ cleanup_cui_files() {
 configure_devcontainer() {
     print_step "Phase 4: DevContainer Configuration"
 
+    local target_file=".devcontainer/devcontainer.json"
+
+    # Skip if devcontainer.json already exists
+    if [[ -f "${target_file}" ]]; then
+        print_success "DevContainer already configured: ${target_file}"
+        log_info "Phase 4: Skipped - ${target_file} already exists"
+        return 0
+    fi
+
     print_info "Configuring devcontainer for non-CUI development..."
     echo ""
     echo "${EMOJI_QUESTION} What is a devcontainer?"
@@ -1341,7 +1350,6 @@ configure_devcontainer() {
 
     log_info "Phase 4: DevContainer configuration started"
 
-    local target_file=".devcontainer/devcontainer.json"
     local template_file="scripts/template/devcontainer_example.jsonc"
 
     # Load expected devcontainer.json content from template file
@@ -1362,36 +1370,6 @@ configure_devcontainer() {
 
     expected_content=$(cat "${template_file}")
     log_info "Loaded devcontainer template from: ${template_file}"
-
-    # Check if devcontainer.json already exists
-    if [[ -f "${target_file}" ]]; then
-        # Compare existing content with expected content
-        local existing_content
-        existing_content=$(cat "${target_file}")
-
-        if [[ "${existing_content}" == "${expected_content}" ]]; then
-            print_success "DevContainer already correctly configured: ${target_file}"
-            log_info "Target file exists and matches expected configuration - skipping (idempotent)"
-            echo ""
-            print_success "DevContainer configuration completed!"
-            log_info "Phase 4: DevContainer configuration completed (already correct)"
-            return 0
-        else
-            # File exists but doesn't match - back it up and replace
-            local backup_file="${target_file}.backup.$(date +%s)"
-            print_info "DevContainer config exists but differs from expected - updating..."
-            log_warn "Existing devcontainer.json differs from expected configuration"
-
-            if mv "${target_file}" "${backup_file}"; then
-                print_info "Backed up existing config to: ${backup_file}"
-                log_info "Backed up existing devcontainer.json to: ${backup_file}"
-            else
-                print_error "Failed to backup existing devcontainer.json"
-                log_error "Failed to create backup: ${backup_file}"
-                return 1
-            fi
-        fi
-    fi
 
     # Create devcontainer.json with expected content
     print_info "Creating devcontainer.json..."
