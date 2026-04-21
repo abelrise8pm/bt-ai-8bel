@@ -37,6 +37,22 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## April 21, 2026
+
+### Added
+- Skip devcontainer configuration when `devcontainer.json` already exists ([d805d0d](https://github.com/rise8-us/xpai-ai-assistant-container/commit/d805d0d)): Onboarding Phase 4 now returns early if `.devcontainer/devcontainer.json` is already present, avoiding unnecessary template comparison and backup logic. All other onboarding phases still run normally.
+
+### Changed
+- Update AI assistant container software ([7aae1c6](https://github.com/rise8-us/xpai-ai-assistant-container/commit/7aae1c6)):
+  - **Claude Code 2.1.78 → 2.1.109** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): Session recap on return (`/recap`), `/powerup` interactive feature lessons, `/team-onboarding` ramp-up guide generation, flicker-free rendering (`CLAUDE_CODE_NO_FLICKER=1`), transcript search (`/` to search, `n`/`N` to navigate), Bedrock/Vertex setup wizards, 1-hour prompt caching (`ENABLE_PROMPT_CACHING_1H`), default effort level raised to high, `/resume` up to 67% faster on large sessions, OS CA certificate store trusted by default for enterprise TLS proxies, multiple security fixes (Bash permission bypass via backslash-escaped flags, compound command forced-prompt bypass, `find -exec`/`-delete` no longer auto-approved, dangerous-path `rm` safety check, command injection in LSP `which` fallback, `permissions.deny` now overrides PreToolUse hooks)
+  - **OpenCode 1.2.27 → 1.4.5** ([changelog](https://github.com/anomalyco/opencode/releases)): GitLab Agent Platform with WebSocket local tools, git-backed session review for uncommitted changes and branch diffs, TUI plugins, Node.js runtime support, full HTTP proxy support, OTLP telemetry export, macOS MDM managed preferences, `opencode export --sanitize` for PII redaction, new providers (Poe, Venice AI, Alibaba, LLM Gateway), Claude Opus 4.7 adaptive reasoning, fast mode variants, TypeScript LSP memory leak fix, token usage double-counting fix for Anthropic/Bedrock
+  - **Pi coding agent 0.67.2** (new) ([releases](https://github.com/badlogic/pi-mono/releases)): Terminal-based AI coding agent supporting 15+ LLM providers with file and bash tooling, configurable keybindings, session cloning, and TypeScript-based extensions. Pre-installed with fd 10.4.2 for filesystem search.
+  - Ubuntu 24.04 base image updated to latest digest
+- Make Zscaler certificate configuration optional ([bb61f18](https://github.com/rise8-us/xpai-ai-assistant-container/commit/bb61f18)): Onboarding now skips Zscaler certificate setup when Zscaler is not installed, allowing the script to work on machines without Zscaler.
+- Update firewall manager to latest build ([2f1e0f7](https://github.com/rise8-us/xpai-ai-assistant-container/commit/2f1e0f7))
+
+---
+
 ## April 13, 2026
 
 ### Changed
