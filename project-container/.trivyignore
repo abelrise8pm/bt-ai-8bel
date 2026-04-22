@@ -2,17 +2,4 @@
 # GitHub workflows enforce: CRITICAL,HIGH severity only
 # See: .github/actions/trivy-scan/action.yml
 
-# CVE-2026-32280, CVE-2026-32282, CVE-2026-33810 - Go stdlib in gh CLI (LOW EXPLOITABILITY)
-# gh 2.89.0 built with Go v1.26.1; fixes are in Go 1.26.2+. Upstream cli/cli has not yet
-# rebuilt on 1.26.2+. In this codebase gh is a dev CLI calling GitHub over TLS:
-#   - 32280 (x509 chain-building DoS): CLI DoS = re-run command, no availability impact
-#   - 32282 (Root.Chmod symlink escape): gh does not use os.Root on attacker-controlled paths
-#   - 33810 (x509 DNS name-constraint bypass): defense-in-depth; standard root CA store,
-#     no name-constrained enterprise CAs in trust store
-# Resolves when: cli/cli ships a release built on Go 1.26.2+
-# Review: weekly
-CVE-2026-32280
-CVE-2026-32282
-CVE-2026-33810
-
-# Last reviewed: 2026-04-15
+# Last reviewed: 2026-04-22
