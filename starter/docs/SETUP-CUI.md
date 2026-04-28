@@ -18,32 +18,52 @@ This guide is for projects that work with **sensitive or controlled data**.
 | **AWS Bedrock credentials** | ✅ Yes | GovCloud endpoints are whitelisted |
 | **Claude Code with Bedrock** | ✅ Yes | Uses whitelisted Bedrock endpoints |
 
-> **Got an Anthropic API key from #helpdesk?** That key is for **non-CUI projects only**. For CUI projects, you need AWS Bedrock access via the `ClaudeBedrock` permission set (see Prerequisites below).
+> **Got an Anthropic API key from #helpdesk?** That key is for **non-CUI projects only**. For CUI projects, you need AWS Bedrock access via a project-scoped permission set (see Prerequisites below).
 
 See https://docs.google.com/document/d/1gtr62hDuvpnfzrc9Sqny4iYzHx_dBaGhpPcp4gRDUxk/edit?tab=t.0.
 
 ## Prerequisites
 
-1. **AWS Bedrock Access**: You must be assigned to the `ClaudeBedrock` permission set
-   - Contact your admin for assignment via a #helpdesk ticket
+1. **AWS Bedrock Access**: You must be assigned to a `BedrockAccess-{YourProject}` permission set
+   - Reach out to your **Delivery Lead** if you think you should have access — they'll submit the request
+   - Each project has its own permission set (e.g., `BedrockAccess-KM`, `BedrockAccess-Torque`)
 
-2. **AWS CLI installed** on your local machine via ` brew install awscli`.
+2. **AWS CLI installed** on your local machine via `brew install awscli`.
 
 ## Setup Steps
 
 ### 1. Configure AWS CLI
 
 ```bash
-aws configure sso --profile claude-bedrock
+aws configure sso --profile bedrockaccess-yourproject
 
 # When prompted, provide:
-# SSO session name: bedrock-session
-# SSO start URL: https://start.us-gov-home.awsapps.com/directory/rise8
+# SSO session name: rise8
+# SSO start URL: https://start.us-gov-west-1.us-gov-home.awsapps.com/directory/rise8
 # SSO region: us-gov-west-1
 # SSO registration scopes: sso:account:access
-# Role: Select "ClaudeBedrock"
+# Role: Select your project's permission set (e.g., "BedrockAccess-KM")
 # Default client Region [None]: us-gov-west-1
 ```
+
+Or add this directly to `~/.aws/config`:
+
+```ini
+[profile bedrockaccess-yourproject]
+sso_session = rise8
+sso_account_id = 431331090492
+sso_role_name = BedrockAccess-YourProject
+region = us-gov-west-1
+
+[sso-session rise8]
+sso_start_url = https://start.us-gov-west-1.us-gov-home.awsapps.com/directory/rise8
+sso_region = us-gov-west-1
+sso_registration_scopes = sso:account:access
+```
+
+> **Replace `yourproject`/`YourProject`** with your actual project name in lowercase for the profile and matching case for the role (e.g., profile `bedrockaccess-tak`, role `BedrockAccess-TAK`).
+>
+> If you work on multiple projects, create one profile per project. They can share the same `[sso-session rise8]` block.
 
 ### 2. Configure DevContainer
 
@@ -81,10 +101,10 @@ Edit `.env` and:
 
 ```bash
 # 1. Authenticate with AWS SSO
-aws sso login --profile claude-bedrock
+aws sso login --profile bedrockaccess-yourproject
 
 # 2. Export credentials for container use
-aws configure export-credentials --profile claude-bedrock --format env-no-export > .env.bedrock
+aws configure export-credentials --profile bedrockaccess-yourproject --format env-no-export > .env.bedrock
 
 # 3. Rebuild the container to load new credentials
 # In VSCode: Cmd/Ctrl + Shift + P → "Dev Containers: Rebuild Container"
@@ -101,8 +121,8 @@ This is the most common error and means your AWS credentials have expired (8-hou
 **Solution:**
 ```bash
 # 1. Refresh your AWS credentials
-aws sso login --profile claude-bedrock
-aws configure export-credentials --profile claude-bedrock --format env-no-export > .env.bedrock
+aws sso login --profile bedrockaccess-yourproject
+aws configure export-credentials --profile bedrockaccess-yourproject --format env-no-export > .env.bedrock
 
 # 2. Rebuild the container
 # In VSCode: Cmd/Ctrl + Shift + P → "Dev Containers: Rebuild Container"
@@ -113,22 +133,22 @@ aws configure export-credentials --profile claude-bedrock --format env-no-export
 ### "No credentials found" error:
 ```bash
 # Re-authenticate and export fresh credentials
-aws sso login --profile claude-bedrock
-aws configure export-credentials --profile claude-bedrock --format env-no-export > .env.bedrock
+aws sso login --profile bedrockaccess-yourproject
+aws configure export-credentials --profile bedrockaccess-yourproject --format env-no-export > .env.bedrock
 
 # Then rebuild the container
 # In VSCode: Cmd/Ctrl + Shift + P → "Dev Containers: Rebuild Container"
 ```
 
 ### "Access denied" for Bedrock:
-- Verify you selected **ClaudeBedrock** permission set during setup
-- Check with admin that you're assigned to ClaudeBedrock permission set
+- Verify `sso_role_name` in your `~/.aws/config` matches the permission set you were assigned (e.g., `BedrockAccess-TAK`)
+- If you don't see your permission set listed when running `aws configure sso`, reach out to your **Delivery Lead** to confirm your access
 - Confirm you're in the correct AWS account (`431331090492`)
 
 ### "Profile not found" error:
 ```bash
 # Reconfigure your AWS profile
-aws configure sso --profile claude-bedrock
+aws configure sso --profile bedrockaccess-yourproject
 ```
 
 ### Explore tool fails with "model identifier is invalid":

@@ -14,14 +14,14 @@
 # 5. Access the container (CLI exec or VS Code)
 #
 # Usage: Run from host machine (outside container):
-#   ./scripts/refresh-credentials.sh [OPTIONS]
+#   AWS_PROFILE=bedrockaccess-yourproject ./scripts/refresh-credentials.sh [OPTIONS]
 #
 # Options:
 #   --vscode    Open VS Code after rebuild (instead of exec into container)
 #   --help      Show this help message
 #
 # Requirements:
-# - AWS CLI with configured claude-bedrock profile
+# - AWS CLI with configured bedrockaccess-{project} profile
 # - DevContainer CLI (@devcontainers/cli)
 # - Podman running
 # - Git repository
@@ -34,7 +34,17 @@ set -euo pipefail  # Exit on error, undefined variables, pipe failures
 # CONSTANTS & CONFIGURATION
 ################################################################################
 
-readonly AWS_PROFILE="claude-bedrock"
+AWS_PROFILE="${AWS_PROFILE:-}"
+if [[ -z "${AWS_PROFILE}" ]]; then
+    echo -e "\033[0;31m[ERROR]\033[0m AWS_PROFILE is not set"
+    echo -e "\033[0;31m[ERROR]\033[0m Set it to your project's profile name, e.g.:"
+    echo -e "\033[0;31m[ERROR]\033[0m   export AWS_PROFILE=bedrockaccess-tak"
+    echo -e "\033[0;31m[ERROR]\033[0m   $0"
+    echo -e "\033[0;31m[ERROR]\033[0m"
+    echo -e "\033[0;31m[ERROR]\033[0m Or inline:"
+    echo -e "\033[0;31m[ERROR]\033[0m   AWS_PROFILE=bedrockaccess-tak $0"
+    exit 1
+fi
 readonly COMPOSE_FILE=".devcontainer/docker-compose.firewall.yml"
 readonly ENV_FILE=".env.bedrock"
 
@@ -69,13 +79,13 @@ OPTIONS:
 
 EXAMPLES:
     # Default: rebuild and exec into container (for devcontainer CLI users)
-    $(basename "$0")
+    AWS_PROFILE=bedrockaccess-tak $(basename "$0")
 
     # For VS Code users: rebuild and open VS Code
-    $(basename "$0") --vscode
+    AWS_PROFILE=bedrockaccess-tak $(basename "$0") --vscode
 
 REQUIREMENTS:
-    - AWS CLI with configured 'claude-bedrock' profile
+    - AWS_PROFILE set to your project profile (e.g., bedrockaccess-tak)
     - DevContainer CLI (@devcontainers/cli)
     - Podman running
     - Git repository with .devcontainer/docker-compose.firewall.yml
