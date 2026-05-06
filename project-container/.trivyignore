@@ -1,5 +1,143 @@
 # Trivy Vulnerability Ignore File
 # GitHub workflows enforce: CRITICAL,HIGH severity only
 # See: .github/actions/trivy-scan/action.yml
+#
+# Each entry includes a comment explaining why it's safe to ignore.
+# Format mirrors image/.trivyignore for consistency.
 
-# Last reviewed: 2026-04-22
+# Last reviewed: 2026-05-06 (Versions: project-container on UBI9 9.7 base via ai-assistant-home, skopeo 1.20.0-3.el9_7, gh 2.91.0)
+
+# ==================================================================
+# Maintenance note — read before adding more suppressions
+# ==================================================================
+# RHEL 9's skopeo is built against an older Go toolchain and Red Hat does
+# not rebuild it on every Go security release. Expect new HIGH CVEs from
+# skopeo's bundled Go stdlib + go-jose to surface periodically until either:
+#   (a) RHEL ships a refreshed skopeo build, or
+#   (b) we migrate the parent ai-assistant-home base from UBI9 to UBI10 —
+#       UBI10 ships a newer Go and a current skopeo and is expected to
+#       resolve most of the will_not_fix entries below in one move, or
+#   (c) we replace skopeo with a tool that ships its own current Go runtime
+#       (e.g., crane from go-containerregistry) or pull skopeo from the
+#       upstream containers project image (a binary-COPY attempt failed due
+#       to glibc ABI mismatch with UBI9 — see PR #427 history if curious).
+#
+# Risk acceptance: skopeo here is a one-shot CLI invoked by developers and
+# CI workflows against trusted public registries (ghcr.io, registry.access.
+# redhat.com, quay.io for explicitly named images). It is not a service,
+# has no listening port, and processes only inputs supplied by an authorized
+# caller. The container runs as non-root user aiAssistant, and the firewall
+# manager restricts egress to whitelisted hosts. The realistic exploit
+# paths for the bundled-Go CVEs below require either a compromised registry
+# or a TLS MITM with a trusted-CA-issued malicious cert — outside skopeo's
+# blast radius. Outcomes are bounded to DoS of the CLI invocation.
+
+# ==================================================================
+# Inherited from UBI9 base image (ai-assistant-home)
+# ==================================================================
+# These three CVEs are present in the parent ai-assistant-home image and
+# triaged in image/.trivyignore. Project-container inherits them and the
+# same risk reasoning applies: same non-root aiAssistant runtime, same
+# firewall-manager egress restriction, no DTLS surface, no GSSAPI accept
+# side, no NegoEx mechanism registered. Keeping in sync with the parent
+# image's review schedule.
+
+# CVE-2026-33845 - GnuTLS DTLS handshake integer underflow [NO FIX AVAILABLE]
+# Affects: gnutls-3.8.3-10.el9_7 (UBI9 base, transitive)
+# Risk: LOW — no DTLS surface in container; gnutls is transitive, not invoked
+# Status: ACTIVE - No RHEL 9 errata. Suppressed in image/.trivyignore.
+# Review: Patch within 30 days of RHEL 9 errata, or re-evaluate by 2026-08-04
+CVE-2026-33845
+
+# CVE-2026-33846 - GnuTLS DTLS handshake heap buffer overflow [NO FIX AVAILABLE]
+# Affects: gnutls-3.8.3-10.el9_7 (UBI9 base, transitive)
+# Risk: LOW — no DTLS surface in container; gnutls is transitive, not invoked
+# Status: ACTIVE - No RHEL 9 errata. Suppressed in image/.trivyignore.
+# Review: Patch within 30 days of RHEL 9 errata, or re-evaluate by 2026-08-04
+CVE-2026-33846
+
+# CVE-2026-40356 - MIT krb5 NegoEx integer underflow [NO FIX AVAILABLE]
+# Affects: krb5-libs-1.21.1-9.el9_7 (UBI9 base, transitive via openssh-clients)
+# Risk: LOW — no GSSAPI server, NegoEx not registered in /etc/gss/mech
+# Status: ACTIVE - No RHEL 9 errata. Suppressed in image/.trivyignore.
+# Review: Patch within 30 days of RHEL 9 errata, or re-evaluate by 2026-08-04
+CVE-2026-40356
+
+# ==================================================================
+# Skopeo bundled-Go-stdlib CVEs (RHEL will_not_fix / no scheduled rebuild)
+# ==================================================================
+# All five live inside the skopeo binary's bundled Go stdlib (or go-jose).
+# Red Hat has either explicitly declined to fix these in skopeo
+# (will_not_fix) or has no scheduled rebuild against a newer Go. The
+# upstream containers project ships a newer skopeo (1.22.2+) but the
+# binary cannot be COPY'd into UBI9 due to glibc ABI mismatch. Expected
+# to be resolved en masse on UBI10 migration.
+
+# CVE-2026-25679 - Go net/url accepts invalid URLs (DoS) [WILL NOT FIX]
+# Affects: skopeo 1.20.0-3.el9_7 (Go stdlib bundled)
+# Issue: url.Parse insufficiently validates host/authority component (CWE-425)
+# CVSS: 7.5 HIGH — AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H
+# Risk: LOW — skopeo only parses URLs supplied by the developer/CI invoking
+#   the binary. No untrusted-input path; not a service. DoS impact is
+#   bounded to the one-shot CLI invocation.
+# Status: WILL_NOT_FIX (RHEL); upstream fixed in Go 1.25.8.
+# CISA KEV: Not listed. Active exploitation: None.
+# Review: Re-evaluate on UBI10 migration or by 2026-08-04
+CVE-2026-25679
+
+# CVE-2026-27137 - Go crypto/x509 email constraint enforcement bypass
+# Affects: skopeo 1.20.0-3.el9_7 (Go stdlib bundled)
+# Issue: When a cert chain has multiple email constraints sharing local
+#   part but different domains, only the last constraint is applied (CWE-295)
+# CVSS: 7.5 HIGH — AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H
+# Risk: LOW — skopeo verifies TLS certs of trusted registries; email
+#   constraints don't appear in registry cert chains; bypass has no
+#   exploitable consequence in this container.
+# Status: ACTIVE (RHEL no scheduled rebuild). Upstream fix in Go.
+# CISA KEV: Not listed. Active exploitation: None.
+# Review: Re-evaluate on UBI10 migration or by 2026-08-04
+CVE-2026-27137
+
+# CVE-2026-32280 - Go crypto/x509 cert chain building DoS
+# Affects: skopeo 1.20.0-3.el9_7 (Go stdlib bundled)
+# Issue: Unbounded work in chain building when many intermediate certs
+#   are passed (CWE-770) → high CPU / DoS during cert verification
+# CVSS: 7.5 HIGH — AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H
+# Risk: LOW — exploit requires a compromised registry serving thousands
+#   of intermediates; outcome is DoS of the one-shot CLI call only.
+# Status: ACTIVE (RHEL no scheduled rebuild). Upstream Go 1.25.9 / 1.26.2.
+# CISA KEV: Not listed. Active exploitation: None.
+# Review: Re-evaluate on UBI10 migration or by 2026-08-04
+CVE-2026-32280
+
+# CVE-2026-33810 - Go crypto/x509 DNS constraint case-bypass [HIGHEST CVSS HERE]
+# Affects: skopeo 1.20.0-3.el9_7 (Go stdlib bundled)
+# Issue: Excluded DNS constraints aren't applied to wildcard SANs with
+#   different case than the constraint (CWE-295)
+# CVSS: 8.2 HIGH — AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:N
+#   (note C:H — the only one in this group with confidentiality impact)
+# Risk: LOW — exploit requires a CA in the system trust store issuing a
+#   malicious cert with case-mismatched wildcard SAN against a hostname
+#   skopeo is pulling from. Skopeo only connects to developer-specified
+#   registry hostnames (ghcr.io, registry.access.redhat.com, quay.io);
+#   public CAs with name-constraint policies don't appear in that path.
+# Note: This is the most actively-monitor-worthy CVE in this group due
+#   to confidentiality impact — re-check status on every review cycle.
+# Status: ACTIVE (RHEL no scheduled rebuild). Upstream Go 1.26.2.
+# CISA KEV: Not listed. Active exploitation: None.
+# Review: Re-evaluate on UBI10 migration or by 2026-08-04
+CVE-2026-33810
+
+# CVE-2026-34986 - go-jose JWE decrypt panic (DoS)
+# Affects: skopeo 1.20.0-3.el9_7 (go-jose bundled)
+# Issue: Decrypting a JWE with empty encrypted_key triggers KeyUnwrap
+#   to allocate a zero/negative-length slice → panic (CWE-248)
+# CVSS: 7.5 HIGH — AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H
+# Risk: LOW — go-jose reached only via OIDC/registry auth flows; exploit
+#   requires the auth server to send a malformed JWE; outcome is panic of
+#   the skopeo CLI, not container compromise. CI registry auth uses GHCR
+#   bearer-token flow, not JWE.
+# Status: ACTIVE (RHEL no scheduled rebuild). Upstream go-jose 4.1.4 / 3.0.5.
+# CISA KEV: Not listed. Active exploitation: None.
+# Review: Re-evaluate on UBI10 migration or by 2026-08-04
+CVE-2026-34986

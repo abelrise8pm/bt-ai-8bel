@@ -21,7 +21,7 @@ ARG GH_VERSION=2.91.0
 USER root
 # Fix /tmp permissions after USER switch - required even though base image has this fix
 # When switching USER contexts, /tmp permissions can be reset due to runc v1.1.8 and crun v1.11+ bugs
-# This chmod must be present before any apt-get commands in each USER root context
+# This chmod must be present before any package install commands in each USER root context
 # See: https://github.com/opencontainers/runc/issues/3952
 #
 # Install additional tools here as needed.
@@ -29,30 +29,34 @@ USER root
 # Keep the image as small as possible while still being useful to reduce CVE surface area.
 # When possible, install tools as the non-root aiAssistant user.
 # See https://docs.docker.com/build/building/best-practices/ for guidelines.
+#
+# Base image is UBI9 minimal — use microdnf, not apt-get.
+# curl-minimal and ca-certificates are pre-installed by the base image.
+# skopeo is available in the ubi-9-appstream repo enabled by default.
 # ==================================================================
 RUN chmod 1777 /tmp && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-        curl \
-        ca-certificates \
+    microdnf install -y --nodocs \
         skopeo \
         && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    microdnf clean all && \
+    rm -rf /var/cache/yum /tmp/* /var/tmp/*
 
 # Install additional tools:
 # - gh: GitHub CLI for interacting with GitHub issues, PRs, and repositories
 #
-# NOTE: skopeo is installed via apt above from Ubuntu repos (actively maintained by Red Hat/Canonical)
-# NOTE: gh CLI uses dpkg architecture naming (amd64/arm64)
-RUN ARCH=$(dpkg --print-architecture) && \
-    # Install GitHub CLI
+# gh CLI release artifacts use Debian-style arch names (amd64/arm64); translate
+# from `uname -m` since dpkg is not available on UBI9.
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
+        GH_ARCH="arm64"; \
+    else \
+        GH_ARCH="amd64"; \
+    fi && \
     curl -fsSL -o /tmp/gh.tar.gz \
-        "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz" && \
+        "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${GH_ARCH}.tar.gz" && \
     tar -xzf /tmp/gh.tar.gz -C /tmp && \
-    mv /tmp/gh_${GH_VERSION}_linux_${ARCH}/bin/gh /usr/local/bin/gh && \
+    mv /tmp/gh_${GH_VERSION}_linux_${GH_ARCH}/bin/gh /usr/local/bin/gh && \
     chmod +x /usr/local/bin/gh && \
-    # Cleanup
     rm -rf /tmp/*
 
 # Use `skopeo inspect docker://ghcr.io/astral-sh/uv:latest | jq -r .Digest` to get the sha256 digest for the latest version.
