@@ -1,0 +1,31 @@
+# OpenSSL configuration — force FIPS provider active unconditionally
+#
+# This configuration ensures FIPS-validated cryptography is used regardless of
+# whether the host kernel has fips_enabled=1. This is required for developer
+# laptops (macOS) where the host kernel does not set the FIPS flag, but CUI
+# is still processed inside the container.
+#
+# CMMC control: SC.L2-3.13.11
+# RHEL 9 OpenSSL FIPS Provider: CMVP #4857
+#
+# Reference: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/security_hardening/using-the-system-wide-cryptographic-policies_security-hardening
+
+config_diagnostics = 1
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = provider_sect
+alg_section = algorithm_sect
+
+[provider_sect]
+fips = fips_sect
+base = base_sect
+
+[fips_sect]
+activate = 1
+
+[base_sect]
+activate = 1
+
+[algorithm_sect]
+default_properties = fips=yes

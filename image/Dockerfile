@@ -1,20 +1,19 @@
 # syntax=docker/dockerfile:1
-# Pinned Ubuntu 24.04 LTS for multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
+# Red Hat UBI9 Minimal — FIPS 140-3 compliant base for CMMC Level 2 CUI boundary
+#
+# Multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
 #
 # IMPORTANT: The SHA must be the MULTI-ARCH MANIFEST digest, NOT an architecture-specific digest.
-# To get the correct SHA, run: skopeo inspect --format "{{.Digest}}" docker://docker.io/library/ubuntu:24.04
+# To get the correct SHA, run: skopeo inspect --format "{{.Digest}}" docker://registry.access.redhat.com/ubi9/ubi-minimal:latest
 # This returns the manifest list digest that works for ALL architectures.
 #
-# DO NOT use `docker inspect` or `docker pull` + inspect - those return architecture-specific digests
-# which will cause cross-platform builds to fail with "exec format error".
-#
-# To verify a SHA is multi-arch: skopeo inspect --raw docker://docker.io/library/ubuntu@sha256:<SHA> | jq .mediaType
-# - Multi-arch: "application/vnd.oci.image.index.v1+json" or "application/vnd.docker.distribution.manifest.list.v2+json"
+# To verify a SHA is multi-arch: skopeo inspect --raw docker://registry.access.redhat.com/ubi9/ubi-minimal@sha256:<SHA> | jq .mediaType
+# - Multi-arch: "application/vnd.docker.distribution.manifest.list.v2+json"
 # - Single-arch (WRONG): "application/vnd.oci.image.manifest.v1+json"
 #
 # TARGETPLATFORM is automatically set by buildx - explicitly use it to ensure correct platform layers are pulled
 ARG TARGETPLATFORM
-FROM --platform=$TARGETPLATFORM ubuntu:24.04@sha256:c4a8d5503dfb2a3eb8ab5f807da5bc69a85730fb49b5cfca2330194ebcc41c7b
+FROM --platform=$TARGETPLATFORM registry.access.redhat.com/ubi9/ubi-minimal:9.7@sha256:7d4e47500f28ac3a2bff06c25eff9127ff21048538ae03ce240d57cf756acd00
 
 # Version definitions
 # To check latest Claude Code version: curl -s https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/latest
@@ -28,14 +27,16 @@ ARG PI_VERSION=0.73.0
 ARG FD_VERSION=10.4.2
 # https://github.com/BurntSushi/ripgrep/releases for latest version and changelog
 ARG RIPGREP_VERSION=15.1.0
+# https://github.com/jqlang/jq/releases for latest version and changelog
+ARG JQ_VERSION=1.7.1
 
 # Copy certificate and install in single layer
-COPY src/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.crt
+COPY src/zscaler-root-ca.crt /etc/pki/ca-trust/source/anchors/zscaler-root-ca.crt
 
 # Fix /tmp permissions for container runtime compatibility
 # Background: Both runc v1.1.8 and crun v1.11+ introduced regressions where the sticky bit
-# on /tmp is not properly set (missing from tmpfs mounts). This causes APT and other tools
-# to fail with "Couldn't create temporary file /tmp/apt.conf.*" errors.
+# on /tmp is not properly set (missing from tmpfs mounts). This causes tools
+# to fail with temporary file creation errors.
 #
 # Technical details:
 # - Expected permissions: 1777 (drwxrwxrwt) - the leading 1 is the sticky bit
@@ -46,45 +47,89 @@ COPY src/zscaler-root-ca.crt /usr/local/share/ca-certificates/zscaler-root-ca.cr
 # Impact: Affects both Docker (typically uses runc) and Podman (typically uses crun)
 # Solution: Explicitly set /tmp permissions to ensure correct behavior across all runtimes
 RUN chmod 1777 /tmp && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates && \
-    update-ca-certificates && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    microdnf install -y --nodocs ca-certificates && \
+    update-ca-trust extract && \
+    microdnf clean all && \
+    rm -rf /var/cache/yum /tmp/* /var/tmp/*
 
 # Set SSL certificate environment variables for all tools
-ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt \
-    SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV CURL_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt \
+    SSL_CERT_FILE=/etc/pki/tls/certs/ca-bundle.crt
 
 # Install security-focused minimal utilities and tool dependencies
 # tzdata: pre-installed to prevent failures in derived container builds.
 #   The setcap cap_sys_time on /usr/bin/date causes tzdata's postinst to fail
 #   in Docker build environments lacking SYS_TIME capability. Installing here
 #   ensures derived containers skip tzdata configuration.
-# libcap2-bin: installed transiently to setcap on /usr/bin/date, then purged
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+# libcap: provides setcap utility for /usr/bin/date capability
+#   (kept installed — coreutils-single depends on libcap.so.2)
+#
+# jq is NOT available in the default UBI9 free repos (ubi-9-baseos, ubi-9-appstream).
+# We download a static binary, SHA256-verify it, and install it directly.
+# Note: curl-minimal is pre-installed in ubi-minimal and conflicts with full curl.
+# curl-minimal provides the curl binary and is sufficient for our download needs.
+RUN microdnf install -y --nodocs \
         git \
-        curl \
-        jq \
         ca-certificates \
-        openssh-client \
+        openssh-clients \
         gnupg2 \
         tzdata \
-        libcap2-bin && \
+        tar \
+        gzip \
+        shadow-utils \
+        libcap && \
     setcap cap_sys_time+eip /usr/bin/date && \
-    apt-get purge -y libcap2-bin && apt-get autoremove -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    microdnf clean all && \
+    rm -rf /var/cache/yum /tmp/* /var/tmp/*
+
+# Install jq — static binary with SHA256 verification
+# jq is not available in UBI9 free repos; download from upstream releases
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
+        JQ_ARCH="arm64"; \
+        JQ_SHA256="4dd2d8a0661df0b22f1bb9a1f9830f06b6f3b8f7d91211a1ef5d7c4f06a8b4a5"; \
+    else \
+        JQ_ARCH="amd64"; \
+        JQ_SHA256="5942c9b0934e510ee61eb3e30273f1b3fe2590df93933a93d7c58b81d19c8ff5"; \
+    fi && \
+    curl -fsSL "https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-${JQ_ARCH}" -o /tmp/jq && \
+    ACTUAL=$(sha256sum /tmp/jq | cut -d' ' -f1) && \
+    if [ "$ACTUAL" != "$JQ_SHA256" ]; then \
+        echo "jq checksum verification failed: expected $JQ_SHA256, got $ACTUAL" >&2; \
+        rm -f /tmp/jq; \
+        exit 1; \
+    fi && \
+    mv /tmp/jq /usr/local/bin/jq && \
+    chmod +x /usr/local/bin/jq
 
 # Dependencies explanation:
 # git: Version control system (Claude Code)
-# curl: HTTP client for downloads and API calls (Claude Code, system)
-# jq: JSON processor for CLI operations (Claude Code)
+# curl-minimal: HTTP client for downloads and API calls (pre-installed in ubi-minimal)
+# jq: JSON processor for CLI operations (Claude Code) — installed from static binary above
 # ca-certificates: SSL/TLS certificate bundle (all tools)
-# openssh-client: SSH client for git operations (Claude Code)
+# openssh-clients: SSH client for git operations (Claude Code)
 # gnupg2: GPG cryptographic tools for verification (system security)
 # tzdata: Timezone data (pre-installed to avoid postinst failures in derived builds)
+# tar, gzip: Archive extraction for tool installs
+# shadow-utils: User management (useradd)
+
+# ==================================================================
+# FIPS 140-3 CONFIGURATION
+# ==================================================================
+# Force OpenSSL FIPS provider active regardless of host kernel fips_enabled state.
+# This ensures FIPS-validated cryptography is used on developer laptops (macOS)
+# where the host kernel does not set fips_enabled=1, as well as in GovCloud
+# where it does.
+#
+# CMMC control: SC.L2-3.13.11 — Employ FIPS-validated cryptography when used
+# to protect the confidentiality of CUI.
+#
+# RHEL 9 OpenSSL FIPS Provider certificate: CMVP #4857
+# ==================================================================
+RUN microdnf install -y --nodocs openssl && \
+    microdnf clean all && \
+    rm -rf /var/cache/yum
+COPY src/openssl-fips.cnf /etc/pki/tls/openssl.cnf
 
 # Create aiAssistant user
 RUN useradd -m -s /bin/bash aiAssistant && \
@@ -113,8 +158,8 @@ RUN chown -R aiAssistant:aiAssistant /home/aiAssistant/.claude /home/aiAssistant
 # the old version in the persistent volume will shadow the new system version
 # (home paths typically come before system paths in $PATH).
 ARG CLAUDE_GCS_BUCKET=https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases
-RUN ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" = "arm64" ]; then \
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
         CLAUDE_PLATFORM="linux-arm64"; \
     else \
         CLAUDE_PLATFORM="linux-x64"; \
@@ -139,8 +184,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
 
 # Install OpenCode (AI-powered terminal coding assistant)
 # OpenCode provides AI-assisted development workflows with support for multiple LLM providers
-RUN ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" = "arm64" ]; then \
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
         OPENCODE_ARCH="arm64"; \
     else \
         OPENCODE_ARCH="x64"; \
@@ -156,8 +201,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
 # Pi ships as a Bun-compiled standalone binary with companion assets (themes, docs, etc.)
 # The binary resolves package.json relative to its own path, so the full distribution
 # must be kept together. Install to /usr/local/lib/pi and symlink the binary.
-RUN ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" = "arm64" ]; then \
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
         PI_ARCH="arm64"; \
     else \
         PI_ARCH="x64"; \
@@ -170,8 +215,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
     rm -f /tmp/pi.tar.gz
 
 # Install ripgrep (fast recursive search tool used by Claude Code's Grep tool)
-RUN ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" = "arm64" ]; then \
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
         RG_ARCH="aarch64-unknown-linux-gnu"; \
     else \
         RG_ARCH="x86_64-unknown-linux-musl"; \
@@ -185,8 +230,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
 # Install fd (fast filesystem search tool, used by Pi coding agent)
 # Pre-installed to prevent Pi from downloading it at runtime, which would
 # fail behind the firewall and write to the user's home directory.
-RUN ARCH=$(dpkg --print-architecture) && \
-    if [ "$ARCH" = "arm64" ]; then \
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then \
         FD_ARCH="aarch64-unknown-linux-gnu"; \
     else \
         FD_ARCH="x86_64-unknown-linux-gnu"; \

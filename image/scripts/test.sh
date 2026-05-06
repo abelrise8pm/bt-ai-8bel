@@ -334,7 +334,7 @@ fi
 echo "✅ Clock skew script exits cleanly when endpoint unreachable"
 
 echo "Testing date binary has cap_sys_time file capability..."
-DATE_CAP_CHECK=$(CONTAINER_CMD="apt-get update -qq >/dev/null 2>&1 && apt-get install -y -qq libcap2-bin >/dev/null 2>&1 && getcap /usr/bin/date" run_container --user root 2>&1)
+DATE_CAP_CHECK=$(CONTAINER_CMD="microdnf install -y --nodocs libcap >/dev/null 2>&1 && getcap /usr/bin/date" run_container --user root 2>&1)
 if [[ "$DATE_CAP_CHECK" != *"cap_sys_time"* ]]; then
     echo "❌ ERROR: /usr/bin/date missing cap_sys_time capability"
     echo "  Got: $DATE_CAP_CHECK"
@@ -356,6 +356,22 @@ OTEL_CHECK=$(CONTAINER_CMD='
     exit 1
 }
 echo "✅ Claude Code OTEL: configured"
+
+echo "Testing OpenSSL FIPS provider is active..."
+FIPS_CHECK=$(CONTAINER_CMD="openssl list -providers" run_container 2>&1)
+# RHEL 9 names it "Red Hat Enterprise Linux 9 - OpenSSL FIPS Provider"
+if [[ "$FIPS_CHECK" != *"FIPS Provider"* ]]; then
+    echo "❌ ERROR: OpenSSL FIPS provider is not active"
+    echo "$FIPS_CHECK"
+    exit 1
+fi
+# Verify the FIPS provider shows status: active
+if ! echo "$FIPS_CHECK" | grep -A 3 "FIPS Provider" | grep -q "status: active"; then
+    echo "❌ ERROR: FIPS provider is listed but not active"
+    echo "$FIPS_CHECK"
+    exit 1
+fi
+echo "✅ OpenSSL FIPS provider is active"
 
 echo "🎉 All tests passed! Container is ready."
 exit 0
