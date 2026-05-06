@@ -37,6 +37,29 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## May 6, 2026
+
+### Changed
+- Rebased AI assistant container onto UBI9 with FIPS 140-3 compliance ([c9350cf](https://github.com/rise8-us/xpai-ai-assistant-container/commit/c9350cf), [79fa0a3](https://github.com/rise8-us/xpai-ai-assistant-container/commit/79fa0a3), [ec140ff](https://github.com/rise8-us/xpai-ai-assistant-container/commit/ec140ff)):
+  - **Base image: Ubuntu 24.04 → UBI9 9.7 (Red Hat UBI minimal)**: OpenSSL FIPS provider is forced on at all times so FIPS-validated cryptography is used regardless of host kernel `fips_enabled` state. Supports CMMC SC.L2-3.13.11 on macOS dev laptops and AWS GovCloud alike.
+  - **Claude Code 2.1.109 → 2.1.129** ([changelog](https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md)): `--plugin-url` flag for fetching plugin `.zip` archives, `CLAUDE_CODE_PACKAGE_MANAGER_AUTO_UPDATE` for background Homebrew/WinGet upgrades, `claude project purge` to delete project state, `claude ultrareview` subcommand for non-interactive CI review, `${CLAUDE_EFFORT}` variable in skills, `alwaysLoad` MCP option to skip tool-search deferral, `claude plugin prune` for orphaned dependencies, type-to-filter search in `/skills`, PostToolUse `updatedToolOutput` for all tools (not just MCP), scrollable overflow dialogs, `/resume` finds sessions by PR URL (GitHub/GitLab/Bitbucket), `ANTHROPIC_BEDROCK_SERVICE_TIER` env var for Bedrock service tier selection, Vertex AI mTLS Workload Identity Federation support, Windows PowerShell tool no longer requires Git Bash, multiple security fixes (Bash `mkdir/touch *` allow rules, `allowManagedDomainsOnly` enforcement, `deniedMcpServers` mixed-case host matching), large memory leak fixes in `/usage` and image processing, EnterWorktree now branches from local HEAD instead of `origin/<default>`
+  - **OpenCode 1.4.5 → 1.14.39** ([changelog](https://github.com/anomalyco/opencode/releases)): Major version jump spanning the 1.5–1.14 release line — see upstream releases for the full feature set
+  - **Pi coding agent 0.67.2 → 0.73.0** ([releases](https://github.com/badlogic/pi-mono/releases))
+  - 5 inherited UBI9 base CVEs suppressed in `.trivyignore` with full risk justifications and 2026-08-04 re-evaluation deadline (libcap CVE-2026-4878, OpenSSH CVE-2026-35385, gnutls DTLS CVE-2026-33845/33846, krb5 NegoEx CVE-2026-40356) — none exploitable in this container's runtime context
+- Updated firewall manager to latest build ([324c2a4](https://github.com/rise8-us/xpai-ai-assistant-container/commit/324c2a4)): Patches nghttp2-libs CVE-2026-27135 via Alpine 3.23.4 base bump
+- Restructured CUI Bedrock documentation around project-scoped permission sets ([0160bff](https://github.com/rise8-us/xpai-ai-assistant-container/commit/0160bff)):
+  - Replaces blanket `ClaudeBedrock` permission set references with project-scoped `BedrockAccess-{Project}` (e.g. `BedrockAccess-TAK`)
+  - Profile names now match permission sets (e.g. `bedrockaccess-tak`) so users on multiple projects can switch profiles cleanly
+  - **Migration required**: `refresh-credentials.sh` now requires the `AWS_PROFILE` env var instead of hardcoding a profile name — set it in your `.env` file
+
+### Fixed
+- Migrated starter project-container template to UBI9 microdnf ([7991ce2](https://github.com/rise8-us/xpai-ai-assistant-container/commit/7991ce2)):
+  - Mirrors the base-container UBI9 rebase so teams consuming the starter template don't inherit a broken `apt-get` baseline
+  - Replaces `apt-get`/`dpkg`/`wget` with `microdnf` and `uname -m` arch detection in the GitHub CLI example
+  - Refreshes starter `.trivyignore` for the UBI9 base: drops stale Hono CVE entries (those came from Node-based tools the previous Ubuntu base shipped — UBI9 ships Claude Code and OpenCode as binary distributions with no transitive Node deps), adds 3 inherited UBI9 base CVEs (gnutls DTLS x2, krb5 NegoEx) so downstream teams' first scan passes out of the box, documents the skopeo/Go-stdlib gotcha and UBI10 expectation
+
+---
+
 ## April 21, 2026
 
 ### Added
