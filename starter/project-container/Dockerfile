@@ -22,7 +22,7 @@ FROM ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:085535295ff76d383d595927148d
 USER root
 # Fix /tmp permissions after USER switch - required even though base image has this fix
 # When switching USER contexts, /tmp permissions can be reset due to runc v1.1.8 and crun v1.11+ bugs
-# This chmod must be present before any apt-get commands in each USER root context
+# This chmod must be present before any package install commands in each USER root context
 # See: https://github.com/opencontainers/runc/issues/3952
 #
 # Install additional tools here as needed.
@@ -30,12 +30,15 @@ USER root
 # Keep the image as small as possible while still being useful to reduce CVE surface area.
 # When possible, install tools as the non-root aiAssistant user.
 # See https://docs.docker.com/build/building/best-practices/ for guidelines.
+#
+# Base image is UBI9 minimal — use microdnf, not apt-get.
+# curl-minimal and ca-certificates are pre-installed by the base image.
+# Add packages from the ubi-9-baseos / ubi-9-appstream repos as needed.
 # ==================================================================
 RUN chmod 1777 /tmp && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends wget && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    microdnf install -y --nodocs wget && \
+    microdnf clean all && \
+    rm -rf /var/cache/yum /tmp/* /var/tmp/*
 
 # ==================================================================
 # EXAMPLE: Install GitHub CLI (gh)
@@ -44,9 +47,12 @@ RUN chmod 1777 /tmp && \
 # This example shows proper architecture detection and version pinning.
 # Also uncomment the ARG GH_CLI_VERSION above.
 #
-# RUN ARCH=$(dpkg --print-architecture) && \
-#     if [ "$ARCH" = "arm64" ]; then GH_ARCH="arm64"; else GH_ARCH="amd64"; fi && \
-#     wget -O /tmp/gh.tar.gz "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_${GH_ARCH}.tar.gz" && \
+# gh CLI release artifacts use Debian-style arch names (amd64/arm64); translate
+# from `uname -m` since dpkg is not available on UBI9.
+#
+# RUN ARCH=$(uname -m) && \
+#     if [ "$ARCH" = "aarch64" ]; then GH_ARCH="arm64"; else GH_ARCH="amd64"; fi && \
+#     curl -fsSL -o /tmp/gh.tar.gz "https://github.com/cli/cli/releases/download/v${GH_CLI_VERSION}/gh_${GH_CLI_VERSION}_linux_${GH_ARCH}.tar.gz" && \
 #     tar -xzf /tmp/gh.tar.gz -C /tmp && \
 #     mv /tmp/gh_${GH_CLI_VERSION}_linux_${GH_ARCH}/bin/gh /usr/local/bin/ && \
 #     chmod +x /usr/local/bin/gh && \
