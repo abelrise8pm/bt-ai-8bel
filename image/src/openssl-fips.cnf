@@ -6,9 +6,11 @@
 # is still processed inside the container.
 #
 # CMMC control: SC.L2-3.13.11
-# RHEL 9 OpenSSL FIPS Provider: CMVP #4857
+# RHEL 10 OpenSSL FIPS Provider: CMVP #TBD (RHEL 9 used CMVP #4857)
+#   Update once Red Hat publishes the RHEL 10 validation cert on
+#   https://csrc.nist.gov/projects/cryptographic-module-validation-program
 #
-# Reference: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/security_hardening/using-the-system-wide-cryptographic-policies_security-hardening
+# Reference: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/security_hardening/using-the-system-wide-cryptographic-policies_security-hardening
 
 config_diagnostics = 1
 openssl_conf = openssl_init

@@ -1,19 +1,20 @@
 # syntax=docker/dockerfile:1
-# Red Hat UBI9 Minimal — FIPS 140-3 compliant base for CMMC Level 2 CUI boundary
+# Red Hat UBI10 Minimal — FIPS 140-3 compliant base for CMMC Level 2 CUI boundary
 #
 # Multi-architecture support (ARM64 for M-series MacBook Pros, AMD64 for other systems)
 #
-# IMPORTANT: The SHA must be the MULTI-ARCH MANIFEST digest, NOT an architecture-specific digest.
-# To get the correct SHA, run: skopeo inspect --format "{{.Digest}}" docker://registry.access.redhat.com/ubi9/ubi-minimal:latest
-# This returns the manifest list digest that works for ALL architectures.
+# IMPORTANT: The SHA must be the MULTI-ARCH INDEX digest, NOT an architecture-specific digest.
+# To get the correct SHA, run: skopeo inspect --format "{{.Digest}}" docker://registry.access.redhat.com/ubi10/ubi-minimal:latest
+# This returns the index digest that works for ALL architectures.
 #
-# To verify a SHA is multi-arch: skopeo inspect --raw docker://registry.access.redhat.com/ubi9/ubi-minimal@sha256:<SHA> | jq .mediaType
-# - Multi-arch: "application/vnd.docker.distribution.manifest.list.v2+json"
+# To verify a SHA is multi-arch: skopeo inspect --raw docker://registry.access.redhat.com/ubi10/ubi-minimal@sha256:<SHA> | jq .mediaType
+# - Multi-arch (UBI10, OCI): "application/vnd.oci.image.index.v1+json"
+# - Multi-arch (legacy Docker): "application/vnd.docker.distribution.manifest.list.v2+json"
 # - Single-arch (WRONG): "application/vnd.oci.image.manifest.v1+json"
 #
 # TARGETPLATFORM is automatically set by buildx - explicitly use it to ensure correct platform layers are pulled
 ARG TARGETPLATFORM
-FROM --platform=$TARGETPLATFORM registry.access.redhat.com/ubi9/ubi-minimal:9.7@sha256:7d4e47500f28ac3a2bff06c25eff9127ff21048538ae03ce240d57cf756acd00
+FROM --platform=$TARGETPLATFORM registry.access.redhat.com/ubi10/ubi-minimal:10.1@sha256:9f12217d6c94d0527c8e97d2a2a0d8de77f08276073b0c4226c07a973dc48eba
 
 # Version definitions
 # To check latest Claude Code version: curl -s https://storage.googleapis.com/claude-code-dist-86c565f3-f756-42ad-8dfa-d59b1c096819/claude-code-releases/latest
@@ -64,8 +65,11 @@ ENV CURL_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt \
 # libcap: provides setcap utility for /usr/bin/date capability
 #   (kept installed — coreutils-single depends on libcap.so.2)
 #
-# jq is NOT available in the default UBI9 free repos (ubi-9-baseos, ubi-9-appstream).
-# We download a static binary, SHA256-verify it, and install it directly.
+# jq was not available in the default UBI9 free repos and we have not yet
+# verified its availability in UBI10 (ubi-10-baseos, ubi-10-appstream).
+# We continue to download a static binary, SHA256-verify it, and install it
+# directly — robust regardless of repo availability and gives reproducible
+# version pinning. Re-evaluate during a future cleanup pass.
 # Note: curl-minimal is pre-installed in ubi-minimal and conflicts with full curl.
 # curl-minimal provides the curl binary and is sufficient for our download needs.
 RUN microdnf install -y --nodocs \
@@ -83,7 +87,7 @@ RUN microdnf install -y --nodocs \
     rm -rf /var/cache/yum /tmp/* /var/tmp/*
 
 # Install jq — static binary with SHA256 verification
-# jq is not available in UBI9 free repos; download from upstream releases
+# Download from upstream releases (see comment block above re: UBI repo availability)
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "aarch64" ]; then \
         JQ_ARCH="arm64"; \
@@ -124,7 +128,11 @@ RUN ARCH=$(uname -m) && \
 # CMMC control: SC.L2-3.13.11 — Employ FIPS-validated cryptography when used
 # to protect the confidentiality of CUI.
 #
-# RHEL 9 OpenSSL FIPS Provider certificate: CMVP #4857
+# RHEL 10 OpenSSL FIPS Provider certificate: CMVP #TBD
+#   TODO: replace with the RHEL 10 CMVP cert number once Red Hat publishes it
+#   on https://csrc.nist.gov/projects/cryptographic-module-validation-program
+#   (RHEL 9 used CMVP #4857). The provider activation here is unchanged and
+#   continues to enforce FIPS-validated crypto regardless of the cert lookup.
 # ==================================================================
 RUN microdnf install -y --nodocs openssl && \
     microdnf clean all && \
