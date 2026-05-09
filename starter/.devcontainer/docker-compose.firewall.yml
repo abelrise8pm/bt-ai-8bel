@@ -34,7 +34,7 @@ services:
   # Unprivileged container with no capabilities
   # Shares network namespace with firewall-manager
   ai-assistant:
-    image: ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:085535295ff76d383d595927148d74f0fb27e942a1aa56bf72a15a83ebd47f8b
+    image: ghcr.io/rise8-us/xpai/ai-assistant-home@sha256:4463fb2164462891a1fdd8c274035cd02e5cf902d8d15a325c79b7578d37501b
     container_name: cui-ai-assistant
     network_mode: "service:firewall-manager"
     cap_drop:
