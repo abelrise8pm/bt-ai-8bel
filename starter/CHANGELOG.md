@@ -37,6 +37,16 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## May 12, 2026
+
+### Changed
+- Updated AI assistant container software with new base image ([883e217](https://github.com/rise8-us/xpai-ai-assistant-container/commit/883e217)):
+  - **Base image: UBI9 9.7 → UBI10 10.1 (Red Hat UBI minimal)**: Pulls in RHEL 10's updated package set, which is expected to clear the inherited UBI9 CVEs that had no RHEL 9 errata path (gnutls DTLS CVE-2026-33845/33846, krb5 NegoEx CVE-2026-40356, libcap CVE-2026-4878, OpenSSH CVE-2026-35385) and resolve the skopeo bundled-Go-stdlib CVE backlog en masse. OpenSSL FIPS provider activation is unchanged — FIPS-validated cryptography continues to be enforced regardless of host kernel `fips_enabled` state, in support of CMMC SC.L2-3.13.11. RHEL 10 CMVP cert is TBD pending Red Hat publication.
+  - **`.trivyignore` reduced from 148 lines to 10 lines**: All UBI9-pinned suppressions cleared so the pipeline scan re-surfaces anything still relevant on UBI10. Only CVEs that cannot be patched will be re-added with full risk-reasoning context going forward.
+  - AI tool versions (Claude Code, OpenCode, Pi) unchanged from the May 6 release.
+
+---
+
 ## May 6, 2026
 
 ### Changed
