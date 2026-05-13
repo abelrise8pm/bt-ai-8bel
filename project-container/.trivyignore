@@ -5,7 +5,7 @@
 # Each entry includes a comment explaining why it's safe to ignore.
 # Format mirrors image/.trivyignore for consistency.
 
-# Last reviewed: 2026-05-06 (Versions: project-container on UBI9 9.7 base via ai-assistant-home, skopeo 1.20.0-3.el9_7, gh 2.91.0)
+# Last reviewed: 2026-05-13 (Versions: project-container on UBI9 9.7 base via ai-assistant-home, skopeo 1.20.0-3.el9_7, gh 2.91.0)
 
 # ==================================================================
 # Maintenance note — read before adding more suppressions
@@ -141,3 +141,83 @@ CVE-2026-33810
 # CISA KEV: Not listed. Active exploitation: None.
 # Review: Re-evaluate on UBI10 migration or by 2026-08-04
 CVE-2026-34986
+
+# ==================================================================
+# gh CLI bundled-Go-stdlib CVEs (awaiting gh release > v2.92.0)
+# ==================================================================
+# All five live inside the gh binary's bundled Go 1.26.2 stdlib. Upstream
+# Go fixed them in 1.25.10 / 1.26.3. cli/cli has already bumped trunk to
+# `toolchain go1.26.3` via PR #13367 (merged); the latest tagged release
+# v2.92.0 still pins go1.26.2, so bumping GH_VERSION does not help yet.
+# Expected resolution: the next gh release (v2.93.0) — re-evaluate then
+# and bump GH_VERSION in project-container/Dockerfile to drop these
+# suppressions.
+#
+# Risk acceptance: gh is a one-shot CLI invoked by developers and CI
+# against api.github.com and github.com only. It is not a service, has
+# no listening port, and processes only inputs supplied by an authorized
+# caller. The container runs as non-root user aiAssistant, and the
+# firewall manager restricts egress to whitelisted hosts. The realistic
+# exploit paths for the bundled-Go CVEs below require either a
+# compromised github.com response or a TLS MITM with a trusted-CA-issued
+# malicious cert — outside gh's blast radius. Outcomes are bounded to
+# DoS / panic of the CLI invocation.
+
+# CVE-2026-33811 - Go net LookupCNAME (cgo resolver) long CNAME handling
+# Affects: gh 2.91.0 (Go 1.26.2 stdlib bundled)
+# Issue: When using LookupCNAME with the cgo DNS resolver, a very long
+#   CNAME triggers mishandling in the stdlib resolver path
+# Risk: LOW — gh only resolves api.github.com / github.com via firewall-
+#   constrained egress; no attacker-controlled CNAME path reaches the
+#   cgo resolver in normal CI/developer use.
+# Status: ACTIVE — fixed upstream in Go 1.25.10 / 1.26.3, awaiting gh rebuild.
+# CISA KEV: Not listed. Active exploitation: None.
+# Review: Re-evaluate on next gh release (>v2.92.0), or by 2026-08-13
+CVE-2026-33811
+
+# CVE-2026-33814 - Go net/http HTTP/2 SETTINGS frame infinite loop (DoS)
+# Affects: gh 2.91.0 (Go 1.26.2 stdlib bundled)
+# Issue: When processing HTTP/2 SETTINGS frames, transport will enter
+#   an infinite loop (CWE-835)
+# Risk: LOW — gh acts as HTTP/2 client only against github.com /
+#   api.github.com; both are trusted endpoints behind the firewall
+#   manager's egress allowlist. Outcome bounded to DoS of the CLI call.
+# Status: ACTIVE — fixed upstream in Go 1.25.10 / 1.26.3, awaiting gh rebuild.
+# CISA KEV: Not listed. Active exploitation: None.
+# Review: Re-evaluate on next gh release (>v2.92.0), or by 2026-08-13
+CVE-2026-33814
+
+# CVE-2026-39820 - Go net/mail ParseAddress input handling
+# Affects: gh 2.91.0 (Go 1.26.2 stdlib bundled)
+# Issue: Well-crafted inputs reaching ParseAddress, ParseAddressList,
+#   and ParseAddrList trigger mishandling
+# Risk: LOW — gh does not parse untrusted email addresses; the
+#   net/mail surface is not reachable through any CLI command path
+#   used by developers or CI in this container.
+# Status: ACTIVE — fixed upstream in Go 1.25.10 / 1.26.3, awaiting gh rebuild.
+# CISA KEV: Not listed. Active exploitation: None.
+# Review: Re-evaluate on next gh release (>v2.92.0), or by 2026-08-13
+CVE-2026-39820
+
+# CVE-2026-39836 - Go net Dial/LookupPort panic on Windows NUL byte
+# Affects: gh 2.91.0 (Go 1.26.2 stdlib bundled)
+# Issue: Panic in Dial and LookupPort when handling NUL byte input
+#   on Windows
+# Risk: NONE — this container is Linux-only (UBI9). The Windows-specific
+#   code path is not reached at runtime. Trivy flags by stdlib version,
+#   not by GOOS-conditional reachability.
+# Status: ACTIVE — fixed upstream in Go 1.25.10 / 1.26.3, awaiting gh rebuild.
+# CISA KEV: Not listed. Active exploitation: None.
+# Review: Re-evaluate on next gh release (>v2.92.0), or by 2026-08-13
+CVE-2026-39836
+
+# CVE-2026-42499 - Go net/mail consumePhrase DoS
+# Affects: gh 2.91.0 (Go 1.26.2 stdlib bundled)
+# Issue: Pathological inputs could cause DoS through consumePhrase when
+#   parsing structured mail headers (CWE-407)
+# Risk: LOW — same reasoning as CVE-2026-39820: gh does not expose any
+#   net/mail parsing surface to untrusted input in normal use.
+# Status: ACTIVE — fixed upstream in Go 1.25.10 / 1.26.3, awaiting gh rebuild.
+# CISA KEV: Not listed. Active exploitation: None.
+# Review: Re-evaluate on next gh release (>v2.92.0), or by 2026-08-13
+CVE-2026-42499
