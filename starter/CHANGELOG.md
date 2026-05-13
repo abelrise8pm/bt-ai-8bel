@@ -37,6 +37,13 @@ Since your project doesn't share git history with this template, you'll need to 
 
 ---
 
+## May 13, 2026
+
+### Fixed
+- Restored SSH egress from FIPS-mode containers ([7e7d4c3](https://github.com/rise8-us/xpai-ai-assistant-container/commit/7e7d4c3)): The May 12 UBI10 base image enabled FIPS-mode OpenSSH but left the system crypto policy at DEFAULT, so `/etc/crypto-policies/back-ends/openssh.config` advertised non-FIPS kex algorithms (`mlkem768x25519-sha256`, `curve25519-sha256`). FIPS-mode OpenSSH rejected the first non-FIPS entry and aborted parsing the entire `KexAlgorithms` line, breaking all SSH egress (`git clone`, `ssh`) from any container built on the base image. This release sets the system crypto policy to FIPS at build time so the OpenSSH back-end config matches the runtime FIPS posture, restoring SSH egress. A regression test was added that validates `/etc/crypto-policies/config` is FIPS, the openssh back-end symlink points at the FIPS policy, and `ssh -G` produces a kex line with no non-FIPS algorithms.
+
+---
+
 ## May 12, 2026
 
 ### Changed
