@@ -133,8 +133,21 @@ RUN ARCH=$(uname -m) && \
 #   on https://csrc.nist.gov/projects/cryptographic-module-validation-program
 #   (RHEL 9 used CMVP #4857). The provider activation here is unchanged and
 #   continues to enforce FIPS-validated crypto regardless of the cert lookup.
+#
+# System crypto policy must be set to FIPS so the back-end symlinks (openssh,
+# gnutls, nss, krb5, libreswan, ...) match the FIPS runtime posture. Without
+# this, /etc/crypto-policies/back-ends/openssh.config still points at the
+# DEFAULT policy, which advertises post-quantum hybrid kex (mlkem768x25519-sha256)
+# and curve25519 variants. FIPS-mode OpenSSH rejects the first non-FIPS entry
+# and aborts parsing the whole KexAlgorithms line — breaking *all* SSH egress
+# (git clone, ssh, etc.) from any container built on this image, even though
+# FIPS-approved algorithms also appear later in the list.
+#
+# --no-reload is required during image build (no daemons running to reload).
+# crypto-policies-scripts is not installed in stock UBI 10 minimal.
 # ==================================================================
-RUN microdnf install -y --nodocs openssl && \
+RUN microdnf install -y --nodocs openssl crypto-policies-scripts && \
+    update-crypto-policies --no-reload --set FIPS && \
     microdnf clean all && \
     rm -rf /var/cache/yum
 COPY src/openssl-fips.cnf /etc/pki/tls/openssl.cnf
