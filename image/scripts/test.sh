@@ -373,5 +373,30 @@ if ! echo "$FIPS_CHECK" | grep -A 3 "FIPS Provider" | grep -q "status: active"; 
 fi
 echo "✅ OpenSSL FIPS provider is active"
 
+echo "Testing system crypto policy is set to FIPS..."
+# The kernel/OpenSSH are built FIPS-aware, but if the system crypto policy is
+# left at DEFAULT, /etc/crypto-policies/back-ends/openssh.config advertises
+# non-FIPS kex algorithms (mlkem768x25519-sha256, curve25519-sha256). FIPS-mode
+# OpenSSH then aborts parsing the KexAlgorithms line on the first non-FIPS
+# entry, breaking all SSH egress from containers built on this image.
+CRYPTO_POLICY_CHECK=$(CONTAINER_CMD='
+    errors=0
+    policy=$(cat /etc/crypto-policies/config 2>/dev/null)
+    [ "$policy" = "FIPS" ] || { echo "crypto policy is $policy, expected FIPS"; errors=1; }
+    link=$(readlink /etc/crypto-policies/back-ends/openssh.config)
+    [ "$link" = "/usr/share/crypto-policies/FIPS/openssh.txt" ] || { echo "openssh back-end symlink is $link, expected FIPS"; errors=1; }
+    kex=$(ssh -G example.com 2>&1 | grep -i "^kexalgorithms")
+    case "$kex" in
+        *mlkem*|*curve25519*) echo "ssh -G kex contains non-FIPS algorithms: $kex"; errors=1 ;;
+        *Bad*|*"not allowed"*) echo "ssh -G failed to parse kex line: $kex"; errors=1 ;;
+    esac
+    exit $errors
+' run_container 2>&1) || {
+    echo "❌ ERROR: System crypto policy not FIPS"
+    echo "$CRYPTO_POLICY_CHECK"
+    exit 1
+}
+echo "✅ System crypto policy is FIPS (SSH egress will work in FIPS mode)"
+
 echo "🎉 All tests passed! Container is ready."
 exit 0
