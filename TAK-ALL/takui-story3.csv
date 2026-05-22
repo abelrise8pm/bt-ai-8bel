@@ -1,0 +1,18 @@
+User Story and Scenario,,Task,Components/pattterns used in task,Screenshot,TAK UI Native Equiv?,Escape Hatch?,Change UI?,Frst Pass Notes,Second Pass,BAH Discussion Points
+,,,,,,,,,,
+,,,,,,,,,,
+"Story 3: Detect and Label Buildings Within Grid Sections
+As a GRG Creator, I need to detect and label buildings within grid sections, So that field operators are aware of the specific points of interest.
+
+Scenario 1: Run AI building detection
+",,Tap detect button,Floating toolbar button,,--,--,No,"Floating toolbar already covered in another section - Floating toolbar is ActionBarView — TAK UI has no abstraction for this, must use ATAK native API",,
+,,Confirmation dialog appears,AlertWidget() / AlertForm(),,Yes,No,No,Confirmed working in TAK UI,,
+,,Detection runs,InferenceAndroidGrgRuntime (ONNX),,No,Yes,No,"Requires grg-tak-sdk-android-debug.aar — detection logic currently stubbed, not yet wired to actual ONNX inference",,
+,,Building markers placed on map,ATAK Marker + MapGroup,,No,Yes,No,Detection markers created as ATAK native objects — TAK UI has no abstraction,,
+,,,,,,,,,,
+"Story 3: Detect and Label Buildings Within Grid Sections
+As a GRG Creator, I need to detect and label buildings within grid sections, So that field operators are aware of the specific points of interest.
+
+Scenario 2: Review and correct building labels
+",,Review placed markers on map,Map display / marker overlay,,No,Yes,No,Markers are ATAK native objects — no TAK UI abstraction,,
+,,Correct or reorder label sequence,SwipeRelabelManager,,?,?,No,SwipeRelabelManager not yet ported — walk live in session. VSM flagged fixing label sequences as the worst user experience in the entire workflow,,

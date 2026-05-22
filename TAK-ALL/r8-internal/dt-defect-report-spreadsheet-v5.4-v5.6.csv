@@ -1,0 +1,72 @@
+Incident Summary Report,,,,,,,,,,,,,,,,,,,,,,
+This report displays all of the incidents tracked for the current project. The incident's details are displayed in a summary list form.,,,,,,,,,,,,,,,,,,,,,,
+Rise8 AI GRG Tool,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,
+Inc #,Name,Description,Type,Status,Priority,Severity,Detected Release,Resolved Release,Verified Release,Fixed Build,Component(s),% Complete,Est. Effort,Actual Effort,Remaining Effort,Projected Effort,Problem Path,Impact,Workaround,Rise 8 Notes,TFS Number,Open Entering DT
+SDT-42 ,Wand re-order tool does not re-order or re-sequence numbers,"When using the Wand re-order tool,  subsequent numbers are not reordered after making changes.  ",Bug,Draft,Low,,v5.5,,,,,,,,,,,Possible confusion on mission numbers,,,,
+SDT-54,Embed User Manual and link in ATAK,Plugin not embedded with software.  Users must obtain the manual separately.  Software should have the manual included and an easy to find link to access it.  Usually somewhere in the settings menu.,Bug,Draft,Medium,,v5.4 and v5.6,,,,,,,,,,N/A,limited access,Obtain externally,Fixed on April 28-May 1st,,
+SDT-55,Automated Labeling tool has issues with finding and making buildings.,"When building GRG and using Automated Labelling tool it has a problem labeling all buildings in highly populated areas. The tool has difficulty labeling large buildings with two separate numbers. Alos, it will label items that are not builds such as parking lots, cars, fields, or large piles of wood. ",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,,Can label blidings manually,,,
+SDT-56,Closing GRG does not remove building labels.,After creating a GRG and using the Automated Labeling tool to number buildings and you decide to save the GRG or delete without saving the GRG is removed from the map but the buildings that have been numbered remain.,Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,,Can manually remove buildings.,,,
+SDT-57,Deleting an MM produces another MM,"If user selects the ""Manual Label"" and proceeds to drop a Mission Marker/Label (MMx) and then attempts to delete a marker (MM), another MM is added with a higher number. ",Bug,Draft,Medium ,,v5.4 and v5.6,,,,,,,,,,"- Select Manual Label 
+- Drop 1-4 Mission Markers
+- Leave Manual Label Icon Selected
+- Attempt to delete MM
+- Note a new MM with a different number will appear
+> User must de-select manual label icon to be able to delete mission markers ",,,,,
+SDT-58,AI GRG Prompts to install after already running,Randomly AI GRG will prompt user to install while already running. This has occurred prior to running building detections ,Bug,Draft,Low,,v5.4,,,,,,,,,,,,,,,
+SDT-59,Grid re-sized to two-three grid squares,"When using the re-sizing options for the grid, Grid moved to two or three grid squares as seen in the picture. ",Bug,Draft,Low,,v5.4,,,,,,,,,,,,,,,
+SDT-60,Selection Building Detection inconsistent," * TEST STEPS
+ ** Create GRG in populated are
+ ** Run Building Detection, note X amount of buildings found
+ ** Create Section (Section B) over X number of buildings that were previously detected
+ ** Run Detection
+ ** First Detection came back with 26 buildings found. However only 7 were previously detected (and only 7 are visible)
+ ** Second detection states 1 building was found
+ ** Create next section (Section C) note that its more consistent in the buildings it found.",,,,,,,,,,,,,,,,,,,,
+SDT-62,Sections are not labeled correctly ,"Test Steps
+ * Create a GRG and using building detection to identify all buildings within the GRG boundaries
+ * Use Section Drawing tool to enclose the area of your desired section (quadrant) 
+ * Initiate building detection (ensure skip sections box is unchecked)
+ * Note the intent of the Section Drawing tool is for the user to be able to label all buildings in a desired section within the GRG the same naming convention/color to differentiate that section or quadrant from the others. 
+ * AI GRG stated that 9 buildings were detected within Section ""A""
+ * Note: There are far more than 9 identified buildings in Section A.
+ * Note: Not all 9 detected and relabeled buildings are visible.  User must be extremely zoomed in to see certain building labels.",,,,,,,,,,,,,,,,,,,,
+SDT-63, When exporting a GRG the system crashes with selecting meters in Scale bar.,"Action: Tap the Toggle Grid icon - 
+Action: Tap Settings - Files tab - Export GRG                                        
+Tap Scale bar
+Tap Meters
+System crash
+Restart system and data was not saved                                  ",Bug,Draft,High,,v5.4 and v5.6,,,,,,,,,,,Crash system,None,"Fixed on May 1st , {commit}",,
+SDT-64,When exporting a GRG there are several items in the menu that have issues,"When exporting a GRG and presented with Capture Screen numerous options are present. Tap Point List number are checked by default, and you are not able to make changes. Tap Compass and you are not able to change color of compass. Tap Info Box and if you change from banner to box placement of box is tied to Points list.",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,
+SDT-65,Center Point shifts when adjusting Spacing,"Center Point adjusts 20-50 meters depending on selected grid spacing
+* Center Point on 10 Meters spacing
+ * Center Point (Red + Sign) moves 43 m SW at 40 Meters When spacing is adjusted. Each time User increases spacing the center point moves 20-50 meters
+ * Recommend keeping the same center point and having the grid adjust off that point.",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,
+SDT-66,Buildings assigned more than one number/label,"AI GRG assigns more than one number/label to larger buildings. 
+Set GRG over a populated area with larger buildings
+Run building detection
+Note some buildings have as many as 5 labels assigned",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,
+SDT-67,X icon on toolbar should close AI GRG,"Currently the ""X"" icon located on the toolbar only closes the toolbar and leaves up whichever menu you were on.  We recommend have the ""X"" icon close AI GRG in its entirety or at least closing the menu that is open. ",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,
+SDT-68,"Building Detection detects piles of wood, pools, etc","When using building detection AI GRG will detect large items such as piles of wood, pools, and driveways. 
+Place GRG over an area that has any of the items listed and run building detection
+User should see pools, driveways and large items marked ",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,
+SDT-69,De-selecting [SHOWABC123 Labels] populates Grid,"When user de-selects [SHOW ABC123 labels] grid populates
+Open AI GRG
+Select Grid Icon placing Grid on map
+Select Grid Icon again removing the Grid from the map
+Navigate to [Grid] Section on menu
+De-select [Show ABC123 labels]
+Grid Re-populates on map ",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,
+SDT-70,Deleting Grid from Radial causes crash,"When user attempts to use the delete key from the radial ATAK freezes then crashes on the S20, S23, Note 8 and the S9
+Test Steps
+Create a grid                                 Use Radial Delete icon
+ATAK Crashes ",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,,None,,,
+SDT-71,Duplicate building numbers ,"Building label numbers will duplicate when building detection is performed a second time. Recommend looking into having building detection software remove previously detected buildings, or recognized buildings that were already detected previously. ",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,
+SDT-72,5.4 Version Radial Column/Row adjustments do not work,"Specific to the 5.4 version of AI GRG the radial column/row and spacing adjustments do not work.
+Add Grid
+Run building detection 
+from the center point radial select the three-dot vertical or horizontal icon and attempt to add a row or column or adjust spacing, note radial closes and does not register desired adjustment",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,
+SDT-73,When drawing shapes buildings are not labeled automatically.,"Under section 3.1 Creating and Naming Sections. Select Polyline tool bar and select polygon shape. Draw polygon shape on GRG and section is named, but buildings are not labeled. This is the same result for all shapes in the tool bar. ",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,
+SDT-74, After buildings are labeled not all shapes in the Polyline tool bar relabel buildings.,"After running automated labeling buildings are detected. Open Polyline tool bar and select a shape (Circle, Rectangle, Oval). The section is created and labeled but buildings are not relabeled to correspond with created section.",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,
+SDT-75,Unit of Measure menu greyed out,"When user is in the ""Edit Scale Bar"" menu if [Map Range] is selected and user attempts to select [Cell Range] the [Unit of Measure] menu is greyed out and cannot be manipulated",Bug,Draft,Low,,v5.4 and v5.6,,,,,,,,,,,Iimits customaizition,None,,,

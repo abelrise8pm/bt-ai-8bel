@@ -1,0 +1,72 @@
+User Story and Scenario,Task,Components/pattterns used in task,Screenshot,TAK UI Native Equiv?,Escape Hatch?,Notes -,BAH Discussion Points,Story Assessment,5/4/2026 - Notes,Change UI?,"Contribute to TAK UI? (or maybe we start to also think of this as ""this shouldn't be a plugin, this should be core to SOCOM TAK"")",Reviewed with BAH?,Dev Story Link
+,,,,,,,,,,,,,
+"STORY 2: Draw Sections Within the Grid
+As a GRG Creator, I need the option to draw sections within the grid, 
+So that I can organize the buildings' markers.
+
+Scenario 1: Activate the section drawing tool
+",Tap section button,"ActionBarView
+Floating toolbar button",,--,--,"Floating toolbar already covered in another section - Floating toolbar is ActionBarView — TAK UI has no abstraction for this, must use ATAK native API","AtakBroadcast / SET_TOOLBAR + UNSET_TOOLBAR — Escape Hatch
+In Scenario 1, when the GRG Creator taps the section button, the ATAK drawing toolbar opens and closes via SET_TOOLBAR / UNSET_TOOLBAR broadcasts through AtakBroadcast — there is no TAK UI abstraction for this today.
+
+- Any feedback or insights we should know before we proceed?
+- Is this on your sprint? If yes, when?
+- If not on your roadmap — should Rise8 contribute a native version to TAK UI, or do we proceed with an escape hatch?",,,No,,,
+,ATAK drawing tools open,"AtakBroadcast / SET_TOOLBAR broadcast
+Drawing toolbar",VIEW,No,Yes,Code confirmed: SectionToolStateManager imports com.atakmap.android.ipc.AtakBroadcast — ATAK native,,,,No,,,
+,(auto) Drawing color and fill applied,"DrawingPreferences
+(mapView)",,No,Yes,"Code confirmed: SectionToolStateManager imports com.atakmap.android.drawing.
+DrawingPreferences — runs automatically in background","DrawingPreferences(mapView) — Escape Hatch
+In Scenario 1, drawing color and fill are applied automatically when the section tool activates — this runs via DrawingPreferences, an ATAK native class, in the background.
+
+- Any feedback or insights we should know before we proceed?
+- Is this on your sprint? If yes, when?",,,No,,,
+,,,,,,,,,,,,,
+"STORY 2: Draw Sections Within the Grid
+As a GRG Creator, I need the option to draw sections within the grid, So that I can organize the buildings' markers.
+
+Scenario 2: Draw a section
+",Select desired drawing shape,"ATAK shape drawing toolbar 
+(via SET_TOOLBAR)
+Shape drawing toolbar buttons",VIEW,No,Yes,"Jonathan notes Rise8 re-used TAK's existing shape drawing toolbar — that toolbar is ATAK native, activated by the SET_TOOLBAR broadcast in Scenario 1. Validate with engineers.",,,,No,,,
+,Draw section boundary on map (repeat until done),"Drawing tool interactions
+PolygonCreationTool()",VIEW,Yes,No,Confirmed TAK UI native — used inside SectionCreationPane per Josh's findings,,,,No,,,
+,Section saved to map,"Shape w/Rise8 customizations - Section label, functions, etc
+SectionMarkerManager / ATAK Marker + MapView",VIEW,?,?,SectionMarkerManager uses ATAK Marker for marker associations. Whether the polygon shape itself persists via the same ATAK path or a separate mechanism needs engineer validation,"- !!! UPDATE: 4.30 (Thurs) Thomas comfirmed that we can do this shape persistant drawing with the ATAK , DrawingTools API - 
+Question from Abel - does drawing sections warrant a TAK UI native or are these tasks/components that are best fitted for ATAK Core?
+
+SectionMarkerManager / section shape persistence — Unknown
+In Scenario 2, after the GRG Creator draws and closes the section boundary, the shape needs to persist on the map. SectionMarkerManager uses ATAK Marker for marker associations, but whether the polygon shape persists via the same ATAK path or a separate mechanism is not confirmed.",,,No,,,
+,Section tool closes ATAK drawing tools	,"Shape drawing toolbar close button
+AtakBroadcast / UNSET_TOOLBAR broadcast",,No,Yes,Same broadcast pattern as open — SectionToolStateManager handles both,,,,No,,,
+,,,,,,,,,,,,,
+"STORY 2: Draw Sections Within the Grid
+As a GRG Creator, I need the option to draw sections within the grid, So that I can organize the buildings' markers.
+
+Scenario 3: Configure section options",Adjust section options via settings (gear) menu,ActionBarView / DropDownReceiver,VIEW,No,Yes,Entry via ActionBarView; pane delivered via ATAK DropDownReceiver — same escape hatch as Story 1,"ColorButton / com.atakmap.android.gui.ColorPalette — Escape Hatch
+In Scenario 3, when the GRG Creator selects a section color from the settings menu, the color picker uses ATAK's ColorPalette dialog via ColorButton.
+> 
+
+- Any feedback or insights we should know before we proceed?
+- Is a TAK UI native color picker available or on your sprint? If yes, when?
+- If not on your roadmap — should Rise8 contribute a native version, or do we proceed with an escape hatch?",,,,,,
+,↳,"text, checkbox, buttons, etc covered in other workflows
+(see Story 1, Scenario 2)	",,--,--,Same UI patterns already covered in other workflows,,,,No,,,
+,↳,"Help icon / modal
+TextView (help icon) / modal unknown",,Yes,Yes,Help icon is a TextView in tab_label.xml. Modal triggered on tap is not confirmed — if AlertWidget() then TAK UI native; if ATAK AlertDialog then escape hatch. Validate with engineers.,"Help icon modal — Unknown
+In Scenario 3, a help icon in the settings pane triggers a modal when tapped. The component handling the modal is not confirmed — if AlertWidget(), it would be TAK UI native; if ATAK AlertDialog, it is escape hatch.
+- Can you confirm whether the modal component used here has a TAK UI native equivalent?
+> We are using AlertWidget, questins is if we can use AlertDialog the TAK UI equiv
+
+",,,No,,,
+,↳,"Icon buttons for label flow
+Android ImageButton (tab_label.xml)",,Yes,,Two ImageButton elements for flow type selection in tab_label.xml — no TAK UI ImageButton equivalent confirmed,"- !!! UPDATE: 4.30 (Thurs) Thomas, found TAK UI does have an image button also called ImageButton.. ","ImageButton (label flow type selector) — Unknown
+In Scenario 3, icon buttons in the settings pane let the GRG Creator select a label flow type. These are Android ImageButton elements in tab_label.xml — no TAK UI ImageButton equivalent is confirmed.
+
+- Does TAK UI have a native equivalent for ImageButton?
+- If not — is one on your roadmap?",,No,,,
+,↳,"Color picker
+ColorButton / com.atakmap.android.gui.ColorPalette",,Yes,,ColorButton.kt confirmed: uses ATAK's ColorPalette — ATAK native,"- !!! UPDATE: 4.30 (Thurs) thomas, found through TAK UI repo and found there is a ""ColorPickerButton"" ",,,No,,,
+,Adjust section options via radial menu,,VIEW,,,,,,,No,,,
+,↳,"Nested radial function buttons already covered in other workflows
+MapMenuWidget / GridRadialMenuManager",VIEW,--,--,Same UI patterns already covered in other workflows,,"ActionBarView appears in Scenario 1 (section button entry) and Scenario 3 (settings gear wheel entry) — both entry points are escape hatch, the same pattern identified in Story 1. PolygonCreationTool in Scenario 2 is the one confirmed TAK UI native component across the three scenarios. The SET_TOOLBAR and UNSET_TOOLBAR broadcasts in Scenarios 1 and 2 have no TAK UI abstraction today. Three unknowns in Scenarios 2 and 3 need engineer validation before a call can be made: section shape persistence (SectionMarkerManager), the help icon modal, and ImageButton for label flow.",,No,,,

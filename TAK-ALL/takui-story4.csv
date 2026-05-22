@@ -1,0 +1,9 @@
+User Story and Scenario,,Task,Components/pattterns used in task,Screenshot,TAK UI Native Equiv?,Escape Hatch?,Change UI?,First Pass Notes,Secon Pass Notes - May 6,BAH Discussion Points,Story Assessment,April 20,"Contribute to TAK UI? (or maybe we start to also think of this as ""this shouldn't be a plugin, this should be core to SOCOM TAK"")",Reviewed with BAH?,Dev Story Link
+,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,
+"Story 4: Manually Label Buildings
+As a GRG Creator, I need the option to manually label building placement, So that I can modify the GRG's specific points of interest.
+
+Scenario 1: Manually place building label in sequence",,Tap label button,Floating toolbar button,,--,--,No,"Floating toolbar already covered in another section - Floating toolbar is ActionBarView — TAK UI has no abstraction for this, must use ATAK native API",,,,,,,
+,,Tap building on map to place marker,Map touch listener / manual marker placement,,No,Yes,No,Label button activates map touch listener — ATAK native interaction,,,,,,,
+,,Marker placed with label,ATAK Marker + MapGroup,,No,Yes,No,Same marker pattern as AI detection — ATAK native,,,,,,,
