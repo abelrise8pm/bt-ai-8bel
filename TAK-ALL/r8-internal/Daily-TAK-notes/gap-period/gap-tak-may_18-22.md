@@ -2,7 +2,7 @@
 # Establishing Goals during the "TAK-Gap/Beach" time
 
 ### SUMMARY
-The team established anti-goals and prioritized objectives for the transitional contract gap via collaborative goal synthesis.
+The team established anti-goals and prioritized objectives for the transitional contract gap via collaborative goal synthesis.  - stop
 
 **Defining Gap Period Anti-Goals**
 The team identified anti-goals to maintain focus during the 2 to 5 week contract gap. These guidelines prioritize efficiency and prevent scope creep by discouraging premature solution development.
