@@ -3,8 +3,8 @@
 - **Framing:** Customer (SOCOM). Pronouns: "the customer / their team / they."
 - **Subject:** How capabilities get delivered to SOCOM TAK operators for a mission
 - **Started:** 2026-05-28
-- **Last updated:** 2026-05-29
-- **Current status:** Second Pass (Information Flow) complete. Third Pass (Metrics Flow) is next.
+- **Last updated:** 2026-05-31
+- **Current status:** Third Pass (Metrics Flow) in progress; paused 2026-05-31. Blocks 1–4 attempted (Block 1 skipped; Blocks 2–4 have partial estimates). Blocks 5–16 still TBD.
 
 Section names below follow [Mission-OS/vsm-facilitator-guide.md](../vsm-facilitator-guide.md).
 
@@ -162,16 +162,29 @@ All three are Abel's best-guess anchors pending Nik validation. Open questions:
 
 ---
 
-## Third Pass — Metrics Flow *(next)*
+## Third Pass — Metrics Flow *(in progress; paused 2026-05-31)*
 
 **Method per [facilitator guide](../vsm-facilitator-guide.md):**
 - For each of the 16 blocks, estimate **PT (Process Time)**, **LT (Lead Time)**, and **%C&A (Percent Complete & Accurate)**
 - Team estimates are fine if no data; flag low-confidence numbers
 - Then calculate **Total PT**, **Total LT**, **Activity Ratio** (PT ÷ LT), and **Rolled %C&A**
 
+### 2026-05-31 session progress (Blocks 1–4)
+
+| Block | PT | LT | %C&A | Notes |
+|---|---|---|---|---|
+| 1 — SOFMC PM receives mandate | skipped | skipped | skipped | Very low confidence we know how this happens; revisit with Nik |
+| 2 — SOFMC PM translates mandate → PI capability | TBD | 0–12 weeks | TBD | Medium confidence on LT (PI cycle ~3mo, can be rushed); PT + %C&A pending Nik |
+| 3 — Rise8 picks up issue from backlog | 5–60 minutes | 1–5 days | TBD | PT = discussion + pointing the issue; LT = backlog wait time before pickup |
+| 4 — Rise8 dev writes & commits code | 1–16 hours | 1–5 days | TBD | Low confidence — not tracked; Abel's best guess |
+
+**Next session: pick up at Block 5** (Rise8 developer merges PR → triggers signed build).
+
 **Carried items for this pass:**
 - PT/LT/%C&A per block with SME input from Nik and Chad
 - # People + Queuing per block (deferred from First Pass — collect alongside metrics)
+- Nik-validation queue for unknowns: Block 1 entirely; Block 2 PT + %C&A; Blocks 3 + 4 %C&A
+- Refinement of low-confidence estimates with actual data if Nik / Chad / team can provide
 
 ---
 
@@ -253,19 +266,33 @@ Status:
   loop + 3 conditional process blocks
 - Second Pass (Information Flow): 6 IT system rectangles + per-block arrows
   + pink/red stickies
+- Third Pass (Metrics Flow): in progress; paused 2026-05-31. Blocks 1–4
+  attempted. Pick up at Block 5.
 
-Next: Third Pass — Metrics Flow.
+Third Pass progress so far:
+- Block 1 (SOFMC PM receives mandate): skipped — low confidence, need Nik
+- Block 2 (SOFMC PM translates → PI capability): LT = 0–12 weeks (medium
+  confidence); PT + %C&A TBD pending Nik
+- Block 3 (Rise8 picks up issue from backlog): PT = 5–60 minutes; LT = 1–5
+  days; %C&A TBD
+- Block 4 (Rise8 dev writes & commits code): PT = 1–16 hours; LT = 1–5
+  days; %C&A TBD (low confidence — Abel's best guess; not tracked)
+- Blocks 5–16: still TBD
 
 Method (from Mission-OS/vsm-facilitator-guide.md):
-- Estimate PT (Process Time), LT (Lead Time), %C&A (Percent Complete &
-  Accurate) for each of the 16 blocks
+- Estimate PT (Process Time = active hands-on hours), LT (Lead Time =
+  elapsed calendar time arrival to handoff, includes waiting), %C&A (% of
+  work passing downstream without rework) for each block
 - Team estimates are fine if no data; flag low-confidence numbers
-- Calculate Total PT, Total LT, Activity Ratio (PT ÷ LT), Rolled %C&A
+- After all 16 blocks: calculate Total PT, Total LT, Activity Ratio (PT ÷ LT),
+  Rolled %C&A
 
-Carried items for this pass:
-- PT/LT/%C&A per block with SME input from Nik and Chad
+Carried items still relevant:
+- PT/LT/%C&A refinement with SME input from Nik and Chad
 - # People + Queuing per block (deferred from First Pass — collect alongside
-  metrics)
+  metrics if useful)
+- Nik-validation queue for unknowns: Block 1 entirely; Block 2 PT + %C&A;
+  Blocks 3 + 4 %C&A
 
 Collaboration rules I want maintained (already in memory):
 - One collaboration window per message — close current topic fully before
@@ -283,3 +310,6 @@ Pace: block by block. Slow down, sketch, confirm before moving on.
 
 Start of next session: gently orient me to the state file before diving in.
 ```
+
+
+---
