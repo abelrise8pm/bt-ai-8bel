@@ -349,11 +349,11 @@ Development of the future target state will proceed alongside current mapping. A
 
 ===
 
-### Kevan's "quick technical feasibility prototype" Slack shareout , Friday May 29th"
+#  Kevan's "quick technical feasibility prototype" Slack shareout , Friday May 29th"
 
-#### Thread #1 - Kevan: Alright, wrapped up a quick technical feasibility prototype and handing it off!
+## Thread #1 - Kevan: Alright, wrapped up a quick technical feasibility prototype and handing it off!
 
-Current Model
+Current Model 
 Arclight is the secure mesh synchronization substrate. The ATAK runtime plugin owns the long-running service, peer discovery, peer admittance, routing, identity, encryption, transport fallback, and sync primitives. Other plugins talk to it through the Arclight SDK instead of managing radios, sockets, or mesh state directly.
 
 Arclight currently provides:
@@ -606,7 +606,7 @@ also why Arclight? That's what the LLM decreed its name should be. Mases, here i
 
 also why Arclight? That's what the LLM decreed its name should be..
 
-#### Thread #2 - Kevan: 
+## Thread #2 - Kevan: 
 Those curious specifically about the data sync mechanism..
 Kevan: Heartbeat PLI
 Arclight separates frequently changing location from durable mission metadata.
@@ -734,7 +734,7 @@ The result is that ATAK shows current CoT markers and routes while Arclight keep
 [5:37 PM]This model minimizes separate rollup send/ACK traffic by using the existing PLI heartbeat as the carrier for ephemeral state that is already expected to refresh continuously. Instead of queueing every location update as a durable envelope that must be sent, acknowledged, retried, and eventually pruned, Arclight treats PLI and hostile positions as latest-value telemetry: each heartbeat carries the current rollup, and missed updates are naturally superseded by the next heartbeat. Durable MST documents still use the reliable sync path when metadata or mission state changes, but high-churn location data rides the heartbeat path without creating extra delivery state. That keeps the protocol simpler, reduces log and network noise, avoids stale backlog replay, and preserves ACK/retry complexity for the data that actually needs durable convergence. 
 Kevan: There are definite areas for improvement, such as data fusion from multiple sensors with confidence and prioritization. But it's a stable foundation to build on
 
-#### Thread #3 - Kevan: Mesh network and encryption
+## Thread #3 - Kevan: Mesh network and encryption
 
 Short Version
 Arclight currently builds a multi-transport peer graph, not a single radio-level mesh protocol. Each device runs the Arclight foreground service, advertises itself over Wi-Fi Direct, BLE, and LAN, learns routes to other admitted peers, and sends signed/encrypted Arclight envelopes over the best available route.
@@ -833,8 +833,6 @@ BLE subscribed peer           300
 BLE client write              200
 TAK Server relay stub          50
 
-
-
 For broadcast-style sends, Arclight expands the send across known reachable peers. For each recipient, it checks admission, encrypts for that peer, signs the envelope, sends over the selected route, and tracks delivery per recipient.
 
 Identity
@@ -902,6 +900,164 @@ So the radio/network layer may discover anyone nearby, but the Arclight data lay
 
 ===
 
+# Candidate Chores — engineers' read of Kevan's 5/29 prototype shareout
+
+> Prompt to the engineers: "Based on Kevan's slack threads for this prototype, what are your assumed chores or candidates for issues we need to look into working on?"
+> How to read these: **Kevan's words = the architecture anchor** (cited to lines, source of record for intent). **Thomas / Zach = the team's engineers decomposing that intent into concrete candidate chores** — trusted expert read, not flagged inference. Provenance separation here is to show what's *settled intent* vs *still-being-planned detail*, never to rank the PM above the engineers on interpreting Kevan.
+
+### Shared terms (so we stop using these interchangeably)
+
+| Term | Shares |
+|---|---|
+| Multiplatform | general concept — runs on >1 platform |
+| Kotlin Multiplatform (KMP) | logic only; UI stays native per platform |
+| Compose Multiplatform (CMP) | logic AND UI; built on top of KMP |
+
+> Kevan's literal ask was "Kotlin MultiPlat Compose" = **Compose Multiplatform (CMP)** (L596): share as much as possible via CMP, keep only ATAK-specific UX native. Use "CMP" only where that is actually what's being raised.
+
+## Candidate 1 — Extract the Arclight SDK (the network mesh) into its own module
+
+**Raised by:** Thomas (ranked it #1). **Possible owner / timing:** Mases, may start next week (Thomas's note — not stated by Kevan).
+
+**Architecture anchor — Kevan's words:**
+- Kevan lists `:arclight-sdk` as its own module, separate from the Android/ATAK runtime:
+  > `:arclight-sdk` — "Generic secure sync API: MST documents, telemetry, envelopes, runtime state, peer state, trust/admittance state, delivery state" … `:arclight-atak-runtime-plugin` — "Android/ATAK runtime: foreground service, BLE, Wi-Fi Direct, LAN…" (L408–418)
+- And the directed ask that requires it:
+  > "we try to put as much of this in Kotlin MultiPlat Compose as possible, the only ATAK specific portion should be the specific UX components… everything here is up for grabs as far as moving it from prototype to reality… a baseline to keep adding technical robustness." (L596–602)
+
+**What it is (PM-level read):** Pull the platform-agnostic sync API out of the ATAK/Android-bound runtime so the mesh layer isn't tied to ATAK. This is the track Kevan's Compose Multiplatform (CMP) direction depends on. Architecture-grounded (Kevan) **and** engineer-endorsed (Thomas).
+
+**Open signal to look into — Zach:** an existing product, "Ditto," reportedly does something similar. Buy-vs-build / does-it-overlap is a real *look-into-before-we-over-invest* question. Folded into this candidate for now (not yet a separate item).
+
+**Alignment (light):** Serves **Goal 2** — "evidence-based prototypes in weekly increments." Zach's Ditto check guards the anti-goal "do throw-away work… without grounding in… feasibility."
+
+**Defensible questions Abel carries to the engineers** (theirs to resolve, not the PM's):
+- Is the chore scoped to separating `:arclight-sdk` from `:arclight-atak-runtime-plugin`, or does it also touch the mission-logic/UI coupling Kevan named in Team Presence (L397)?
+- Did Kevan actually assign this to Mases for next week, or is that the team's planning?
+- Ditto — overlap, complement, or replace Arclight; and does evaluating it gate the extraction?
+
+## Candidate 2 — Separate the mission logic (Mission-Core) from the ATAK UI/rendering
+
+**Raised by:** Thomas — "the Multiplatform stuff," separating Mission-Core (the team stuff, GRG, routes, etc.) from rendering. (Abel's shorthand was crude; anchor is Kevan's words below.)
+
+**Architecture anchor — Kevan's words:**
+- The coupling Kevan named:
+  > "Right now, Team Presence contains both the mission business logic and the ATAK UI/rendering logic. Route-threat proximity evaluation, hostile stale handling, draft/publish behavior, side-panel UI, marker rendering, and map capture are mostly inside the plugin." (L397)
+- The two modules he splits it into:
+  > `:mission-core` — "Pure mission logic: team members, routes, hostiles, GRGs… reducers, route-threat rules…" (L419–427) vs. `:mission-atak-plugin` — "ATAK UI adapter: side panel, map taps… CoT markers, route polylines…" (L441–447)
+- The ask that drives it:
+  > "the only ATAK specific portion should be the specific UX components" (L596)
+
+**What it is (PM-level read):** Same effort Kevan asked for as Candidate 1 — share as much as possible via Compose Multiplatform (CMP), keep only ATAK-specific UX native — in a different part of the code. #1 pulls out the bottom layer (sync/mesh → `arclight-sdk`). #2 pulls the **mission logic** (teams, routes, GRGs, hostiles) **out of** Team Presence into `mission-core` so it's platform-agnostic, leaving only ATAK-specific rendering in the plugin.
+
+**Theme map:** **Bucket A** — lands on A1 (Kotlin Multiplatform), A2 (the 6-module split), touches A3 (mission-domain logic). All three are actual Kevan requests → high-confidence candidate chore.
+
+**Alignment (light):** Serves **Goal 2** — evidence-based prototypes in weekly increments.
+
+**Defensible questions Abel carries to the engineers:**
+- **Confirm direction with Thomas:** chore = pull **mission logic out** of Team Presence into `mission-core`, leaving ATAK rendering in `mission-atak-plugin`? (Kevan's direction; the captured shorthand read as the inverse.)
+- Does #2 depend on #1 landing first, or can they run in parallel?
+
+## Candidate 3 — Propose a set of data models as informed suggestions / demo for SOCOM (Consideration, NOT a build chore)
+
+**Type: Consideration** (Bucket B — named future/optional). Thomas explicitly scoped it: "not something we are going to attempt to build during this gap period… provide informed 'suggestions' for SOCOM… ideally something to demo, not do it."
+
+**Raised by:** Thomas, via Claude.
+
+**Term flag:** "command-contract" is **Claude's label** (Thomas: "the way it described it to me was 'command-contract'") — **not Kevan's word.** Kevan's actual words:
+- "mission intent/action contracts… deterministic command execution" (L426)
+- "typed MissionCommand DTOs" (L437); example `DropHostile(...)`; "the LLM only fills the contract" (L460–475)
+
+**Conflation to catch — Kevan's architecture has two distinct "data model" things, and the relayed sentence merges them:**
+- **(a) command contracts** — the typed MissionCommand that turns language/intent into an action (L426, L437, L460–475) — the *input* layer.
+- **(b) data models that sync across devices** — Kevan's MST document schemas: `mission.team.member.v1`, `mission.route.v1`, `mission.hostile.v1`, GRG/source-data manifests (L633–648) — the *team-comms-across-devices* layer.
+
+Thomas's phrase "data models for everything that needs to be part of team communications across their devices" matches **(b)**, but arrived via **(a)'s** name. Which one #3 targets is engineering judgment → carry to the team.
+
+**What it is (PM-level read):** Unlike #1/#2 (engineering refactors), #3 is a **future-vision artifact** — a proposed set of data models to demo and hand SOCOM as suggestions. Squarely in the PM/design lane, not a build task.
+
+**Theme map:** Bucket B (named future/optional → Consideration), grounded in Kevan's Bucket-C descriptions (the MST schemas + mission-core contents he described as mechanism). NOT a Chore — Thomas said don't build it.
+
+**Alignment (light):** Serves the anti-goal guard "don't move into OTA without exploring target mission-outcomes for the future vision." "Demo, not do" keeps it clear of throw-away build work.
+
+**Defensible questions Abel carries to the engineers:**
+- Is #3 about the command contracts (intent→action), the MST data models that sync across devices, or both?
+- "Suggestions for SOCOM" — what form lands it (schema sketches? a demo'd example?), and who's the SOCOM audience?
+
+## Candidate 4 — The LLM adapter (natural-language → command), incl. voice/text input (Consideration, NOT a build chore)
+
+**Type: Consideration** (Bucket B — named future/optional). Decided by Kevan's own word: he calls it "Optional."
+
+**Raised by:** Thomas — "the other thing is the LLM adapter. Basically, Voice Recognition, text input (kotlin parser)."
+
+**Anchor — Kevan's words:**
+- `:mission-llm-adapter` — "**Optional parser layer:** local Gemma / other on-device LLM / cloud LLM, converts natural language into typed MissionCommand DTOs only, never directly mutates mission state or talks to Arclight" (L435–439)
+- Current state: the deterministic Kotlin parser — "a good prototype, but the intent/action mapping should move into mission-domain logic over time" (L399–401)
+- "The LLM adapter owns language-to-command mapping" (L476–477)
+
+**Two distinctions to keep clean:**
+1. **The optional LLM adapter (future)** vs. **relocating the existing deterministic Kotlin parser into mission-core** (the "should move… over time" refactor, theme A3). Different sizes of work — don't bundle. The current parser already demos the capability without any LLM, so building the LLM adapter now would be over-investment.
+2. **"Voice Recognition" is Thomas's expansion.** Kevan names "text/voice command input" as an input modality (L444) but does NOT scope a speech-to-text build. Voice is named, not specced.
+
+**What it is (PM-level read):** Like #3, not a build-now. The future/optional upgrade to today's deterministic parser; the prototype already demonstrates the capability without it.
+
+**Theme map:** Bucket B (named future/optional → Consideration), anchored on Kevan's "Optional." Adjacent to A3 but distinct.
+
+**Alignment (light):** Kevan's guardrail — LLM "only fills the contract, never mutates state" — plus keeping it Optional, both serve the anti-goal "don't lock into a direction on assumptions we can't validate yet." Deferring the build avoids throw-away work.
+
+**Defensible questions Abel carries to the engineers:**
+- Is #4 the optional LLM adapter (future), or relocating the existing Kotlin parser into mission-core (the A3 refactor)? Two different efforts.
+- Voice: in scope for a demo, or text-only? Kevan named voice as a modality but didn't spec recognition.
+
+## Candidate 5 — Sensor integration / multi-sensor data fusion (Consideration; currently blocked)
+
+**Type: Consideration** (Bucket B4 — named future/optional). Currently blocked pending discovery.
+
+**Raised by:** Thomas — "sensor integration, whatever hardware a team would have in the field (input source)… so not all data is coming from a single team leader, teams can just take that in."
+
+**Anchor — Kevan's words (the one spot he touches it):**
+> "There are definite areas for improvement, such as **data fusion from multiple sensors with confidence and prioritization.** But it's a stable foundation to build on." (L735)
+
+Kevan frames it as an "area for improvement" — future, not built. Matches "Kevan doesn't have that." This is theme B4.
+
+**What's the team's read, not Kevan's:**
+- "Blocked because we don't know what sensors they have" — the *blocker* (unknown sensor inventory) is the team's assessment, NOT Kevan's stated reason. Kevan just listed it as a future improvement.
+- "By sensors we're probably talking about hardware in the field… could be TACLAN stuff too?" — Kevan did NOT define "sensors." What counts (field hardware? TACLAN? ISR feeds?) is undefined in his message → a domain question, don't assume.
+
+**What it is (PM-level read):** Like #3/#4, not a build-now. The angle that matters: the blocker — "what sensors/hardware do field teams actually carry" — is a **discovery question in the PM lane** (stakeholder map + user interviews already committed), not an engineering one. That discovery is the move that unblocks it.
+
+**Theme map:** Bucket B (B4, multi-sensor data fusion) → Consideration. Blocked pending discovery.
+
+**Alignment (light):** Directly guards the anti-goal "do throw-away work… without grounding in user input" — can't be built without knowing the field hardware. The block is correct, not a problem.
+
+**Defensible questions / next:**
+- Define "sensors": field hardware, TACLAN, ISR feeds? (Kevan didn't define it.)
+- Is the blocker only unknown inventory, or also undefined fusion rules — Kevan's "confidence and prioritization" (L735)?
+- Unblock path is discovery (what hardware teams carry) → fold into the stakeholder map / user interviews, not engineering.
+
+## Candidate 6 — "API route hardening" / security (Question for the team — NOT a clear Kevan-stated chore)
+
+**Type: Question for the team.** The security model is described by Kevan as already built; needs Thomas to name what "hardening" adds before it becomes a chore.
+
+**Raised by:** Thomas — "API route hardening — (making sure we are only transferring, across devices, so basically security stuff)."
+
+**Anchor — Kevan's words: the security model is ALREADY BUILT (all of Thread #3):**
+> "the radio/network layer may discover anyone nearby, but the Arclight data layer **only accepts signed envelopes from verified identities and only exchanges mission payloads with admitted peers.**" (L898)
+
+Backed by peer admission — "Normal mission data is blocked until the peer is admitted" (L855–875) — and per-recipient signing + encryption (L877–896).
+
+**The honest finding:** Thomas's gloss "only transferring across devices [to the right peers]" is exactly Kevan's existing admission + per-recipient encryption model. This maps to **Bucket C (theme 7): a security model Kevan describes as already in place — NOT a chore he asked for.** "API route hardening" is Thomas's phrase; Kevan did NOT list hardening as a chore or a future improvement. (His only Thread #3 "areas to improve," L899, are transport tuning — performance, not security.) → Question for the team: what specifically needs hardening beyond what's already built?
+
+**Two things to clarify with Thomas:**
+- **"API route" — which?** Mesh transport routes (the Wi-Fi/BLE/LAN paths Arclight scores) or a software API surface? Kevan's "routes" are transport routes; this design has no REST API.
+- **Where's the gap?** 🟨 *My read, not Kevan's ask* — places Kevan described but didn't flag as todo: private key falls back to "legacy software key storage" if Android Keystore is unavailable (L848–852); "TAK Server stub fallback" is a stub (L748). A hardening review would look here — but Thomas should name the actual gap; I'm inferring.
+
+**Theme map:** Bucket C (C7 — trust/encryption model, already built). Not A, not B.
+
+**Alignment (light):** If it means "build more security," risks the anti-goal "throw-away work" (duplicating a built model). If it means "verify/review the existing model," that's a legitimate small derisking spike. Which one depends on Thomas.
+
+===
+
 # [raw-notes] May 28th , Thurs
 
 How capabilities get delivered to operators using TAK in SOCOM Missions (right now they are making plugins for every idea or use case)
@@ -952,5 +1108,33 @@ be concise, we sitll need to finish § 4. Converge — 10 min and what follows..
 
 
 can you collaborate with us on how we can determine the entries for this "Prompt C — Variation drivers:" We have current state and geneeral project and domain info that we can prompt.. 
+
+
+=====
+
+- Arclight doesn't exist, the effort is extracting the arclight SKD doesn't exist, part of the effort across the modules he referred to
+
+deterministic kotlin parser = "hard coded"
+> candidate? 
+
+Pulling out the core-mission logic (data models m etc) and moving it to KMZ (file type)
+
+Multiplatform = cross-platform
+
+Compose Multiplaform is built on top Kotlin Multiplaform, 
+
+"kotlin multiplafform compose"
+
+moving away from ATAK native to multiplaform ()
+"our SDK" would be the mesh data tor transfer between decices so that whatever other modules we end up building could comm with each.. 
+
+---
+
+Zach, 
+CMP Stuff
+- ATAK and WebTAK to work properly and then TAKX c# / 
+- AI GRG (zip file in the drive the source drive)
+- can it be done prototype
+- apps that have share code
 
 

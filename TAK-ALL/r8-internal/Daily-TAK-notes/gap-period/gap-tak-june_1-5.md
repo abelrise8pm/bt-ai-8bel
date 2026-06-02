@@ -315,61 +315,160 @@ Claude, not Kevan's stated words.
 ### Candidate #1 — Port the shared logic to Kotlin Multiplatform
 
 - **NOW** — 🩷 *inferred (Kevan doesn't state it outright):* the architecture runs
-  through "the ATAK runtime plugin" (line 357), and his phrasing "the only ATAK
-  specific portion **should be** the specific UX components" (596) implies more than
-  the UI is ATAK-bound today. → *The guts are currently tied to one platform, ATAK.*
+  through *"the ATAK runtime plugin"* (line 357), and his phrasing *"the only ATAK
+  specific portion **should be** the specific UX components"* (596) implies more than
+  the UI is ATAK-bound today. → *The shared logic (mainly MissionCore) is currently
+  tied to one platform, ATAK.*
 - **TARGET** — line 596, Kevan: *"put as much of this in Kotlin MultiPlat Compose as
   possible, the only ATAK specific portion should be the specific UX components… TAK-X
-  and TAK-Y and TAK-Z."* → *Write the guts once; only the screen stays platform-specific.*
-- **CHORE** = rewrite the shared guts in Kotlin Multiplatform so they're not locked to ATAK.
-- **So what:** one recipe written in a language every kitchen understands, instead of
-  rewriting it per kitchen. This is the candidate that most directly tests the
-  anti-rewrite bet (avoid 20+ plugins) → **Goal 2 evidence.**
+  and TAK-Y and TAK-Z."* → *Move the shared logic into Kotlin Multiplatform so the only
+  ATAK-specific part left is the UI.*
+- **CHORE** = move as much of the shared logic (mainly MissionCore) out of the ATAK
+  runtime plugin and into Kotlin Multiplatform, leaving only the UI ATAK-specific.
+- **So what:** this is the candidate that most directly tests our bet — write the logic
+  once and reuse it, rather than **rewriting 20+ existing plugins** (lines 36, 89). Also
+  the strongest **interoperability** evidence against the GOTS / MOSA (Modular Open
+  Systems Approach) criteria we were asked to assess the plugins against. → **Goal 2 evidence.**
 
-### Candidate #2 — Split the one big plugin into clean layered modules
+### Candidate #2 — Modularize the Team Presence plugin into clean layers
 
 - **NOW** — line 397, Kevan: *"Right now, Team Presence contains both the mission
   business logic and the ATAK UI/rendering logic… are mostly inside the plugin."*
-  → *Everything is jammed into one box.*
+  → The Team Presence plugin bundles two different jobs:
+  1. the mission logic and 
+  2. the on-screen UI — together in one unit.
+
 - **TARGET** — lines 403–404, Kevan labels it: *"Future Layered Model — The cleaner
-  target structure is:"* then lists separate modules (mission-core, adapters, UI plugin;
-  lines 408–447). → *The same stuff pulled apart into labeled, separate rooms.*
-- **CHORE** = pull the tangled plugin apart into the separate modules Kevan drew.
-- **So what:** the studio apartment — kitchen, bed, office in one room. To reuse one
-  without disturbing the others, you need walls. This renovation is what makes #1 possible.
+  target structure is:"* then lists the separate modules himself: 
+  - mission-core,
+  - adapters, 
+  - UI plugin (lines 408–447). 
+  → *Split into separate, single-responsibility modules with clear boundaries between them.*
+- **CHORE** = modularize Team Presence into the layered modules Kevan specified
+  (mission-core / adapters / UI plugin).
+- **So what:** today it's one room doing three jobs; modular layers give each job its
+  own room with a defined doorway, so you can change or reuse one without disturbing
+  the others. This separation is the precondition that makes #1 possible.
 
-### Candidate #3 — Move command-parsing out of the UI plugin into the mission core
+- 🩷 **OPEN / assumptions to confirm with Kevan:**
+  - Is "Team Presence" the *whole* prototype, or one feature inside it? (scope unconfirmed)
+  - The modular *target* is Kevan's own words; **who executes this chore** (Mases /
+    Thomas / Zach) is inferred — Kevan gave direction, not a written task assignment
+    (lines 177–188).
 
-- **NOW** — lines 399–401, Kevan: the action parser *"is parsed by Kotlin code inside
-  the plugin."* → *The "understand the command" job lives in the same box as the screen.*
+### Consideration — Move command-parsing out of the UI plugin into mission-core
+
+> 🩷 **Not a standalone chore for this week.** Kevan framed this *"over time"* (line 401),
+> and it reads as a *piece inside* the #2 modularization rather than a parallel story.
+> Flagged as a consideration; scope + sequencing is a question to confirm with Zach,
+> Thomas, and Mases — not for the PM to settle. (Bring: *"Is this its own chore or part
+> of #2? Is 'over time' this-week or later?"*)
+
+- **NOW** — lines 399–401, Kevan: the command text *"is parsed by Kotlin code inside
+  the plugin."* → *Command-parsing [standard term: turning typed text into a structured
+  action] currently lives inside the UI plugin, alongside the screen code.*
 - **TARGET** — line 401, Kevan: *"the intent/action mapping should move into
-  mission-domain logic over time"* (and line 424 lists "mission intent/action contracts"
-  inside mission-core). → *Command-understanding should sit with the mission brain.*
-- **CHORE** = move the command-understanding code out of the screen plugin into the mission core.
-- **So what:** the parser is a *translator*. Move it from the front desk (screen) to the
-  operations room (mission core) so any front desk — phone, web, or real AI — can use it.
-  Precondition for #4.
+  mission-domain logic over time"* (line 424 lists "mission intent/action contracts"
+  inside mission-core). → *That parsing code should move into mission-core, separate
+  from the UI.*
+- **POSSIBLE MOVE** = move the command-parsing code out of the UI plugin into mission-core
+  (likely as part of #2, not a separate track).
+- **So what:** once parsing lives in mission-core instead of the UI plugin, any
+  input source — a phone screen, a web client, or a real LLM (#4) — can reuse the same
+  parsing logic. Precondition for #4.
 
-### Candidate #4 — Replace the hardcoded text parser with a real (LLM) language layer
+**Terms used in #3:**
 
-- **NOW** — line 561, Kevan: *"The current prototype uses a deterministic Kotlin parser"*
-  (hand-coded, lines 399–401). → *The demo's "AI" command is faked by hand-written code.*
-- **TARGET** — lines 435–439, Kevan's mission-llm-adapter: *"local Gemma / other
-  on-device LLM… converts natural language into typed MissionCommand DTOs only."*
-  → *A real language model turns plain speech into mission commands.*
-- **CHORE** = build the LLM adapter to replace the hardcoded parser.
-- **So what:** turns the staged "drop a hostile 500 yds east" beat into proven capability.
-  Biggest **open feasibility** question — but heavier; do after #2/#3 give it a clean slot.
+- **mission-domain logic** — `[standard term "domain logic" + Kevan's "mission-domain"]`
+  Domain logic = the rules and behavior specific to the problem the software solves
+  (here the mission: routes, hostiles, teams), as opposed to UI or networking code.
+  "Mission-domain" is Kevan's word for it (line 401).
+- **mission-core** — `[Kevan's module name]`
+  The module in Kevan's target structure that holds the mission-domain logic
+  (lines 408–447). The concrete container; mission-domain logic is what goes inside it.
+- **command-parsing / command-parsing code** — `[standard term + my naming]`
+  Command-parsing = turning typed text ("drop a hostile 500 yds east") into a
+  structured action the app can execute. "Command-parsing code" = the actual code
+  that does it.
 
-### Candidate #5 — Build the real TAK Server fallback (today it's a stub)
+🩷 **Assumptions to confirm with Kevan:**
+- *mission-domain logic* (the rules) vs *mission-core* (the module they live in) — confirm
+  he means exactly that pairing.
+- Kevan didn't say "command-parsing"; his words are *"parsed by Kotlin code inside the
+  plugin"* (line 399) and *"intent/action mapping"* (line 401). I'm applying the standard
+  term to what he described — the code is real, the label is the industry one.
 
-- **NOW** — line 372, Kevan lists *"TAK Server stub/future fallback"* (scored lowest at
-  50, line 834). → *When no peer-to-peer radio path exists, there's only a placeholder.*
-- **TARGET** — 🩷 *inferred from "future fallback" wording:* a functioning TAK Server
-  relay path. → *A working backup route, not a stub.*
-- **CHORE** = build out the real TAK Server fallback path.
-- **So what:** a backup route for when devices can't reach each other directly. Needed for
-  real deployments, but NOT required to prove the core no-server thesis → **backlog.**
+### Candidate #4 — Add the planned LLM parser layer (mission-llm-adapter)
+
+- **NOW**
+  - **Anchor (lines 558–563)** — Kevan's "Text command action flow": *"A natural-language-style
+    text command is entered to drop a hostile marker. The current prototype uses a
+    deterministic Kotlin parser. The parser resolves intent, distance, direction, and
+    hostile metadata into a structured action. The action executes the same domain flow
+    as a manual hostile drop."*
+  - **Bridge** — "deterministic" = fixed, hand-written rules; same input always gives the
+    same output (vs. a language model, which interprets flexibly).
+  - **Defensible read** — today the text command is handled by fixed-rule Kotlin code that
+    pulls out intent/distance/direction/metadata and drops the marker.
+- **TARGET**
+  - **Anchor (lines 435–439)** — Kevan lists a *mission-llm-adapter* in the future layered
+    model: *"Optional parser layer: local Gemma / other on-device LLM / cloud LLM, converts
+    natural language into typed MissionCommand DTOs only, never directly mutates mission
+    state or talks to Arclight."*
+  - **Bridge** — a language model would interpret plain speech flexibly, instead of the
+    fixed rules above.
+  - **Defensible read** — a planned module where an on-device/cloud LLM turns plain language
+    into structured mission commands. 🩷 *Kevan labels it "Optional" and does not say it
+    "replaces" the deterministic parser — that framing is mine; confirm with Kevan.*
+- **CHORE** = build the mission-llm-adapter (the planned LLM parser layer).
+- **So what:** turns the staged *"drop a hostile 500 yds east"* beat into proven capability.
+  Biggest **open feasibility** question — but heavier, and Kevan tagged it "Optional"; do
+  after the modularization foundation.
+- **Link to the #3 consideration (PM read):** #2 (and the #3 consideration) first create a
+  clean, defined spot in mission-core where command-understanding belongs; the LLM adapter
+  plugs into that same spot. 🩷 *My read — sequence the foundation first, then the LLM.*
+
+**Terms used in #4:**
+
+- **deterministic** (in "deterministic Kotlin parser") — `[standard engineering term]`
+  Same input always produces the exact same output, by fixed rules. A deterministic
+  parser only understands the exact phrasings it was hand-coded to recognize — no
+  interpretation, no flexibility. That's why the demo's *"drop a hostile 500 yds east"*
+  works but a reworded command might not. Kevan's word, line 561.
+- **MissionCommand DTOs** — `[Kevan's term; "DTO" is standard]`
+  DTO = Data Transfer Object: a simple, structured package of data passed between parts
+  of a system. "MissionCommand DTO" = Kevan's name for one mission command in that
+  structured form. It's the format mission-core accepts — line 439, the adapter
+  *"converts natural language into typed MissionCommand DTOs only."*
+- **mission-llm-adapter** — `[Kevan's module name; "adapter" is standard]`
+  Adapter = a component that converts one thing into the form another component expects.
+  "mission-llm-adapter" = Kevan's name for the module that uses an LLM to convert plain
+  speech into MissionCommand DTOs — the planned replacement for the deterministic parser.
+  Kevan's term, lines 435–439.
+
+### Candidate #5 — Build out the TAK Server fallback (today a stub)
+
+- **NOW**
+  - **Anchor (lines 368–373)** — Kevan's "Tiered transport routing": *"Wi-Fi Direct preferred,
+    BLE fallback, LAN direct fallback, TAK Server stub/future fallback, route scoring and
+    per-recipient delivery tracking."* And the scoring (lines 824–834): *"Wi-Fi Direct
+    registered peer 400 … LAN direct 325 … BLE client write 200 … TAK Server relay stub 50."*
+  - **Bridge** — "stub" = a placeholder piece of code standing in for a real feature that
+    isn't built yet. At a score of 50 (vs 200–400 for the radios), the router only reaches
+    for it as a last resort.
+  - **Defensible read** — the TAK Server path exists only as a stub today, ranked last among
+    the transport routes.
+- **TARGET**
+  - **Anchor (line 372)** — Kevan's only words on the future state are *"stub/future fallback."*
+  - **Bridge** — "future" = planned but not built.
+  - **Defensible read** — 🩷 *Kevan names it a "future fallback" but gives no spec, no
+    target, and asks no one to build it. A working TAK Server relay path is my inference
+    from the word "future" — confirm with Kevan before treating it as a real chore.*
+- **CANDIDATE CHORE** = build out the TAK Server fallback into a working relay path
+  (🩷 inferred from "future fallback"; not a stated ask).
+- **So what:** a backup route for when devices can't reach each other directly. 🩷 *My read:*
+  needed for real deployments, but NOT required to prove the core no-central-server thesis
+  (TLDR line 41) → **backlog.**
 
 ### Candidate #6 — Add multi-sensor data fusion (confidence + prioritization)
 
@@ -412,7 +511,7 @@ Claude, not Kevan's stated words.
   week" is the rabbit-hole guard.
 - **#8 is Abel's to decide** whether to raise with the engineers.
 
----
+===
 
 ## Let's focus around [4.3.3] AI/ML Model Improvements first,
 
@@ -490,16 +589,105 @@ The meta-dependency: all six are blocked on the same missing thing — a post-mi
 * Remember - Before we defined the experiments.. We need to talk to people, Yi, Mases, Kevan, Etc..
 * Remember - some of these answers, assumptions and experiments need to be discussed with Nik first.. use this to get him to open up about what we want to learn.
 
+===
+
+# Output/Deliverable Candidates (Competition Period)
+
+> Sourced from: `pre-sow-tak-competitions.md`, `tak-challenge_n_current-condition.md`, `tak-repo-info.md`. Each item uses the source's own wording. For inquired items, sourced facts and technical judgments (not in the docs) are tagged separately — no fabrication.
+
+### Plugins
+
+1. **Fully functional WinTAK plugin** — Built in a different .NET WPF framework, working through its technical limitations. — `pre-sow-tak-competitions.md:398`
+
+2. **Single AI SDK** — Performed inference and complicated labeling algorithms with an ONNX YOLO computer vision model; the same "Building Detection SDK" feeds both the WinTAK plugin and the ATAK plugin. — `pre-sow-tak-competitions.md:399`, `:44-47`
+   - **On the question (why a "single" SDK is a thing / what it enables):**
+   - *Sourced:* The two plugins live in completely different frameworks — ATAK on Android, WinTAK on .NET WPF (`:398`). The SDK feeds both (`:47`). ONNX runtime was specifically chosen because it runs on *both* Windows and Android edge devices (`:33`). The "train once, build once" framing says security patches get fixed once and deployed everywhere (`:40-41`), and the testing slide claims users get "the same reliable experience regardless of the device" (`:56`).
+   - *Technical judgment (not in docs):* The contrast — "do AI without an SDK" — would mean embedding the inference + labeling logic directly inside each plugin. Across two unrelated frameworks (Android/Java vs .NET WPF) that means writing it twice, where the two copies inevitably drift and behave differently. A single SDK is feasible *because* ONNX is cross-platform: one model artifact + one runtime works on both. The SDK is the seam that makes one body of AI logic serve both plugins.
+   - *Outcome it enables:* Consistent detection/labeling behavior across ATAK and WinTAK, one place to patch vulnerabilities, one place to swap models — primarily an engineering/maintainability + cross-platform-consistency enabler, not a user-facing feature.
+
+### AI SDK features / enhancements
+
+3. **Advanced labeling algorithm** — Numbers buildings the way a human would; naturally adapts to complex, irregular layouts. — `pre-sow-tak-competitions.md:159`
+   - **On the question (why "advanced," and what evidence defines "complex/irregular"):**
+   - *Sourced — what "complex/irregular" means:* Buildings normally organize in logical sequences/rows with a top-left origin (`:177-178`), but "roads, rivers, and natural or man-made gaps influence label order" and "circular or irregular patterns require judgment and 'artful' adjustment" (`:186-187`).
+   - *Sourced — evidence it works on those:* Validated on two real AOIs of different size/layout — Ft. Magsaysay, Philippines (30 buildings) and Razish Village, California (68 buildings) — reaching ~90% out-of-box acceptability with only 9-12% of labels needing edits (`:192-202`); SME Hayes called the default "acceptable and valuable" for mission use as-is (`:197`).
+   - *Technical judgment (not in docs):* "Advanced" is relative to naive sequential numbering (blind left-to-right). This algorithm mimics human ordering and reacts to layout features rather than ignoring them — that's the differentiator.
+   - *Outcome it enables:* A labeling order that's "instantly intuitive," reducing cognitive load and corrective actions (`:159`).
+
+4. **Additional labeling features** — Easy strategies for common scenarios like row- and grid-based schemes; operator selects the best scheme. — `pre-sow-tak-competitions.md:320`
+
+5. **Multi-Model Runtimes** — SDK engineered to allow different AI models; configurable to match mission requirements and device, with support to quickly add new model runtimes. — `pre-sow-tak-competitions.md:161`, `:322`
+   - **On the question (benefit, the opposite, eng vs end-user):**
+   - *Sourced:* "Ideal user workflow needs multi-model support… SDK configurable to match mission requirements and device" (`:322`); operators "select the balance of speed and accuracy to match their exact mission requirements and device" (`:161`). Slide 12 names the drivers: the S20 needs small/fast models at the cost of detection performance; general-purpose models compromise too much, so specialized models are needed; a plug-and-play architecture allows continuous replacement of fungible models (`:262-268`). Slide 16 shows the tradeoff concretely — YOLO is fast (~2s on S20) but misses small objects; YOLT catches small objects but is slow (40s+ on S20) (`:308-310`).
+   - *Technical judgment (not in docs):* The opposite is a single hard-coded model baked into the plugin — one fixed speed/accuracy tradeoff for every device and mission. That forces a bad compromise: a fast S20-friendly model underperforms on capable hardware, while an accurate heavy model is unusably slow on the S20.
+   - *Eng vs end-user:* Both. Engineers can add/deploy new runtimes without rebuilding the plugin; the end user (or mission config) gets to pick speed-vs-accuracy for their device/mission.
+   - *Outcome it enables:* The plugin stays useful across a device range and mission types (fast "hasty" vs. accurate "deliberate") instead of being locked to one tradeoff.
+
+6. **Fungible AI model upgrades** — Swapped in latest trained model ONNX files, demonstrating CT/CD (Continuous Train/Continuous Deploy) value. — `pre-sow-tak-competitions.md:324`
+   - **On the question (same as Multi-Model Runtimes):**
+   - *Sourced:* "Swapped in latest trained model ONNX files, demonstrating CT/CD value" (`:324`); architecture supports "continuous integration and replacement of fungible models, ensuring ongoing improvement" (`:268`).
+   - *Distinction from #5 (judgment):* Multi-Model Runtimes = run *different kinds* of models (YOLO vs YOLT); fungible upgrades = drop in a *newer trained version* as a swappable ONNX artifact.
+   - *Technical judgment (not in docs):* The opposite is a statically embedded model — upgrading it means rebuilding and redeploying the whole plugin through TAK Forge (itself a hard, gated path). Fungible = ship just the ONNX file.
+   - *Eng vs end-user:* Primarily an engineering/ops enabler that benefits users downstream — it shrinks the cycle from "model improved" to "operator has the better model" (connects to Task 3's repeatable-pipeline outcome in `tak-challenge_n_current-condition.md:86`). **Caveat:** real-world deployment still has to clear TAK Forge.
+
+7. **Image Format Improvements** — Created an RGB bitmap input for the model, resulting in better detections. — `pre-sow-tak-competitions.md:326`
+   - **On the question (RGB input / how "better" was measured):**
+   - *Sourced:* One line only — "Create a RGB bitmap input for model, resulting in better detections" (`:326`). **No metric, magnitude, or measurement method is given in any of the three files.**
+   - *Technical judgment (not in docs):* YOLO-family models are trained on 3-channel RGB imagery, so feeding an input that matches that expected channel format (vs. a grayscale/mismatched encoding) would plausibly improve detection — but the docs don't quantify or describe how this was validated.
+   - *Read:* This looks like an engineering pre-processing call-out, not a measured user-facing feature. Low-confidence candidate pending evidence.
+
+8. **Multi-inference strategy** — Implemented a multi-inference strategy based on user-defined sections to overcome YOLO's limitations within the user workflow. — `pre-sow-tak-competitions.md:314-317`
+
+9. **Upgraded AI model (YOLT integration)** — Integrated state-of-the-art detection model YOLT, resulting in a 670% improvement in building detection recall. — `pre-sow-tak-competitions.md:157`, `:84`
+   - **On the question (670% compared to what / prior baseline):**
+   - *Sourced:* "Integrating the YOLT model resulted in a significant 670% improvement in AI building detection recall" (`:84`), restated as "670% improvement in our model's recall" (`:93`). **The prior model and the absolute before/after recall numbers are NOT stated** in any of the three files.
+   - *Supported inference (judgment, partially sourced):* The baseline was almost certainly the original YOLO model (the SDK's stated CV model, `:33`/`:399`). Slide 16 supports the mechanism: YOLO scores "No" on small objects while YOLT scores "Yes" (`:309-310`) — so the recall jump is plausibly driven by catching small buildings YOLO missed. The exact comparison base isn't spelled out, so no number is asserted.
+   - *What recall means + outcome:* Recall = of all real buildings, how many the model finds. A large recall gain = far fewer missed buildings up front ("Missing a building is missing a marker," ranked Critical, `:297`) → less manual adding by the operator.
+   - *Don't conflate:* This Oct 10 recall figure is a different metric from the Oct 24 experiment's "55% accuracy rate" (`:224`). They measure different things at different dates.
+
+10. **ONNX runtime AI engine** — Chosen after outperforming TensorFlow Lite and PyTorch for Windows and Android edge devices. — `pre-sow-tak-competitions.md:33`
+
+### Plugin capabilities
+
+11. **Automatic renumbering** — System automatically renumbers/updates marker sequences when changes are made; renumbering adjustable via a swipe gesture to optimize sequence for mission flow. — `pre-sow-tak-competitions.md:386-387`
+    - **On the question (what it enables):**
+    - *Sourced — the pain it targets:* "Labeling accuracy and sequence correction is the worst UX… Fixing numbering sequences after hundreds of labels are placed is described as extremely frustrating and time-consuming" (`:246-250`); 9-12% of labels need manual correction (`:247`). The operator is the final authority who can review/correct/add/remove markers (`:385`).
+    - *Technical judgment (not in docs):* Without auto-renumber, removing or inserting one building mid-sequence forces the operator to manually renumber everything after it. Automatic renumbering keeps the sequence consistent on every edit.
+    - *Outcome it enables:* Directly attacks the single worst-described UX pain — it removes the "extremely frustrating" manual resequencing while the operator still exercises final authority. Strong evidence-based link to a stated pain point.
+
+12. **Section parameter control** — Users control section name, color, and numbering to match team conventions. — `pre-sow-tak-competitions.md:391`
+13. **Legend generation** — Plugin generates a legend with operation title, location (MGRS), and version. — `pre-sow-tak-competitions.md:392`
+14. **KMZ export** — Finalized products exportable as KMZ files, supporting data sharing and interoperability with other mission planning software. — `pre-sow-tak-competitions.md:393`
+
+### Pipeline, library & security artifacts
+
+15. **AI Model Training Pipeline** — GitLab model repo → AWS SageMaker (load training imagery via CVAT, epoch training) → generate artifacts (model, weights, results) to S3. — `pre-sow-tak-competitions.md:270-292`
+16. **"train once, build once" AI library** — Centralized library so security patches are fixed once and deployed everywhere. — `pre-sow-tak-competitions.md:40-41`
+17. **AI Model Training RMF artifacts** — AI Policy Guide, NIST Control Mapping, Secure AI DevSecOps Playbook, AI Security Checklist. — `pre-sow-tak-competitions.md:333-337`
+
+### Repositories — `tak-repo-info.md`
+
+18. **atak-cv-model-servers** — Computer vision model server for building segmentation using a trained YOLOv8 model, designed for ATAK/WinTAK GRG plugin integration; batch processing, CSV/zip output. — `tak-repo-info.md:1-60`
+19. **GRG AI MODEL repo** — Trains and evaluates three model implementations (YOLO, YOLT, UNET) on AWS SageMaker with automated CVAT data pulling and S3 artifact storage. — `tak-repo-info.md:64-134`
+20. **Security Policy Project for rise8-grg-ai-model** — Repository storing security policies (e.g., enforcing DAST in every pipeline) with protected default branch. — `tak-repo-info.md:136-174`
+
+---
+
+# Output/Deliverable Candidates (TAK Bridge Period)
+
+> Sourced from: `tak-final-demo.md`, `db-wk7.md`, `tak-daily-may_11-15.md`. Each item uses the source's own wording — no fabrication. Running list after Round 2 review cuts.
+
+## Task 1 [4.3.1] — SDK Update to v5.6
+
+1. **`pads-fast` publish service** — Rise8-built publish service replaces the upstream PADS sidecar in the release pipeline; publish time for all five supported ATAK builds cut from 50–60 minutes to under 4 minutes, zero manual interventions since April 22. — `tak-final-demo.md:14`
+
+## Task 3 [4.3.3] — AI/ML Model Improvements
+
+2. **124% building detection accuracy improvement** — Quantified at the April 22 sprint demo, validated through side-by-side comparison with SOCOM. — `tak-final-demo.md:34`, `:45`
+3. **Detection accuracy and reliability improvements** — Building detection now performs consistently regardless of zoom level, and repeated detection runs produce stable results. — `tak-final-demo.md:34`, `:43-44`
+4. **Imagery pre-caching feature** — Plugin pre-caches imagery before building detection runs, so operators can assess conditions before committing to detection. — `tak-final-demo.md:35`, `:52`
+5. **Operator imagery status messaging** — Status notification based on result: full success, partial completion, or fetch failure; includes a "Tile Capture Failed" warning popup when capture fails. — `tak-final-demo.md:35`, `:53-54`
+6. **Plugin behavior and operator-experience fixes** — Seven defects resolved: detection no longer triggers before map load; background threads shut down cleanly (memory leak); no detection on backup imagery when tile capture fails; delete-section confirmation shows section name correctly; closed grids no longer reappear on map tap; building labels clear when a GRG is closed; labels outside named sections clear on save/close. — `tak-final-demo.md:37`, `:64-67`
 
 
-
-Reference
-
-- tak-repo-info.md
-- tak-challenge_n_current-condition.md
-- pre-sow-tak-competitions.md
-
-
-
-Good list claude, Next I am gonna ask you to look through these files, @tak-repo.info.md, @talk-challenge_n_current-condition.md and @pre-sow-tak-competitions.md and I am looking for help synthesize potential candidates of outputs/deliverables that the team perhaps shipped during the competition, or maybe baselines before the culminations of the TAK Bridge contract on May 15th.. I want to identify potential opportunities that can become hypothesis to validate outcomes in production.
 

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Arclight / Team Presence — PM-Level Architecture</title>
+<style>
+  :root {
+    --bg:        #0f1620;
+    --panel:     #18222e;
+    --panel-2:   #1f2c3a;
+    --line:      #2c3c4e;
+    --ink:       #e7eef5;
+    --ink-dim:   #9fb2c4;
+    --ink-faint: #6f8295;
+
+    /* provenance palette */
+    --kevan:   #2dd4bf;  /* Kevan's word */
+    --std:     #6aa6ff;  /* standard engineering term */
+    --read:    #f2b443;  /* my plain-language read */
+
+    --arclight: #2dd4bf;
+    --mission:  #c084fc;
+    --danger:   #f87171;
+    --radius: 12px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 70% -10%, #1b2735 0%, var(--bg) 60%);
+    color: var(--ink);
+    line-height: 1.5;
+    padding: 32px 20px 80px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header.page { margin-bottom: 8px; }
+  .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    font-size: 12px;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  h1 { font-size: 28px; margin: 6px 0 4px; letter-spacing: -.01em; }
+  .subtitle { color: var(--ink-dim); font-size: 15px; max-width: 760px; }
+
+  .pm-line {
+    margin: 20px 0 28px;
+    padding: 16px 18px;
+    background: linear-gradient(90deg, rgba(45,212,191,.10), rgba(45,212,191,0));
+    border-left: 3px solid var(--arclight);
+    border-radius: 6px;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .pm-line b { color: #fff; }
+
+  /* legend */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 10px 18px;
+    align-items: center;
+    margin: 0 0 28px;
+    padding: 12px 16px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .legend .lab { color: var(--ink-faint); font-weight:600; text-transform:uppercase; letter-spacing:.1em; font-size:11px;}
+  .chip {
+    display: inline-flex; align-items:center; gap:6px;
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 12.5px; font-weight: 600;
+    border: 1px solid transparent;
+  }
+  .chip::before { content:""; width:8px; height:8px; border-radius:50%; }
+  .chip.k { color: var(--kevan); background: rgba(45,212,191,.10); border-color: rgba(45,212,191,.35);}
+  .chip.k::before { background: var(--kevan);}
+  .chip.s { color: var(--std); background: rgba(106,166,255,.10); border-color: rgba(106,166,255,.35);}
+  .chip.s::before { background: var(--std);}
+  .chip.r { color: var(--read); background: rgba(242,180,67,.10); border-color: rgba(242,180,67,.35);}
+  .chip.r::before { background: var(--read);}
+
+  /* inline term tags */
+  .t { border-bottom: 1.5px dotted; padding-bottom: 1px; font-weight: 600; white-space: nowrap;}
+  .t.k { color: var(--kevan); border-color: var(--kevan);}
+  .t.s { color: var(--std);   border-color: var(--std);}
+  .t.r { color: var(--read);  border-color: var(--read);}
+
+  /* tabs */
+  .tabs { display:flex; gap:8px; margin: 0 0 22px; flex-wrap:wrap;}
+  .tab {
+    background: var(--panel); color: var(--ink-dim);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: all .15s ease;
+  }
+  .tab:hover { color: var(--ink); border-color: #3a4d61;}
+  .tab.active { background: var(--arclight); color: #06201c; border-color: var(--arclight);}
+  .view { display: none; }
+  .view.active { display: block; animation: fade .25s ease;}
+  @keyframes fade { from {opacity:0; transform: translateY(4px);} to {opacity:1; transform:none;} }
+
+  section.block {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin: 0 0 22px;
+  }
+  section.block h2 { margin: 0 0 4px; font-size: 18px; }
+  section.block .hint { color: var(--ink-dim); font-size: 14px; margin: 0 0 18px; }
+
+  /* ---- LAYER STACK ---- */
+  .stack { display: flex; flex-direction: column; gap: 0; }
+  .actor {
+    text-align:center; color: var(--ink-dim); font-size: 13px; font-weight:600;
+    padding: 8px; letter-spacing:.04em;
+  }
+  .arrow-down { text-align:center; color: var(--ink-faint); font-size: 20px; line-height:1; padding: 2px 0;}
+  .layer {
+    border-radius: 10px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    position: relative;
+  }
+  .layer .l-head { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom: 6px;}
+  .layer .l-name { font-size: 16px; font-weight: 700;}
+  .layer .l-tag { font-size: 11.5px; text-transform:uppercase; letter-spacing:.1em; color: var(--ink-faint); font-weight:700;}
+  .layer .l-desc { color: var(--ink-dim); font-size: 13.5px;}
+  .layer .l-items { display:flex; flex-wrap:wrap; gap:7px; margin-top:12px;}
+  .pill {
+    background: var(--panel-2); border:1px solid var(--line);
+    border-radius: 7px; padding: 4px 9px; font-size: 12.5px; color: var(--ink-dim);
+  }
+  .layer.mission { border-color: rgba(192,132,252,.4); background: linear-gradient(180deg, rgba(192,132,252,.08), rgba(192,132,252,.02));}
+  .layer.mission .l-name { color: var(--mission);}
+  .layer.sdk { border-color: rgba(106,166,255,.35); background: rgba(106,166,255,.05);}
+  .layer.sdk .l-name { color: var(--std);}
+  .layer.arclight { border-color: rgba(45,212,191,.4); background: linear-gradient(180deg, rgba(45,212,191,.09), rgba(45,212,191,.02));}
+  .layer.arclight .l-name { color: var(--arclight);}
+  .layer.transport { border-style: dashed; background: var(--panel-2);}
+  .layer.transport .l-name { color: var(--ink);}
+
+  /* ---- TWO DEVICE SYNC ---- */
+  .sync-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 16px; align-items: center;
+  }
+  .device {
+    border: 1px solid var(--line); border-radius: 12px; overflow:hidden;
+    background: var(--panel-2);
+  }
+  .device .d-head {
+    background: rgba(45,212,191,.08); padding: 10px 14px;
+    font-weight:700; font-size:14px; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:8px;
+  }
+  .device .d-body { padding: 12px 14px; display:flex; flex-direction:column; gap:8px;}
+  .mini {
+    border:1px solid var(--line); border-radius:8px; padding:8px 10px; font-size:12.5px;
+  }
+  .mini.m1 { background: rgba(192,132,252,.07); color:#e7d6ff; border-color: rgba(192,132,252,.3);}
+  .mini.m2 { background: rgba(45,212,191,.07); color:#cdfaf2; border-color: rgba(45,212,191,.3);}
+  .channel { text-align:center; min-width: 130px;}
+  .channel .lock { font-size: 26px;}
+  .channel .updown { font-size: 22px; color: var(--arclight); letter-spacing:-2px;}
+  .channel .clab { font-size:11.5px; color: var(--ink-dim); margin-top:4px;}
+  .noserver {
+    margin-top:8px; font-size:12px; color: var(--danger); font-weight:700;
+    border:1px dashed rgba(248,113,113,.5); border-radius:8px; padding:6px;
+  }
+  .transports-row { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:14px;}
+  .transports-row .pill { font-size:12px;}
+
+  /* ---- DATA SPLIT ---- */
+  .split { display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .lane { border:1px solid var(--line); border-radius:10px; padding:16px;}
+  .lane.durable { border-color: rgba(106,166,255,.4); background: rgba(106,166,255,.05);}
+  .lane.live { border-color: rgba(242,180,67,.4); background: rgba(242,180,67,.05);}
+  .lane h3 { margin:0 0 4px; font-size:15px;}
+  .lane.durable h3 { color: var(--std);}
+  .lane.live h3 { color: var(--read);}
+  .lane .ltag { font-size:12px; color: var(--ink-dim); margin-bottom:12px;}
+  .lane ul { margin:0; padding-left:18px; color: var(--ink-dim); font-size:13.5px;}
+  .lane li { margin-bottom:5px;}
+  .lane .note { margin-top:12px; font-size:12.5px; color: var(--ink-faint); font-style:italic;}
+
+  /* ---- COMMAND FLOW ---- */
+  .flow { display:flex; align-items:stretch; gap:0; flex-wrap:wrap;}
+  .step {
+    flex:1 1 0; min-width:140px;
+    border:1px solid var(--line); border-radius:10px; padding:12px;
+    background: var(--panel-2); text-align:center; position:relative;
+  }
+  .step .s-n { font-size:11px; color:var(--ink-faint); font-weight:700;}
+  .step .s-t { font-size:13.5px; font-weight:600; margin-top:4px; color:var(--ink);}
+  .step .s-d { font-size:12px; color:var(--ink-dim); margin-top:4px;}
+  .flow .sep { display:flex; align-items:center; color:var(--arclight); font-size:22px; padding:0 6px;}
+  .example {
+    margin-top:14px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:12.5px; background:#0c121a; border:1px solid var(--line);
+    border-radius:8px; padding:10px 12px; color:#bfe9e1;
+  }
+  .example .u { color: var(--read);}
+  .example .arr { color: var(--ink-faint);}
+
+  /* future target */
+  .target-note {
+    font-size:13.5px; color:var(--ink-dim);
+    background: rgba(242,180,67,.06); border:1px solid rgba(242,180,67,.25);
+    border-radius:8px; padding:12px 14px; margin-bottom:18px;
+  }
+  .modgrid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:12px;}
+  .mod { border:1px solid var(--line); border-radius:10px; padding:14px; background:var(--panel-2);}
+  .mod .m-name { font-family: ui-monospace, monospace; font-size:13px; font-weight:700; color: var(--arclight);}
+  .mod.m-mission .m-name { color: var(--mission);}
+  .mod .m-role { font-size:12.5px; color:var(--ink-dim); margin-top:6px;}
+
+  /* citations */
+  .cites { font-size:13px; color: var(--ink-dim);}
+  .cites table { width:100%; border-collapse: collapse;}
+  .cites td { padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  .cites td:first-child { color: var(--ink); font-weight:600; white-space:nowrap; width: 30%;}
+  .cites code { color: var(--kevan); font-size:12px;}
+
+  footer.page { color: var(--ink-faint); font-size:12.5px; margin-top:28px; text-align:center;}
+  .caveat { color: var(--read); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <div class="eyebrow">TAK · Gap Period · PM-Level View</div>
+    <h1>What Kevan Built &amp; Handed Off</h1>
+    <p class="subtitle">
+      A visual, product-management read of the feasibility prototype Kevan shared on Fri May&nbsp;29.
+      Every box traces back to his own words — line references are in the citations panel at the bottom.
+    </p>
+  </header>
+
+  <div class="pm-line">
+    <b>One-sentence version:</b> Two ATAK devices share mission data — team locations, routes, enemy markers —
+    directly with each other, <b>encrypted, with no server in the middle</b>. The sync engine is called
+    <span class="t k">Arclight</span>; the mission feature riding on top is <span class="t k">Team&nbsp;Presence</span>.
+    Kevan handed the repo to Mases as the baseline to build on.
+  </div>
+
+  <div class="legend">
+    <span class="lab">How to read the labels:</span>
+    <span class="chip k">Kevan's word</span>
+    <span class="chip s">Standard engineering term</span>
+    <span class="chip r">My plain-language read</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-view="built">① What he built (today)</button>
+    <button class="tab" data-view="data">② How data moves</button>
+    <button class="tab" data-view="command">③ The text-command demo</button>
+    <button class="tab" data-view="target">④ Where it's headed</button>
+    <button class="tab" data-view="cites">Citations</button>
+  </div>
+
+  <!-- ============ VIEW 1: WHAT HE BUILT ============ -->
+  <div class="view active" id="built">
+
+    <section class="block">
+      <h2>The stack — two layers, two names</h2>
+      <p class="hint">Read top-to-bottom: the operator acts on the mission app, which rides on the sync engine, which reaches the other device over whatever connection is available.</p>
+
+      <div class="stack">
+        <div class="actor">👤 Operator — types / taps / speaks</div>
+        <div class="arrow-down">↓</div>
+
+        <div class="layer mission">
+          <div class="l-head">
+            <span class="l-name">Team Presence</span>
+            <span class="l-tag">the mission app · what the operator sees</span>
+          </div>
+          <div class="l-desc">
+            <span class="t r">My read:</span> the feature on top. It shares teammate locations, missions, routes and enemy markers, and draws them on the ATAK map.
+          </div>
+          <div class="l-items">
+            <span class="pill">team member locations (PLI)</span>
+            <span class="pill">missions &amp; routes</span>
+            <span class="pill">hostile markers</span>
+            <span class="pill">side-panel UI</span>
+            <span class="pill">map markers &amp; route lines (<span class="t s">CoT</span>)</span>
+          </div>
+        </div>
+
+        <div class="arrow-down" title="Team Presence talks to Arclight through the SDK">↓ &nbsp;<span style="font-size:12px;color:var(--ink-faint)">talks through the</span>&nbsp; ↓</div>
+
+        <div class="layer sdk">
+          <div class="l-head">
+            <span class="l-name">Arclight SDK</span>
+            <span class="l-tag">the clean hand-off point</span>
+          </div>
+          <div class="l-desc">
+            <span class="t r">My read:</span> the doorway. The mission app asks for "sync this" / "send that" and never touches radios or encryption itself.
+          </div>
+        </div>
+
+        <div class="arrow-down">↓</div>
+
+        <div class="layer arclight">
+          <div class="l-head">
+            <span class="l-name">Arclight</span>
+            <span class="l-tag">the sync engine · the plumbing</span>
+          </div>
+          <div class="l-desc">
+            Kevan's words: the <span class="t k">"secure mesh synchronization substrate."</span> It owns everything that makes server-less, encrypted device-to-device sync work.
+          </div>
+          <div class="l-items">
+            <span class="pill">who's a trusted peer (<span class="t k">peer admittance</span>)</span>
+            <span class="pill">identity</span>
+            <span class="pill">encryption</span>
+            <span class="pill">routing &amp; fallback</span>
+            <span class="pill">sync primitives</span>
+          </div>
+        </div>
+
+        <div class="arrow-down">↓</div>
+
+        <div class="layer transport">
+          <div class="l-head">
+            <span class="l-name">Connections it can use</span>
+            <span class="l-tag">picks the best available — no cell tower / no server</span>
+          </div>
+          <div class="l-desc">
+            <span class="t k">Kevan is precise here:</span> this is a <span class="t k">"multi-transport peer graph, not a single radio-level mesh protocol"</span> — i.e. devices find each other over whichever link works.
+          </div>
+          <div class="l-items">
+            <span class="pill">Wi-Fi Direct <span style="color:var(--ink-faint)">(preferred)</span></span>
+            <span class="pill">Bluetooth Low Energy (<span class="t s">BLE</span>)</span>
+            <span class="pill">LAN direct</span>
+            <span class="pill" style="opacity:.6">TAK Server <span class="t r">(stub — not built yet)</span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>Two devices, no server</h2>
+      <p class="hint">The demo connected one device to one other approved peer. Everything synced directly between them.</p>
+
+      <div class="sync-grid">
+        <div class="device">
+          <div class="d-head">📱 Device A</div>
+          <div class="d-body">
+            <div class="mini m1">Team Presence — author a mission &amp; routes</div>
+            <div class="mini m2">Arclight — sign + encrypt + send</div>
+          </div>
+        </div>
+
+        <div class="channel">
+          <div class="lock">🔒</div>
+          <div class="updown">⇄</div>
+          <div class="clab">Encrypted.<br>Approved peers only.</div>
+          <div class="noserver">NO SERVER<br>IN THE MIDDLE</div>
+        </div>
+
+        <div class="device">
+          <div class="d-head">📱 Device B</div>
+          <div class="d-body">
+            <div class="mini m2">Arclight — verify + decrypt</div>
+            <div class="mini m1">Team Presence — renders the same routes &amp; markers</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="transports-row">
+        <span class="pill">edits flow <b>both directions</b></span>
+        <span class="pill">a peer must be <span class="t k">admitted</span> (tap Admit/Deny) before mission data flows</span>
+        <span class="pill">strangers nearby can be <i>seen</i> but get <b>no mission data</b></span>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ VIEW 2: HOW DATA MOVES ============ -->
+  <div class="view" id="data">
+    <section class="block">
+      <h2>Two kinds of data, two lanes</h2>
+      <p class="hint">
+        <span class="t r">My read of the key design choice:</span> Arclight treats "facts that must be exactly right" differently from "where everyone is right now." This keeps the network from drowning in old location pings.
+      </p>
+
+      <div class="split">
+        <div class="lane durable">
+          <h3>Durable truth</h3>
+          <div class="ltag"><span class="t k">"MST documents"</span> · reliable, must converge exactly</div>
+          <ul>
+            <li>team member metadata (callsign, role)</li>
+            <li>missions &amp; summaries</li>
+            <li>routes</li>
+            <li>hostile metadata (label, type, confidence)</li>
+            <li>GRG / source-data manifests</li>
+          </ul>
+          <div class="note">Sent reliably — confirmed, retried if needed, until both devices match.</div>
+        </div>
+
+        <div class="lane live">
+          <h3>Live position</h3>
+          <div class="ltag"><span class="t k">"heartbeat telemetry"</span> · latest-value, refreshes constantly</div>
+          <ul>
+            <li>where each teammate is right now (<span class="t s">PLI</span>)</li>
+            <li>where each hostile is right now</li>
+          </ul>
+          <div class="note">Not stored/retried. If one update is missed, the next heartbeat just carries the newer position — no backlog of stale pings.</div>
+        </div>
+      </div>
+
+      <p class="hint" style="margin-top:18px;">
+        <b>Why a PM should care:</b> Kevan calls this <span class="t k">"a stable foundation to build on,"</span> and flags
+        <span class="t k">"data fusion from multiple sensors with confidence and prioritization"</span> as a known next improvement —
+        a candidate consideration, not something he built.
+      </p>
+    </section>
+  </div>
+
+  <!-- ============ VIEW 3: COMMAND DEMO ============ -->
+  <div class="view" id="command">
+    <section class="block">
+      <h2>The "drop a hostile" text command</h2>
+      <p class="hint">One of the headline demo moments: typing plain text creates a real map marker — running the exact same flow as if the operator had tapped the map by hand.</p>
+
+      <div class="flow">
+        <div class="step"><div class="s-n">STEP 1</div><div class="s-t">Operator types</div><div class="s-d">a plain-English command</div></div>
+        <div class="sep">→</div>
+        <div class="step"><div class="s-n">STEP 2</div><div class="s-t">Parser reads it</div><div class="s-d"><span class="t r">today:</span> simple, dependable code on the device</div></div>
+        <div class="sep">→</div>
+        <div class="step"><div class="s-n">STEP 3</div><div class="s-t">Becomes a structured order</div><div class="s-d">label, type, distance, direction</div></div>
+        <div class="sep">→</div>
+        <div class="step"><div class="s-n">STEP 4</div><div class="s-t">Marker appears &amp; syncs</div><div class="s-d">same as a manual drop; visible on both devices</div></div>
+      </div>
+
+      <div class="example">
+        <span class="u">"drop a hostile armored vehicle 500 yards east of me"</span><br>
+        <span class="arr">&nbsp;&nbsp;&nbsp;↓ becomes →</span> &nbsp; DropHostile( type = "armored_vehicle", 457m, bearing 90° / east, origin = SELF )
+      </div>
+
+      <p class="hint" style="margin-top:18px;">
+        <span class="t r">My read:</span> the demo used <span class="t k">"a deterministic Kotlin parser"</span> (plain code). Kevan says the
+        intent/action mapping <span class="t k">"should move into mission-domain logic over time,"</span> with an <b>optional</b>
+        on-device or cloud LLM as a future, swappable add-on — both candidate items for the team, not finished work.
+      </p>
+
+      <p class="hint">
+        <b>Then the smart part:</b> when a hostile is dropped near a route, the route turns <span style="color:var(--danger);font-weight:700;">orange</span>
+        to flag the threat — mission meaning driving what the map shows.
+      </p>
+    </section>
+  </div>
+
+  <!-- ============ VIEW 4: WHERE IT'S HEADED ============ -->
+  <div class="view" id="target">
+    <section class="block">
+      <h2>Where Kevan says it's headed</h2>
+      <div class="target-note">
+        ⚠️ This is the <b>target / future structure</b> Kevan sketched, not what's built today. He explicitly said
+        <span class="t k">"everything here is up for grabs as far as moving it from prototype to reality."</span>
+        Treat these as <b>considerations</b> for the team, not committed work.
+      </div>
+
+      <p class="hint">
+        Today the mission logic and the ATAK screen code live together inside Team Presence. The proposed clean-up splits
+        responsibilities so the bulk could be shared across ATAK, WinTAK, WebTAK, etc. — Kevan's
+        <span class="t k">"TAK-X / TAK-Y / TAK-Z"</span> idea, built in <span class="t k">Kotlin Multiplatform Compose</span>.
+      </p>
+
+      <div class="modgrid">
+        <div class="mod"><div class="m-name">arclight-sdk</div><div class="m-role">the generic, mission-agnostic sync doorway</div></div>
+        <div class="mod"><div class="m-name">arclight-atak-runtime</div><div class="m-role">the Android engine: radios, identity, crypto, routing</div></div>
+        <div class="mod m-mission"><div class="m-name">mission-core</div><div class="m-role"><span class="t r">"pure mission logic"</span> — routes, hostiles, rules — reusable across platforms</div></div>
+        <div class="mod m-mission"><div class="m-name">mission-arclight-adapter</div><div class="m-role">the bridge that hides sync details from mission features</div></div>
+        <div class="mod m-mission"><div class="m-name">mission-llm-adapter</div><div class="m-role"><b>optional</b> language → command translator (on-device or cloud)</div></div>
+        <div class="mod m-mission"><div class="m-name">mission-atak-plugin</div><div class="m-role">just the ATAK screen: panels, taps, markers</div></div>
+      </div>
+
+      <p class="hint" style="margin-top:18px;">
+        Kevan's umbrella name for the whole stack: <span class="t k">"SOFTAK SDK"</span> —
+        <span class="t k">"whether we ever officially publish it or not."</span>
+        Plain read: a reusable kit that could power mission features on many TAK flavors, not just Android.
+      </p>
+    </section>
+  </div>
+
+  <!-- ============ CITATIONS ============ -->
+  <div class="view" id="cites">
+    <section class="block cites">
+      <h2>Citations — every box above traces to Kevan's words</h2>
+      <p class="hint">Source: <code>gap-tak-may_25-29.md</code>, Kevan's Fri May 29 shareout (Threads #1–#3).</p>
+      <table>
+        <tr><td>Arclight = the sync engine</td><td>L357 — <code>"Arclight is the secure mesh synchronization substrate… owns the long-running service, peer discovery, peer admittance, routing, identity, encryption, transport fallback, and sync primitives."</code></td></tr>
+        <tr><td>Team Presence sits on top</td><td>L388–395 — <code>"The current Team Presence plugin sits above Arclight. It uses the Arclight SDK to: publish team member metadata… render those updates as ATAK CoT markers and route polylines."</code></td></tr>
+        <tr><td>No server / direct sync</td><td>L495–498 — <code>"Mission data syncs directly between devices through Arclight… rather than a central server workflow."</code> &nbsp;L491 — <code>"connected to one admitted peer."</code></td></tr>
+        <tr><td>"Mesh" caveat (peer graph)</td><td>L740 — <code>"Arclight currently builds a multi-transport peer graph, not a single radio-level mesh protocol."</code></td></tr>
+        <tr><td>Bidirectional sync</td><td>L538–542 — <code>"A route is added on one device and appears on the other. The route is edited from the second device and syncs back."</code></td></tr>
+        <tr><td>Peer admission / trust</td><td>L855–875 — explicit peer approval: <code>"Member taps Admit or Deny… Normal mission data is blocked until the peer is admitted."</code></td></tr>
+        <tr><td>Encryption</td><td>L877–889 — envelope signatures (ECDSA SHA-256) + payload encryption (ECDH P-256 + AES-256-GCM).</td></tr>
+        <tr><td>Durable vs live data split</td><td>L657–664 — <code>"MST: durable truth about what entities exist… Heartbeat telemetry: latest known position/motion."</code></td></tr>
+        <tr><td>Text command demo</td><td>L558–564 — <code>"a deterministic Kotlin parser… resolves intent, distance, direction… executes the same domain flow as a manual hostile drop."</code> &nbsp;L399–401, L460–475.</td></tr>
+        <tr><td>Route turns orange near threat</td><td>L587–588 — <code>"Threatened routes turn orange… mission-domain state driving ATAK rendering."</code></td></tr>
+        <tr><td>Parser should move over time</td><td>L401 — <code>"the intent/action mapping should move into mission-domain logic over time."</code></td></tr>
+        <tr><td>Optional LLM adapter</td><td>L435–439 — <code>":mission-llm-adapter / Optional parser layer: local Gemma / other on-device LLM / cloud LLM… never directly mutates mission state."</code></td></tr>
+        <tr><td>KMP Compose / TAK-X,Y,Z</td><td>L596 — <code>"put as much of this in Kotlin MultiPlat Compose as possible, the only ATAK specific portion should be the specific UX components… TAK-X and TAK-Y and TAK-Z."</code></td></tr>
+        <tr><td>"SOFTAK SDK" umbrella name</td><td>L600 — <code>"Arclight + Arclight SDK + MissionCore + Adapters = 'SOFTAK SDK' whether we ever officially publish it or not."</code></td></tr>
+        <tr><td>Up for grabs / handoff to Mases</td><td>L602 — <code>"everything here is up for grabs… baseline to keep adding…"</code> &nbsp;L605 — <code>"the zipped repo… pull down and keep iterating on and probably push to our internal gitlab."</code></td></tr>
+        <tr><td>Known next improvements</td><td>L735 — <code>"data fusion from multiple sensors with confidence and prioritization."</code> &nbsp;L899 — <code>"prioritizing LAN direct, having different PLI/heartbeat timings…"</code></td></tr>
+      </table>
+    </section>
+  </div>
+
+  <footer class="page">
+    PM-level illustration · derived strictly from Kevan's May 29 shareout ·
+    <span class="caveat">terms color-coded by source — open the Citations tab to defend any box in front of the engineers.</span>
+  </footer>
+
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const views = document.querySelectorAll('.view');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const target = tab.dataset.view;
+      tabs.forEach(t => t.classList.toggle('active', t === tab));
+      views.forEach(v => v.classList.toggle('active', v.id === target));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>
