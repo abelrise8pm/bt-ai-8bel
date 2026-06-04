@@ -934,7 +934,7 @@ So the radio/network layer may discover anyone nearby, but the Arclight data lay
 **Defensible questions Abel carries to the engineers** (theirs to resolve, not the PM's):
 - Is the chore scoped to separating `:arclight-sdk` from `:arclight-atak-runtime-plugin`, or does it also touch the mission-logic/UI coupling Kevan named in Team Presence (L397)?
 - Did Kevan actually assign this to Mases for next week, or is that the team's planning?
-- Ditto — overlap, complement, or replace Arclight; and does evaluating it gate the extraction?
+- Ditto (https://docs.ditto.live/home/about-ditto) — overlap, complement, or replace Arclight; and does evaluating it gate the extraction?
 
 ## Candidate 2 — Separate the mission logic (Mission-Core) from the ATAK UI/rendering
 
@@ -1008,6 +1008,8 @@ Thomas's phrase "data models for everything that needs to be part of team commun
 **Defensible questions Abel carries to the engineers:**
 - Is #4 the optional LLM adapter (future), or relocating the existing Kotlin parser into mission-core (the A3 refactor)? Two different efforts.
 - Voice: in scope for a demo, or text-only? Kevan named voice as a modality but didn't spec recognition.
+
+**Status / split (added June 3, 2026):** Candidate 4 was split. The parser-relocation half was drafted as a Chore (move the deterministic command parser into Mission-Core). The **optional LLM adapter half is parked as a future Spike candidate**, not build-now (Kevan's "Optional"). Convert it to a Spike (evaluate the LLM approach: local Gemma vs other on-device LLM vs cloud LLM, natural language to typed MissionCommand) when the team decides to actually explore it, for example after Candidates 1 and 2 land or when a stakeholder wants the LLM in a demo. Context lives here so it is not lost.
 
 ## Candidate 5 — Sensor integration / multi-sensor data fusion (Consideration; currently blocked)
 

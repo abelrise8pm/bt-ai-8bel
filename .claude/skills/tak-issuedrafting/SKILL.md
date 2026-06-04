@@ -10,6 +10,12 @@ A collaborative skill for drafting four agile artifact types: user stories, deve
 
 ---
 
+## Output Formatting Rules (apply to every artifact and every reply)
+
+- **Never use the em dash character (—). Not in artifacts, not in replies, not anywhere.** Abel does not write that way. Use a period, a comma, parentheses, or "e.g." / "i.e." instead. Rewrite the sentence if needed so no em dash appears.
+
+---
+
 ## Collaboration Workflow
 
 Follow this sequence every time, for every artifact type:

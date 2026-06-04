@@ -118,7 +118,7 @@ A working TWO-DEVICE prototype with no central server (Slack lines 352–602):
 3. WHAT'S BEING BUILT — multiple parallel prototypes:
    platform dashboard for Chad (K3s/Flux/Prometheus/Grafana/Harbor, line 29);
    edge-deploy prototype on Podman (line 103); Andrew's Tackland prototype
-   (line 152); Sean Herbert's AI-on-hub idea (line 158); Kevan's mesh PoC →
+   (line 152); Sean's AI-on-hub idea (line 158); Kevan's mesh PoC →
    now "Arclight" (line 162); white paper + prototype (line 41).
 4. TECH STACK — open-source, cloud/HW-agnostic, replacing ~$30M/yr Palantir:
    K3s/RK2, Flux CD, Prometheus, Keycloak, Harbor (lines 29,101); $30M (line 113);
@@ -591,103 +591,107 @@ The meta-dependency: all six are blocked on the same missing thing — a post-mi
 
 ===
 
-# Output/Deliverable Candidates (Competition Period)
+# Stand-up: TAK Beach Gap - Weds, June 3 [gemini-transcript]
 
-> Sourced from: `pre-sow-tak-competitions.md`, `tak-challenge_n_current-condition.md`, `tak-repo-info.md`. Each item uses the source's own wording. For inquired items, sourced facts and technical judgments (not in the docs) are tagged separately — no fabrication.
+**Summary**
+Meeting notes detailed automated gardening progress and prototype architecture designs alongside team updates and engineering milestones.
 
-### Plugins
+**Automated Garden and Design**
+The team discussed automated gardening features involving scheduled watering systems. Design efforts are currently focused on refining prototype architecture, libraries, and plug-in integration for mission visibility.
 
-1. **Fully functional WinTAK plugin** — Built in a different .NET WPF framework, working through its technical limitations. — `pre-sow-tak-competitions.md:398`
+**Prototype and AI Updates**
+The Tackling prototype reached near-production status for future demonstrations. Attack Manager AI integration now supports multiple model providers and local large language models via Ollama.
 
-2. **Single AI SDK** — Performed inference and complicated labeling algorithms with an ONNX YOLO computer vision model; the same "Building Detection SDK" feeds both the WinTAK plugin and the ATAK plugin. — `pre-sow-tak-competitions.md:399`, `:44-47`
-   - **On the question (why a "single" SDK is a thing / what it enables):**
-   - *Sourced:* The two plugins live in completely different frameworks — ATAK on Android, WinTAK on .NET WPF (`:398`). The SDK feeds both (`:47`). ONNX runtime was specifically chosen because it runs on *both* Windows and Android edge devices (`:33`). The "train once, build once" framing says security patches get fixed once and deployed everywhere (`:40-41`), and the testing slide claims users get "the same reliable experience regardless of the device" (`:56`).
-   - *Technical judgment (not in docs):* The contrast — "do AI without an SDK" — would mean embedding the inference + labeling logic directly inside each plugin. Across two unrelated frameworks (Android/Java vs .NET WPF) that means writing it twice, where the two copies inevitably drift and behave differently. A single SDK is feasible *because* ONNX is cross-platform: one model artifact + one runtime works on both. The SDK is the seam that makes one body of AI logic serve both plugins.
-   - *Outcome it enables:* Consistent detection/labeling behavior across ATAK and WinTAK, one place to patch vulnerabilities, one place to swap models — primarily an engineering/maintainability + cross-platform-consistency enabler, not a user-facing feature.
+**Team and Operational Updates**
+The team welcomed new engineering support and finalized administrative transitions. A major decision was made to prioritize immediate pairing sessions over previously scheduled interview preparation activities.
 
-### AI SDK features / enhancements
+### Next steps
 
-3. **Advanced labeling algorithm** — Numbers buildings the way a human would; naturally adapts to complex, irregular layouts. — `pre-sow-tak-competitions.md:159`
-   - **On the question (why "advanced," and what evidence defines "complex/irregular"):**
-   - *Sourced — what "complex/irregular" means:* Buildings normally organize in logical sequences/rows with a top-left origin (`:177-178`), but "roads, rivers, and natural or man-made gaps influence label order" and "circular or irregular patterns require judgment and 'artful' adjustment" (`:186-187`).
-   - *Sourced — evidence it works on those:* Validated on two real AOIs of different size/layout — Ft. Magsaysay, Philippines (30 buildings) and Razish Village, California (68 buildings) — reaching ~90% out-of-box acceptability with only 9-12% of labels needing edits (`:192-202`); SME Hayes called the default "acceptable and valuable" for mission use as-is (`:197`).
-   - *Technical judgment (not in docs):* "Advanced" is relative to naive sequential numbering (blind left-to-right). This algorithm mimics human ordering and reacts to layout features rather than ignoring them — that's the differentiator.
-   - *Outcome it enables:* A labeling order that's "instantly intuitive," reducing cognitive load and corrective actions (`:159`).
+[Zachary, Jonathan] Discuss Design Systems: Coordinate on the design system implementation. Meet to discuss the implementation strategy together.
 
-4. **Additional labeling features** — Easy strategies for common scenarios like row- and grid-based schemes; operator selects the best scheme. — `pre-sow-tak-competitions.md:320`
+[Zachary] Pair Prototype Expansion: Reach out to Thomas to collaborate on expanding the prototype into TAC X. Coordinate effectively to achieve the best results.
 
-5. **Multi-Model Runtimes** — SDK engineered to allow different AI models; configurable to match mission requirements and device, with support to quickly add new model runtimes. — `pre-sow-tak-competitions.md:161`, `:322`
-   - **On the question (benefit, the opposite, eng vs end-user):**
-   - *Sourced:* "Ideal user workflow needs multi-model support… SDK configurable to match mission requirements and device" (`:322`); operators "select the balance of speed and accuracy to match their exact mission requirements and device" (`:161`). Slide 12 names the drivers: the S20 needs small/fast models at the cost of detection performance; general-purpose models compromise too much, so specialized models are needed; a plug-and-play architecture allows continuous replacement of fungible models (`:262-268`). Slide 16 shows the tradeoff concretely — YOLO is fast (~2s on S20) but misses small objects; YOLT catches small objects but is slow (40s+ on S20) (`:308-310`).
-   - *Technical judgment (not in docs):* The opposite is a single hard-coded model baked into the plugin — one fixed speed/accuracy tradeoff for every device and mission. That forces a bad compromise: a fast S20-friendly model underperforms on capable hardware, while an accurate heavy model is unusably slow on the S20.
-   - *Eng vs end-user:* Both. Engineers can add/deploy new runtimes without rebuilding the plugin; the end user (or mission config) gets to pick speed-vs-accuracy for their device/mission.
-   - *Outcome it enables:* The plugin stays useful across a device range and mission types (fast "hasty" vs. accurate "deliberate") instead of being locked to one tradeoff.
+[Andrew] Record Prototype Demo: Capture a video demonstration of the prototype. Share current progress and functionality with the team.
+[Andrew] Discuss Taffan Approach: Collaborate with Jared and Sean to explore how the Taffan approach can support SOAR. Identify opportunities to improve existing workflows.
 
-6. **Fungible AI model upgrades** — Swapped in latest trained model ONNX files, demonstrating CT/CD (Continuous Train/Continuous Deploy) value. — `pre-sow-tak-competitions.md:324`
-   - **On the question (same as Multi-Model Runtimes):**
-   - *Sourced:* "Swapped in latest trained model ONNX files, demonstrating CT/CD value" (`:324`); architecture supports "continuous integration and replacement of fungible models, ensuring ongoing improvement" (`:268`).
-   - *Distinction from #5 (judgment):* Multi-Model Runtimes = run *different kinds* of models (YOLO vs YOLT); fungible upgrades = drop in a *newer trained version* as a swappable ONNX artifact.
-   - *Technical judgment (not in docs):* The opposite is a statically embedded model — upgrading it means rebuilding and redeploying the whole plugin through TAK Forge (itself a hard, gated path). Fungible = ship just the ONNX file.
-   - *Eng vs end-user:* Primarily an engineering/ops enabler that benefits users downstream — it shrinks the cycle from "model improved" to "operator has the better model" (connects to Task 3's repeatable-pipeline outcome in `tak-challenge_n_current-condition.md:86`). **Caveat:** real-world deployment still has to clear TAK Forge.
+[Sean] Cancel Interview Prep: Notify relevant parties to cancel the scheduled interview preparation session. Coordinate rescheduling for a future date if necessary.
 
-7. **Image Format Improvements** — Created an RGB bitmap input for the model, resulting in better detections. — `pre-sow-tak-competitions.md:326`
-   - **On the question (RGB input / how "better" was measured):**
-   - *Sourced:* One line only — "Create a RGB bitmap input for model, resulting in better detections" (`:326`). **No metric, magnitude, or measurement method is given in any of the three files.**
-   - *Technical judgment (not in docs):* YOLO-family models are trained on 3-channel RGB imagery, so feeding an input that matches that expected channel format (vs. a grayscale/mismatched encoding) would plausibly improve detection — but the docs don't quantify or describe how this was validated.
-   - *Read:* This looks like an engineering pre-processing call-out, not a measured user-facing feature. Low-confidence candidate pending evidence.
+[Thomas] Add To Slack: Provide Andrew Ferguson with access to the appropriate project Slack channels. Enable him to review previous discussions for extra context.
 
-8. **Multi-inference strategy** — Implemented a multi-inference strategy based on user-defined sections to overcome YOLO's limitations within the user workflow. — `pre-sow-tak-competitions.md:314-317`
 
-9. **Upgraded AI model (YOLT integration)** — Integrated state-of-the-art detection model YOLT, resulting in a 670% improvement in building detection recall. — `pre-sow-tak-competitions.md:157`, `:84`
-   - **On the question (670% compared to what / prior baseline):**
-   - *Sourced:* "Integrating the YOLT model resulted in a significant 670% improvement in AI building detection recall" (`:84`), restated as "670% improvement in our model's recall" (`:93`). **The prior model and the absolute before/after recall numbers are NOT stated** in any of the three files.
-   - *Supported inference (judgment, partially sourced):* The baseline was almost certainly the original YOLO model (the SDK's stated CV model, `:33`/`:399`). Slide 16 supports the mechanism: YOLO scores "No" on small objects while YOLT scores "Yes" (`:309-310`) — so the recall jump is plausibly driven by catching small buildings YOLO missed. The exact comparison base isn't spelled out, so no number is asserted.
-   - *What recall means + outcome:* Recall = of all real buildings, how many the model finds. A large recall gain = far fewer missed buildings up front ("Missing a building is missing a marker," ranked Critical, `:297`) → less manual adding by the operator.
-   - *Don't conflate:* This Oct 10 recall figure is a different metric from the Oct 24 experiment's "55% accuracy rate" (`:224`). They measure different things at different dates.
+### Details
 
-10. **ONNX runtime AI engine** — Chosen after outperforming TensorFlow Lite and PyTorch for Windows and Android edge devices. — `pre-sow-tak-competitions.md:33`
+**Design and Prototype Architecture:** Jonathan explained that the design team has been prioritizing pain points and refining problem statements to establish a foundation for future work. 
+- They are determining how to implement design within the architecture established by Kevan, which includes libraries, a user interface, a software development kit, and plug-ins. 
+- Thomas is focusing on creating data models to facilitate shared mission visibility between devices. 
+- Mary Pollin noted that the team will continue to huddle to define the chores necessary to realize the prototype, while Zachary will pair with Jonathan to address design systems and expand the prototype into TAC X.
 
-### Plugin capabilities
+**Zachary's Upcoming Leave:** Zachary announced plans to take time off before Friday to renew a driver's license in West Virginia. Additionally, Zachary will be working remotely from the mountains during the following week.
 
-11. **Automatic renumbering** — System automatically renumbers/updates marker sequences when changes are made; renumbering adjustable via a swipe gesture to optimize sequence for mission flow. — `pre-sow-tak-competitions.md:386-387`
-    - **On the question (what it enables):**
-    - *Sourced — the pain it targets:* "Labeling accuracy and sequence correction is the worst UX… Fixing numbering sequences after hundreds of labels are placed is described as extremely frustrating and time-consuming" (`:246-250`); 9-12% of labels need manual correction (`:247`). The operator is the final authority who can review/correct/add/remove markers (`:385`).
-    - *Technical judgment (not in docs):* Without auto-renumber, removing or inserting one building mid-sequence forces the operator to manually renumber everything after it. Automatic renumbering keeps the sequence consistent on every edit.
-    - *Outcome it enables:* Directly attacks the single worst-described UX pain — it removes the "extremely frustrating" manual resequencing while the operator still exercises final authority. Strong evidence-based link to a stated pain point.
+**Andrew Ferguson's Onboarding:** Andrew Ferguson introduced themself as a software engineer joining the team from the MEOGMI team for the next few weeks until a contract is finalized. Andrew Ferguson noted that they will not be fully focused on work until Monday due to being out on Friday and stated that they have already reviewed the prototype shared by Kevin.
 
-12. **Section parameter control** — Users control section name, color, and numbering to match team conventions. — `pre-sow-tak-competitions.md:391`
-13. **Legend generation** — Plugin generates a legend with operation title, location (MGRS), and version. — `pre-sow-tak-competitions.md:392`
-14. **KMZ export** — Finalized products exportable as KMZ files, supporting data sharing and interoperability with other mission planning software. — `pre-sow-tak-competitions.md:393`
+**Andrew's Prototype Updates:** Andrew reported that the Tackling prototype is in a near-production state and they plan to record a demo for the team. Andrew is pairing with Jerod Culpepper and Sean to explore how the Tackling approach might support Security Orchestration, Automation, and Response. Additionally, Andrew will leave at approximately 3:00 PM to attend a cyber security event in Tampa.
+Jerod Culpepper's Daily Tasks: Jerod Culpepper stated that they intend to assist with Alligate at some point during the day.
 
-### Pipeline, library & security artifacts
+**Attack Manager AI Integration:** Sean completed a significant portion of the AI integration for Attack Manager, which allows users to select from various model providers or run a local large language model using Ollama. Sean also refined the rule-based chatbot to improve user experience for Q&A-style interactions. Regarding team collaboration, Sean is canceling the scheduled interview prep with Andrew Ferguson to focus on pairing to explore how to incorporate ideas from the 160th unit into Attack Manager.
 
-15. **AI Model Training Pipeline** — GitLab model repo → AWS SageMaker (load training imagery via CVAT, epoch training) → generate artifacts (model, weights, results) to S3. — `pre-sow-tak-competitions.md:270-292`
-16. **"train once, build once" AI library** — Centralized library so security patches are fixed once and deployed everywhere. — `pre-sow-tak-competitions.md:40-41`
-17. **AI Model Training RMF artifacts** — AI Policy Guide, NIST Control Mapping, Secure AI DevSecOps Playbook, AI Security Checklist. — `pre-sow-tak-competitions.md:333-337`
+Closing Housekeeping:  Thomas committed to adding Andrew Ferguson to the relevant Slack channels to provide additional context for the project.
 
-### Repositories — `tak-repo-info.md`
+===
 
-18. **atak-cv-model-servers** — Computer vision model server for building segmentation using a trained YOLOv8 model, designed for ATAK/WinTAK GRG plugin integration; batch processing, CSV/zip output. — `tak-repo-info.md:1-60`
-19. **GRG AI MODEL repo** — Trains and evaluates three model implementations (YOLO, YOLT, UNET) on AWS SageMaker with automated CVAT data pulling and S3 artifact storage. — `tak-repo-info.md:64-134`
-20. **Security Policy Project for rise8-grg-ai-model** — Repository storing security policies (e.g., enforcing DAST in every pipeline) with protected default branch. — `tak-repo-info.md:136-174`
+# Continue Issue Drafting: Candidates 5 and 6 (added June 3, 2026)
 
----
+## TLDR Summary
 
-# Output/Deliverable Candidates (TAK Bridge Period)
+WHAT THIS IS: A hand-off to continue turning Kevan's 5/29 prototype shareout into GitLab issues, using the tak-issuedrafting skill. The candidates were translated from Kevan's Slack threads (tak-eng-translate) and live in `gap-tak-may_25-29.md`, in the "Candidate Chores, engineers' read" section (starts at line 903, runs to about line 1060).
 
-> Sourced from: `tak-final-demo.md`, `db-wk7.md`, `tak-daily-may_11-15.md`. Each item uses the source's own wording — no fabrication. Running list after Round 2 review cuts.
+TRAP TO AVOID: that may_25-29 section is the current 6-candidate set. It is NOT the older 8-candidate "Candidate Engineering Chores" list earlier in THIS June file (lines 301 to 512). Use the may_25-29 6-candidate set.
 
-## Task 1 [4.3.1] — SDK Update to v5.6
+DONE SO FAR (drafted and now in Abel's GitLab backlog):
+- Candidate 1: Chore. Extract the Arclight SDK (`:arclight-sdk`) out of the ATAK/Android runtime.
+- Candidate 2: Chore. Extract Mission-Core (`:mission-core`) out of Team Presence, away from ATAK rendering.
+- Candidate 3: Spike. Investigate the data models needed for mission data shared between field devices.
+- Candidate 4: split. The parser-relocation half was drafted as a Chore (move the deterministic command parser into Mission-Core). The optional LLM adapter half is parked as a future Spike candidate (see may_25-29 line 1012).
 
-1. **`pads-fast` publish service** — Rise8-built publish service replaces the upstream PADS sidecar in the release pipeline; publish time for all five supported ATAK builds cut from 50–60 minutes to under 4 minutes, zero manual interventions since April 22. — `tak-final-demo.md:14`
+STILL TO DO (this hand-off): draft issues for Candidate 5 and Candidate 6.
+- Candidate 5, Sensor integration / multi-sensor data fusion: captured as a Consideration, currently BLOCKED. Kevan named it once as a future "area for improvement" (may_25-29 L735). Kevan did NOT define "sensors". The blocker, per the team, is that we do not know what hardware field teams carry, which is PM-side discovery tied to the stakeholder map and user interviews. Likely NOT a build chore. Decide with Abel: a discovery Spike, or leave it a Consideration until discovery lands.
+- Candidate 6, "API route hardening" / security: captured as a Question for the team, NOT a clear chore. Kevan describes the security model (peer admission, signing, per-recipient encryption) as ALREADY BUILT (Thread #3, may_25-29 L877 to 898). "API route hardening" is Thomas's phrase; Kevan asked for no hardening. Clarify with Thomas what gap exists beyond what is built before it becomes anything. Likely a Question or a small security-review Spike, not a build chore.
 
-## Task 3 [4.3.3] — AI/ML Model Improvements
+CONVENTIONS LOCKED THIS SESSION (carry them forward):
+- Never use the em dash character, anywhere. Use commas, periods, parentheses, or "e.g."
+- Use the real name, not a description. It is "Arclight SDK" / `:arclight-sdk`, not "generic sync api". It is "Mission-Core" / `:mission-core`, not "mission logic".
+- Use "track" for a place in the code where a chore cuts. Do not use "seam".
+- Terms: Multiplatform (general), KMP (logic only), CMP (logic and UI). Kevan's literal ask was CMP ("Kotlin MultiPlat Compose", L596). Use "CMP" only where it is actually what was raised.
+- Thomas and Zach are the team's actual engineers. Their read of Kevan is trusted expert interpretation, not suspect inference. Kevan's words are the citation anchor for intent.
+- Chore shape Abel approved: WHAT and WHY firm, then "How we'll confirm" in witnessable terms (not a prescriptive spec), then "To align on with the engineers" for the decisions they own. Do not tell engineers how to do the work.
+- Spike shape Abel approved: collapse "What We Are Doing" and "Why" into one research-leaning section. Leave the deliverable form to the engineers (a doc, sketches, a demo, their call).
+- Workflow: one clarifying question at a time, propose the title only and stop for confirm, then ask "ready to draft" before the full draft.
 
-2. **124% building detection accuracy improvement** — Quantified at the April 22 sprint demo, validated through side-by-side comparison with SOCOM. — `tak-final-demo.md:34`, `:45`
-3. **Detection accuracy and reliability improvements** — Building detection now performs consistently regardless of zoom level, and repeated detection runs produce stable results. — `tak-final-demo.md:34`, `:43-44`
-4. **Imagery pre-caching feature** — Plugin pre-caches imagery before building detection runs, so operators can assess conditions before committing to detection. — `tak-final-demo.md:35`, `:52`
-5. **Operator imagery status messaging** — Status notification based on result: full success, partial completion, or fetch failure; includes a "Tile Capture Failed" warning popup when capture fails. — `tak-final-demo.md:35`, `:53-54`
-6. **Plugin behavior and operator-experience fixes** — Seven defects resolved: detection no longer triggers before map load; background threads shut down cleanly (memory leak); no detection on backup imagery when tile capture fails; delete-section confirmation shows section name correctly; closed grids no longer reappear on map tap; building labels clear when a GRG is closed; labels outside named sections clear on save/close. — `tak-final-demo.md:37`, `:64-67`
+## Hand-off Prompt (paste into a new context window)
+
+You are assisting Abel (Product Manager, Rise 8) on the SOCOM TAK project during the OTA gap period. We are using the tak-issuedrafting skill to turn candidate engineering items into GitLab issues. I am a PM, not an engineer. Translate engineering detail into plain language and product implications. Do not put me in the engineer's seat: open engineering questions are things I carry TO the team, not decisions I owe you.
+
+Source of the candidates: TAK-ALL/r8-internal/Daily-TAK-notes/gap-period/gap-tak-may_25-29.md, the "Candidate Chores, engineers' read" section, starting at line 903 (runs to about line 1060). This is the current 6-candidate set. Do not confuse it with the older 8-candidate list in gap-tak-june_1-5.md (lines 301 to 512).
+
+Already drafted and in GitLab: Candidates 1 and 2 (Chores), 3 (Spike), and 4 (Chore for the parser-relocation half; the LLM-adapter half is parked as a future Spike).
+
+Your task: walk me through Candidate 5, then Candidate 6, one at a time. For each: determine the artifact type with me first (it may not be a build chore), then propose the title only and stop, then draft only after I confirm.
+
+Candidate 5 (Sensor integration / multi-sensor data fusion): a Consideration, currently blocked. Kevan named it once as a future "area for improvement" (L735). He did not define "sensors". The blocker is that we do not know what hardware field teams carry, which is PM-side discovery. Help me decide if this is a discovery Spike or stays a Consideration.
+
+Candidate 6 ("API route hardening" / security): a Question for the team, not a clear chore. Kevan describes the security model as already built (Thread #3, lines 877 to 898). "API route hardening" is Thomas's phrase, not Kevan's, and Kevan asked for no hardening. Help me frame the question to take to Thomas: what gap exists beyond what is already built. Likely a Question or a small security-review Spike.
+
+Conventions to follow:
+- Never use the em dash character, anywhere. Use commas, periods, parentheses, or "e.g."
+- Use the real name, not a description (for example "Arclight SDK" / `:arclight-sdk`, not "generic sync api"; "Mission-Core" / `:mission-core`, not "mission logic").
+- Use "track" for a place in the code where a chore cuts, not "seam".
+- Terms: Multiplatform (general), KMP (logic only), CMP (logic and UI). Use "CMP" only where it was actually raised (Kevan's L596).
+- Thomas and Zach are the team's actual engineers; their read of Kevan is trusted, not suspect inference. Kevan's words are the citation anchor.
+- Chore shape: WHAT and WHY firm, then "How we'll confirm" in witnessable terms (not a spec), then "To align on with the engineers". Never tell engineers how to do the work.
+- Spike shape: collapse What and Why into one research-leaning section; leave the deliverable form to the engineers.
+- Workflow: one clarifying question at a time, propose the title only and stop, then ask "ready to draft" before the full draft.
+
+===
 
 
 
