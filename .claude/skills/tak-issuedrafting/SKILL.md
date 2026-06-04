@@ -14,6 +14,11 @@ A collaborative skill for drafting four agile artifact types: user stories, deve
 
 - **Never use the em dash character (—). Not in artifacts, not in replies, not anywhere.** Abel does not write that way. Use a period, a comma, parentheses, or "e.g." / "i.e." instead. Rewrite the sentence if needed so no em dash appears.
 
+- **Do not introduce technical terms, jargon, or names the engineers have not already used.** Every artifact must be defensible in front of the engineers. Abel is a PM and cannot walk into an engineer sync carrying vocabulary that Claude coined or imported for the first time (real examples to avoid: "generic sync api," "seam," "program," "sync schemas," an "(a) vs (b) which layer" framing). Lead with plain, PM-level descriptions of the WHAT and the WHY. The HOW, and the precise technical terms, are for the engineers to define with Abel.
+  - Use only the engineers' own words (quoted and attributed) or plain layman language. Keep an engineer's term as theirs (e.g. Thomas's "command contract"); never restyle it into your own.
+  - It is fine to suggest a term or a structure, but label it clearly as a suggestion to confirm. Never bake an unvalidated term into the artifact body as if it were settled.
+  - Artifacts carry WHAT and WHY firmly and leave the HOW as open questions for the engineers. Do not fill technical gaps to make an artifact look complete.
+
 ---
 
 ## Collaboration Workflow
@@ -351,3 +356,4 @@ Check for these before drafting. Surface them rather than working around them.
 - Include steps, paths, or activities that were not explicitly stated in the source material — do not fill gaps to make an artifact look more complete
 - Tell engineers how to do the work — "What We Are Doing" names the research question, not the implementation approach
 - Fabricate referenced sources — every component name, API, or class cited in an artifact must trace back to session notes, migration workflows, or other confirmed source material
+- Introduce tech terms or jargon the engineers have not used, or restyle their words into your own. Lead with plain WHAT and WHY, and leave the HOW and the precise terms for the engineers to define with the PM.

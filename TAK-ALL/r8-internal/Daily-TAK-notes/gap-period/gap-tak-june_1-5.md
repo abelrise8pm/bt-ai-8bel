@@ -639,57 +639,86 @@ Closing Housekeeping:  Thomas committed to adding Andrew Ferguson to the relevan
 
 ===
 
-# Continue Issue Drafting: Candidates 5 and 6 (added June 3, 2026)
+# Session Recap and Hand-off: Candidates to GitLab Issues (updated June 4, 2026)
 
-## TLDR Summary
+## What happened this session (the arc)
+- Reviewed the engineers' raw notes (Thomas and Zach's "5 to 6 things") and Kevan's 5/29 Slack threads (`gap-tak-may_25-29.md`, lines 352 to 901).
+- Translated them into a 6-candidate set with tak-eng-translate. It lives in `gap-tak-may_25-29.md`, the "Candidate Chores, engineers' read" section (about lines 903 to 1060).
+- Drafted issues from the candidates with tak-issuedrafting and put them in GitLab.
+- Refactored the tak-issuedrafting skill twice: an em-dash rule, and a no-injected-jargon rule (lead with plain WHAT and WHY, leave the HOW and the precise terms to the engineers).
+- Held a pre-IPM that was eye-opening and reshaped how we should draft (see Learnings).
 
-WHAT THIS IS: A hand-off to continue turning Kevan's 5/29 prototype shareout into GitLab issues, using the tak-issuedrafting skill. The candidates were translated from Kevan's Slack threads (tak-eng-translate) and live in `gap-tak-may_25-29.md`, in the "Candidate Chores, engineers' read" section (starts at line 903, runs to about line 1060).
+## Read this first: the one trap
+There are TWO candidate lists in these notes. Use only one.
+- USE: the 6-candidate set in `gap-tak-may_25-29.md` (about lines 903 to 1060). This is what maps to GitLab.
+- DO NOT USE: the older 8-candidate "Candidate Engineering Chores" list in THIS file (lines 301 to 512). It is an earlier synthesis, now superseded.
 
-TRAP TO AVOID: that may_25-29 section is the current 6-candidate set. It is NOT the older 8-candidate "Candidate Engineering Chores" list earlier in THIS June file (lines 301 to 512). Use the may_25-29 6-candidate set.
+## Authoritative crosswalk (engineer raw item to candidate to GitLab)
 
-DONE SO FAR (drafted and now in Abel's GitLab backlog):
-- Candidate 1: Chore. Extract the Arclight SDK (`:arclight-sdk`) out of the ATAK/Android runtime.
-- Candidate 2: Chore. Extract Mission-Core (`:mission-core`) out of Team Presence, away from ATAK rendering.
-- Candidate 3: Spike. Investigate the data models needed for mission data shared between field devices.
-- Candidate 4: split. The parser-relocation half was drafted as a Chore (move the deterministic command parser into Mission-Core). The optional LLM adapter half is parked as a future Spike candidate (see may_25-29 line 1012).
+| Engineer raw item | Candidate (may_25-29) | GitLab | Status |
+|---|---|---|---|
+| 1. Arclight SDK (Mases, network mesh) | Candidate 1 | #11 | Drafted. Cleaned version ready to paste (adds Mases notes + Ditto decision). Was #7, deleted, now #11. |
+| 2. Multiplatform, mission stuff into Mission-Core (Zach) | Candidate 2 | none (deleted) | Zach reframed it as a CMP-vs-KMP viability spike. Needs recreating in GitLab as that spike. |
+| 3. "command contract" data models | Candidate 3 | #9 (Spike) | Drafted, cleaned of jargon. |
+| 4. LLM adapter / command parser | Candidate 4 | #10 (Chore) | Parser half is #10. LLM half parked as a future spike. |
+| 5. Sensor integration / data fusion | Candidate 5 | none | Not drafted. Consideration, blocked on discovery. |
+| 6. "API route hardening" / security | Candidate 6 | none | Not drafted. Question for the team; security already built per Kevan. |
 
-STILL TO DO (this hand-off): draft issues for Candidate 5 and Candidate 6.
-- Candidate 5, Sensor integration / multi-sensor data fusion: captured as a Consideration, currently BLOCKED. Kevan named it once as a future "area for improvement" (may_25-29 L735). Kevan did NOT define "sensors". The blocker, per the team, is that we do not know what hardware field teams carry, which is PM-side discovery tied to the stakeholder map and user interviews. Likely NOT a build chore. Decide with Abel: a discovery Spike, or leave it a Consideration until discovery lands.
-- Candidate 6, "API route hardening" / security: captured as a Question for the team, NOT a clear chore. Kevan describes the security model (peer admission, signing, per-recipient encryption) as ALREADY BUILT (Thread #3, may_25-29 L877 to 898). "API route hardening" is Thomas's phrase; Kevan asked for no hardening. Clarify with Thomas what gap exists beyond what is built before it becomes anything. Likely a Question or a small security-review Spike, not a build chore.
+## New ground truth from the engineer conversations
+- **Mases / Arclight (#11):** Mases may start next week. His raw notes, to confirm: move all the business logic out of the individual platforms, shared UI and less code, ideally avoid changing business logic separately across ATAK and the SDK. This is Kevan's suggestion and direction, not a task Kevan assigned.
+- **Zach / Mission-Core (Candidate 2):** Zach's own first step is a spike, in his words: "CMP viability vs KMP (ATAK, WebTAK, TAK-X)." He is building a thin "marker placer" to baseline how the business logic shares across the 3 platforms. MVP is ATAK and WebTAK dropping markers off the same code. Then bring TAK-X to parity, validate, then move to bigger features (CoT messages, GRG). Validation, his words: Zach creates a "CMP/KMP Prototype" folder in the GitLab repo, Thomas and Andrew F pull it down and test it, since there is no client environment. So Candidate 2's real ticket is this spike in Zach's words, not the abstract "extract Mission-Core" chore first drafted.
+- **Ditto:** decided NOT to use it. Kevan confirmed it costs about $2 million, so we are building our own. The earlier Ditto buy-versus-build question is closed.
 
-CONVENTIONS LOCKED THIS SESSION (carry them forward):
+## Still to do
+- Recreate Candidate 2 in GitLab as Zach's CMP-vs-KMP viability spike (his title, his marker-placer MVP, his validation method). The old ticket was deleted.
+- Update #11 with the cleaned version (Mases notes attributed to him, Ditto as a closed decision).
+- Draft Candidate 5 (sensor integration) and Candidate 6 (API route hardening / security). Both are likely NOT build chores. Determine the type with Abel first.
+
+## Learnings from the pre-IPM (these reshape how we draft)
+- We were over-building. Full, confident, citation-backed chores got drafted from thin engineer notes, so they read as more settled and more Claude's than the input warranted. Example: from about 20 words of Zach's note, a complete "extract Mission-Core" chore was produced. Zach's actual first step turned out to be a narrow CMP-vs-KMP viability spike.
+- Proposed next refactor of tak-issuedrafting (NOT built yet): a pre-drafting step where Abel sets two things before any drafting, and those choices set how Claude collaborates and how much it drafts.
+  1. Abel's PM confidence on the issue (knowledgeable, intermediate, limited).
+  2. Abel's gut on the type (technical chore or spike, bug, user story, general spike).
+  Captured here so it is not lost.
+
+## Conventions locked this session (carry forward)
 - Never use the em dash character, anywhere. Use commas, periods, parentheses, or "e.g."
-- Use the real name, not a description. It is "Arclight SDK" / `:arclight-sdk`, not "generic sync api". It is "Mission-Core" / `:mission-core`, not "mission logic".
-- Use "track" for a place in the code where a chore cuts. Do not use "seam".
-- Terms: Multiplatform (general), KMP (logic only), CMP (logic and UI). Kevan's literal ask was CMP ("Kotlin MultiPlat Compose", L596). Use "CMP" only where it is actually what was raised.
-- Thomas and Zach are the team's actual engineers. Their read of Kevan is trusted expert interpretation, not suspect inference. Kevan's words are the citation anchor for intent.
-- Chore shape Abel approved: WHAT and WHY firm, then "How we'll confirm" in witnessable terms (not a prescriptive spec), then "To align on with the engineers" for the decisions they own. Do not tell engineers how to do the work.
-- Spike shape Abel approved: collapse "What We Are Doing" and "Why" into one research-leaning section. Leave the deliverable form to the engineers (a doc, sketches, a demo, their call).
-- Workflow: one clarifying question at a time, propose the title only and stop for confirm, then ask "ready to draft" before the full draft.
+- Use the real name, not a description. "Arclight SDK", not "generic sync api". "Mission-Core", not "mission logic".
+- Do not introduce tech terms the engineers have not used. Lead with plain WHAT and WHY. Leave the HOW and the precise terms for the engineers to define. Keep an engineer's own term as theirs (e.g. Thomas's "command contract", Zach's "marker placer").
+- Use "track" for a place in the code where a chore cuts, not "seam".
+- Terms: Multiplatform (general), KMP (logic only), CMP (logic and UI). Use "CMP" only where it was actually raised.
+- Thomas, Zach, and Mases are the team's engineers. Their read is trusted. Kevan's words are the citation anchor for intent.
+- Chore shape: WHAT and WHY firm, then "How we'll confirm" in witnessable terms, then "To align on with the engineers". Never tell engineers how to do the work.
+- Spike shape: collapse What and Why into one research-leaning section, leave the deliverable form to the engineers.
+- Match the drafting depth to how solid the input is. Do not draft a full, confident ticket from a thin note.
+- Workflow: one clarifying question at a time, propose the title only and stop, then ask "ready to draft" before the full draft.
 
 ## Hand-off Prompt (paste into a new context window)
 
-You are assisting Abel (Product Manager, Rise 8) on the SOCOM TAK project during the OTA gap period. We are using the tak-issuedrafting skill to turn candidate engineering items into GitLab issues. I am a PM, not an engineer. Translate engineering detail into plain language and product implications. Do not put me in the engineer's seat: open engineering questions are things I carry TO the team, not decisions I owe you.
+You are assisting Abel (Product Manager, Rise 8) on the SOCOM TAK project during the OTA gap period. We use the tak-issuedrafting skill to turn candidate engineering items into GitLab issues. I am a PM, not an engineer. Translate engineering detail into plain language. Do not put me in the engineer's seat: open engineering questions are things I carry TO the team, not decisions I owe you.
 
-Source of the candidates: TAK-ALL/r8-internal/Daily-TAK-notes/gap-period/gap-tak-may_25-29.md, the "Candidate Chores, engineers' read" section, starting at line 903 (runs to about line 1060). This is the current 6-candidate set. Do not confuse it with the older 8-candidate list in gap-tak-june_1-5.md (lines 301 to 512).
+Source of the candidates: TAK-ALL/r8-internal/Daily-TAK-notes/gap-period/gap-tak-may_25-29.md, the "Candidate Chores, engineers' read" section, about lines 903 to 1060. This is the 6-candidate set. Do not use the older 8-candidate list in gap-tak-june_1-5.md (lines 301 to 512).
 
-Already drafted and in GitLab: Candidates 1 and 2 (Chores), 3 (Spike), and 4 (Chore for the parser-relocation half; the LLM-adapter half is parked as a future Spike).
+State of the work:
+- GitLab #11 = Arclight SDK extraction (Candidate 1, engineer item 1, Mases). Cleaned version pending paste.
+- GitLab #10 = command parser into Mission-Core (Candidate 4 parser half).
+- GitLab #9 = data models spike, "command contract" (Candidate 3).
+- Candidate 2 (Mission-Core, engineer item 2, Zach) has NO ticket. Zach reframed it as a CMP-vs-KMP viability spike (a "marker placer" across ATAK, WebTAK, TAK-X). Recreate it in GitLab in his words.
+- Candidate 5 (sensor integration) and Candidate 6 (API route hardening) are not drafted.
+- Ditto: decided against, about $2 million, building our own.
 
-Your task: walk me through Candidate 5, then Candidate 6, one at a time. For each: determine the artifact type with me first (it may not be a build chore), then propose the title only and stop, then draft only after I confirm.
-
-Candidate 5 (Sensor integration / multi-sensor data fusion): a Consideration, currently blocked. Kevan named it once as a future "area for improvement" (L735). He did not define "sensors". The blocker is that we do not know what hardware field teams carry, which is PM-side discovery. Help me decide if this is a discovery Spike or stays a Consideration.
-
-Candidate 6 ("API route hardening" / security): a Question for the team, not a clear chore. Kevan describes the security model as already built (Thread #3, lines 877 to 898). "API route hardening" is Thomas's phrase, not Kevan's, and Kevan asked for no hardening. Help me frame the question to take to Thomas: what gap exists beyond what is already built. Likely a Question or a small security-review Spike.
+Your task: help me (1) recreate Candidate 2 as Zach's CMP-vs-KMP viability spike, then (2) draft Candidate 5 and Candidate 6, type first. One clarifying question at a time, title only first, then draft after I confirm.
 
 Conventions to follow:
-- Never use the em dash character, anywhere. Use commas, periods, parentheses, or "e.g."
-- Use the real name, not a description (for example "Arclight SDK" / `:arclight-sdk`, not "generic sync api"; "Mission-Core" / `:mission-core`, not "mission logic").
-- Use "track" for a place in the code where a chore cuts, not "seam".
-- Terms: Multiplatform (general), KMP (logic only), CMP (logic and UI). Use "CMP" only where it was actually raised (Kevan's L596).
-- Thomas and Zach are the team's actual engineers; their read of Kevan is trusted, not suspect inference. Kevan's words are the citation anchor.
-- Chore shape: WHAT and WHY firm, then "How we'll confirm" in witnessable terms (not a spec), then "To align on with the engineers". Never tell engineers how to do the work.
-- Spike shape: collapse What and Why into one research-leaning section; leave the deliverable form to the engineers.
-- Workflow: one clarifying question at a time, propose the title only and stop, then ask "ready to draft" before the full draft.
+- Never use the em dash character. Use commas, periods, parentheses, or "e.g."
+- Do not introduce tech terms the engineers have not used. Lead with plain WHAT and WHY; leave the HOW and the precise terms to the engineers. Keep an engineer's own term as theirs.
+- Use the real name, not a description.
+- Terms: Multiplatform (general), KMP (logic only), CMP (logic and UI); use "CMP" only where it was raised.
+- The engineers (Thomas, Zach, Mases) are trusted; Kevan's words are the citation anchor.
+- Chore shape: WHAT and WHY firm, "How we'll confirm" witnessable, "To align on with the engineers". Spike shape: collapse What and Why, leave the deliverable form to the engineers.
+- Match the drafting depth to how solid the input is. Do not draft a full, confident ticket from a thin note.
+### One thing I did not do, because you have not asked yet: actually building that pre-drafting "confidence + gut-type" step into the skill. It is captured as a proposed change only. Want me to take that on next, or leave it for a future session?
+
 
 ===
 
