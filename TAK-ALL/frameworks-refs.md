@@ -96,6 +96,35 @@ Your perception of true does not make it true.
 - Use this category sparingly. If you find yourself putting most assumptions here, revisit the other three categories.
 - Miscellaneous assumptions are still assumptions. Apply all the same rules: no questions, positive framing, one sentence, We believe or I believe.
 
+# OUTCOME LANGUAGE
+## Framework: Josh Seiden (and Jeff Gothelf)
+Source: Josh Seiden, *Outcomes Over Output*; Gothelf and Seiden, *Lean UX*.
+---
+
+### What is an outcome
+
+An outcome is **a change in human behavior that drives business (mission) results**. Not a feature, not a deliverable. The output is the thing we ship; the outcome is the behavior change that output is meant to cause.
+
+### Who does what by how much
+
+Every outcome is read in three parts:
+
+- **Who** = the user or group/segment whose behavior changes.
+- **Does what** = the change in behavior. This is the outcome itself.
+- **By how much** = the key result, the metric we measure by. This is the part that tells us what to measure and how we will know the behavior changed.
+
+Worked example (from `tak-oor.md`, the Model Improvements mission outcome):
+- **Who** = SOF Operators
+- **Does what** = increased their focus on the mission environment
+- **By how much** = the frequency and manual effort to configure/correct GRGs is reduced (e.g. how much less time it takes)
+
+### Norms for working with the TAK outcomes
+
+- The outcomes in `tak-oor.md` are **TARGET** outcomes. We have not drafted their hypothesis yet. Treat them as targets we are aiming at, not validated/settled outcomes.
+- **One target outcome can be informed or measured by more than one output**, sometimes in a different scenario, use case, or workflow. An output touching an existing target outcome does not claim or close it.
+- An output may also surface a **sub-outcome** under a target outcome, or point at a **brand-new outcome**. Naming a sub-outcome or a new outcome is a `tak-outcomes` job, not the assumptions skill's. The assumptions skill flags it; it does not name it.
+- Outcome order: **target (primary) outcome -> sub-outcome(s) -> the output(s) that inform/measure them.** "By how much" lives in the outcome, not the output.
+
 # Problems, Risk and Blockers + COA's Course of Actions
 
 RISK If {Condition or Context} is true, then {consequence}

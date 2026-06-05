@@ -95,3 +95,14 @@
 4. **Imagery pre-caching feature** — Plugin pre-caches imagery before building detection runs, so operators can assess conditions before committing to detection. — `tak-final-demo.md:35`, `:52`
 5. **Operator imagery status messaging** — Status notification based on result: full success, partial completion, or fetch failure; includes a "Tile Capture Failed" warning popup when capture fails. — `tak-final-demo.md:35`, `:53-54`
 6. **Plugin behavior and operator-experience fixes** — Seven defects resolved: detection no longer triggers before map load; background threads shut down cleanly (memory leak); no detection on backup imagery when tile capture fails; delete-section confirmation shows section name correctly; closed grids no longer reappear on map tap; building labels clear when a GRG is closed; labels outside named sections clear on save/close. — `tak-final-demo.md:37`, `:64-67`
+    - **Prioritized by operator-behavior bet (synthesis):** the seven fixes from government testing / operator input (`:38`) grouped by the bet each carries, highest first. Groupings are Claude's read, react and reorder.
+    - **1. Operators get detections worth trusting** (high, trust + mission risk):
+      - No detection on backup imagery when tile capture fails (`:48`). An operator could have built and acted on a GRG made from the *wrong* imagery without knowing. Bet: operators were trusting detections they shouldn't have.
+      - Detection no longer triggers before the map finishes loading (`:46`). Premature runs gave bad or empty results. Bet: those early-failure runs were eroding trust in the plugin's output.
+    - **2. The map shows the true current state** (medium, clarity about what's real):
+      - Closed grids no longer reappear on map tap (`:65`).
+      - Building labels clear when a GRG is closed (`:66`).
+      - Labels outside named sections clear on save and close (`:67`).
+      - Bet: ghost grids and stale labels left operators unsure what state the map was actually in.
+    - **3. Background threads shut down cleanly (memory leak)** (low, hygiene): pure stability, keeps the plugin healthy over a long session (`:47`). No operator would want it as a feature; hard to attach a behavior bet to it.
+    - **Set aside from the prioritization (per Abel):** delete-section confirmation now shows the section name, was "undefined" (`:64`).
