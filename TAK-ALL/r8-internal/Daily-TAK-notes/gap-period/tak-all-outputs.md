@@ -1,4 +1,116 @@
-# Output/Deliverable Candidates (Competition Period)
+
+# *Monday, June 8*
+
+# Output/Deliverable Candidates *UPDATED*
+
+> Categorized list. A category collects delivered outputs regardless of whether they shipped in the Competition or the Bridge period. Each item keeps its source citation and a short description.
+
+## Detection: High Confidence in Delivery
+
+1. **ONNX runtime AI engine.** Chosen after outperforming TensorFlow Lite and PyTorch for Windows and Android edge devices. (`pre-sow-tak-competitions.md:33`)
+2. **256x256 image tiling (pre-processing).** The model performs best on a 256x256 image, so the larger AOI is broken into 256x256 image tiles. (`pre-sow-tak-competitions.md:34`)
+3. **Upgraded AI model.** Competition docs report integrating YOLT for a 670% improvement in building detection recall (`pre-sow-tak-competitions.md:157`, `:84`). **Team update (Jun 9):** the current model is YOLO, not YOLT; the move to YOLO fixed false and double detections. The 670% recall figure is unverified and pending reverification (Zachary). (`gap-tak-june_8-12.md:235-236`, `:285`)
+4. **Multi-inference strategy.** Implemented a multi-inference strategy based on user-defined sections to overcome YOLO's limitations within the user workflow. (`pre-sow-tak-competitions.md:314-317`)
+5. **Multi-Model Runtimes.** SDK engineered to allow different AI models, configurable to match mission requirements and device, with support to quickly add new model runtimes. (`pre-sow-tak-competitions.md:161`, `:322`)
+6. **Fungible AI model upgrades.** Swapped in latest trained model ONNX files, demonstrating CT/CD (Continuous Train/Continuous Deploy) value. (`pre-sow-tak-competitions.md:324`)
+7. **AI Model Training Pipeline.** GitLab model repo to AWS SageMaker (load training imagery via CVAT, epoch training) to artifacts (model, weights, results) in S3. (`pre-sow-tak-competitions.md:270-292`)
+8. **atak-cv-model-servers (repo).** Computer vision model server for building segmentation using a trained YOLOv8 model, designed for ATAK/WinTAK GRG plugin integration; batch processing, CSV/zip output. (`tak-repo-info.md:1-60`)
+9. **GRG AI MODEL repo.** Trains and evaluates three model implementations (YOLO, YOLT, UNET) on AWS SageMaker with automated CVAT data pulling and S3 artifact storage. (`tak-repo-info.md:64-134`)
+10. **Detection accuracy and reliability improvements (Bridge).** Building detection now performs consistently regardless of zoom level, and repeated detection runs produce stable results. (`tak-final-demo.md:34`, `:43-44`)
+11. **124% building detection accuracy improvement (Bridge).** Quantified at the April 22 sprint demo, validated through side-by-side comparison with SOCOM. (`tak-final-demo.md:34`, `:45`)
+
+## Detection: Low Confidence (Needs Verification)
+
+1. **Single AI SDK.** Performed inference AND complicated labeling algorithms with an ONNX YOLO computer vision model; feeds both the WinTAK and ATAK plugins. (`pre-sow-tak-competitions.md:399`, `:44-47`)
+   - *Why low confidence:* the source says it does inference and labeling, so it spans both Detection and Labeling. It is the shared engine above both buckets, not a detection-only output.
+2. **Image Format Improvements (RGB bitmap input).** Created an RGB bitmap input for the model, resulting in better detections. (`pre-sow-tak-competitions.md:326`)
+   - *Why low confidence:* one line only, no metric, magnitude, or measurement method given. It got done, but "better detections" is unvalidated in the docs.
+3. **Imagery pre-caching + operator status messaging (Bridge).** Plugin pre-caches imagery before detection runs; status notification on full success, partial completion, or fetch failure, with a "Tile Capture Failed" popup. (`tak-final-demo.md:35`, `:50-54`)
+   - *Why low confidence:* the demo doc files these under a separate header ("Pre-caching and imagery feedback to operators"), distinct from "Detection / model improvements." They concern the imagery feeding detection, not detection itself.
+4. **Three "detection" bug fixes (Bridge).** Detection no longer triggers before the map finishes loading; background threads shut down cleanly (memory leak); no detection on backup imagery when tile capture fails. (`tak-final-demo.md:46-48`)
+   - *Why low confidence:* listed under "Detection / model improvements" in the demo, but these are fixes to detection behavior, not new detection capability. Your call whether fixes count.
+
+=====
+
+# Main Capabilities/features and outputs delivered according to VSM
+
+> Each block is a step in the current-state GRG workflow (legacy, pre-AI). Under each, the high-level capability and the specific outputs we shipped on top of it, across Competition and Bridge. 🟧 marks Claude's own framing of a name. Blocks 6 to 9 still to come.
+
+### #1. Prepare AOI imagery for GRG creation
+* Main capability/feature: **Imagery handling / preparation**
+* Outputs:
+  1. Imagery pre-caching before detection runs (Bridge)
+  2. Operator status messaging: full success / partial / fetch failure, with a "Tile Capture Failed" popup (Bridge)
+  3. 256x256 image tiling of the AOI (Competition). Note: also a detection pre-processing step, so it overlaps the Detection category.
+* References: Bridge shipped imagery pre-caching before detection runs, plus operator status messaging on full success, partial, or fetch failure (`tak-final-demo.md:35`, `:52-54`); May 6 walkthrough covered imagery improvements across connected and disconnected setups (`db-wk7.md:45`). Competition: the model breaks the AOI into 256x256 tiles (`pre-sow-tak-competitions.md:34`).
+* Confidence Level: **High**
+
+### #2. Define grid parameters over map
+* Main capability/feature: **Grid definition and configuration**
+* Outputs:
+  1. Define a center point over the target building and set mission-area boundaries (Competition, GR8 plugin)
+  2. Skip-ambiguous-letters toggle (B, H, I, 1) to match mission SOPs (Competition)
+  3. Grid configuration via the radial menu: column / row / spacing (Bridge, on 5.4)
+* References: in the GR8 plugin the operator defines a center point over a target building and sets the mission-area boundaries (`pre-sow-tak-competitions.md:376`), with a toggle to skip ambiguous letters like B, H, I, 1 (`:380`). Bridge added grid configuration via the radial menu, column / row / spacing, on 5.4 (`tak-final-demo.md:88`, `:162`). Center-point-vs-spacing behavior is flagged as a feature request, not yet shipped, so it is not listed as an output (`:173`). Note: lines 376 and 380 come from a Gemini-generated summary of the demo video, confirm wording with the team.
+* Confidence Level: **High**
+
+### #3. Add non-building details to map
+* Main capability/feature: **Nothing delivered**
+* Outputs: none
+* References: the VSM has this step done with vanilla TAK tools (`tak-vsm-first_pass.md:253`); the demo confirms sectioning and details use native TAK shape tools, not our build (`pre-sow-tak-competitions.md:378`). Flag for the team to confirm.
+* Confidence Level: n/a (nothing delivered)
+
+### #4. Draw sections on gridded map
+* Main capability/feature: **Section definition/drawing**
+* Outputs:
+  1. Section parameter control: name, color, numbering (the "name, color, numbering" detail is from a Gemini summary, `pre-sow-tak-competitions.md:391`; that users can define sections has team-slide backing, `:259`)
+* References: drawing sections uses native TAK polyline/shape tools, not our build (`pre-sow-tak-competitions.md:378`); "allows users to define sections" (`:259`, team slide); section parameters name, color, numbering (`:391`, Gemini summary). Current state confirms no automation for placing the grid or drawing sections (`tak-challenge_n_current-condition.md:241`).
+* Confidence Level: **High** that section parameter control was shipped; the name/color/numbering detail leans partly on a Gemini summary (flagged), and the drawing action itself is native TAK, not ours.
+
+### #5. Label buildings within grid sections
+> This block has three main capabilities, following the team's own split of AI improvement into the model, the algorithm, and the UI/UX (`tak-challenge_n_current-condition.md:91`). Each carries its own outputs. These are peers, not nested.
+
+**Capability A: AI detection**
+* Outputs:
+  1. On-device AI building detection: a single tap finds buildings inside the drawn sections (`pre-sow-tak-competitions.md:384`, `:256`, Gemini summary, confirm wording)
+  2. AI model upgrade (competition docs say YOLT, 670% recall, `:157`, `:84`; team Jun 9 confirms current model is YOLO and the 670% figure is unverified, pending Zachary, `gap-tak-june_8-12.md:235`)
+  3. Multi-inference (section-based) detection, ~80-90% per section vs 60-70% on a full AOI (`:317`, `tak-challenge_n_current-condition.md:91`)
+  4. 124% accuracy improvement, Bridge (`tak-final-demo.md:45`)
+  5. Detection reliability: zoom-consistent and stable across repeat runs, Bridge (`tak-final-demo.md:43-44`)
+* References: as above. The back-end enablers (ONNX, tiling, RGB input, multi-model runtimes, fungible upgrades, training pipeline, repos) are listed in the Detection category above; they improve detection but are not operator-behavior outputs, so they are kept out of this hypothesis grain.
+* Confidence Level: **High**
+
+**Capability B: Labeling algorithm**
+* Outputs:
+  1. Advanced labeling algorithm: numbers buildings the way a human would, adapts to complex, irregular layouts (`pre-sow-tak-competitions.md:159`)
+  2. Additional labeling features: row and grid schemes, operator-selectable (`:320`)
+  3. 🟧 Skip-ambiguous-letters toggle (B, H, I, 1) (`:380`, Gemini summary). Note: also listed under block #2 (grid); skipping letters is a labeling-scheme decision, so it likely belongs here. Pick one home.
+* References: advanced labeling algorithm (`:159`, team slide); additional labeling features, row and grid schemes (`:320`, team slide); skip-ambiguous-letters toggle (`:380`, Gemini summary).
+* Confidence Level: **High** (algorithm and schemes are team slide text; skip-letters wording leans on a Gemini summary)
+
+**Capability C: Review and correction**
+* Outputs:
+  1. Operator final authority: review, correct, add, or remove building markers (`pre-sow-tak-competitions.md:385`, Gemini summary)
+  2. Automatic renumbering when changes are made (`:386`, Gemini summary)
+  3. Swipe gesture to re-sequence and adjust numbering (`:387`, Gemini summary)
+* References: operator authority and renumbering specifics (`:385-387`, Gemini summary, confirm wording). Bridge fixes touching labels (your call whether they count as outputs): labels clear when a GRG is closed (`tak-final-demo.md:66`); labels outside named sections clear on save and close (`:67`).
+* Confidence Level: **High** that these shipped; the review/correct and renumbering wording leans on a Gemini summary (flagged).
+
+### #6. Export the GRG
+* Main capability/feature: **GRG export** (producing the finished, shareable GRG artifact)
+* Outputs:
+  1. KMZ export of the finished GRG, supports data sharing and interoperability with other mission planning software (`pre-sow-tak-competitions.md:393`, Gemini summary)
+  2. Auto-generated legend on the product: operation title, location (MGRS), version (`pre-sow-tak-competitions.md:392`, Gemini summary)
+* References: legend and KMZ export both appear under the demo's "Customization, Finalization, and Export" bullet (`:392-393`, Gemini summary). Bridge fix (your call whether it counts): GRG export crash on scale bar / meters selection, fixed May 1 (`tak-final-demo.md:59`, `:155`). Not shipped, flagged as a future ask: export menu customization set (point-list editability, compass color, info-box placement), SDT-64 (`tak-final-demo.md:202`).
+* Open flags: (a) legacy could already export KMZ/PDF/PNG before our plugin (`tak-vsm-first_pass.md:279`), so confirm with the team whether KMZ export is ours or native TAK; the auto-generated legend reads as the genuinely plugin-built piece. (b) The editable-KMZ-vs-"glorified image" idea (`tak-vsm-first_pass.md:280`, `:337-339`) is a potential future outcome, not a shipped output.
+* Confidence Level: **High** that legend generation and KMZ export shipped; wording leans on a Gemini summary (flagged).
+
+===
+
+
+### Week of June 1st
+
+# Output/Deliverable Candidates (Competition Period) *LEGACY*
 
 > Sourced from: `pre-sow-tak-competitions.md`, `tak-challenge_n_current-condition.md`, `tak-repo-info.md`. Each item uses the source's own wording. For inquired items, sourced facts and technical judgments (not in the docs) are tagged separately — no fabrication.
 

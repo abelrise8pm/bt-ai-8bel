@@ -62,3 +62,5 @@
 
 **Restart prompt (paste to resume):**
 > Resume the parked first pass of the bet for **#3 Advanced labeling algorithm** in tak-output-assumptions.md. Re-read the parking-lot draft (Output + what it does, Pain+who, two Desirability Assumptions, Riskiest, outcome mapping), then put the two open questions back to me: (1) is "accepts the order without re-sequencing" the real behavior shift, or is it trust (operator stops double-checking)? (2) which real field layouts do you expect to break the intuitive order? Once I answer, finish the card (baseline check + to-test) and move it out of the parking lot.
+
+===

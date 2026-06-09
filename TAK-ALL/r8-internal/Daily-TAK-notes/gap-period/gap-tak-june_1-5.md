@@ -719,8 +719,100 @@ Conventions to follow:
 - Match the drafting depth to how solid the input is. Do not draft a full, confident ticket from a thin note.
 ### One thing I did not do, because you have not asked yet: actually building that pre-drafting "confidence + gut-type" step into the skill. It is captured as a proposed change only. Want me to take that on next, or leave it for a future session?
 
+===
+
+# Mission Core Pre-IPM - June 4th, [gemini-transcript]
+
+### Summary
+The team defined architectural goals for Compose Multiplatform and Kotlin Multiplatform integration for future system unification.
+
+**Defining Core Development Strategies**
+Compose Multiplatform and Kotlin Multiplatform definitions were clarified to distinguish between user interface sharing and logic decoupling. Prototype development established a modular approach for mission-specific data handling.
+
+**Architectural Vision and Integration**
+The team discussed extracting network mesh logic into an independent SDK to enhance data synchronization reliability. A future architecture was outlined to centralize business logic and design systems for cross-platform consistency.
+
+**Feasibility and System Ownership**
+Investigating design system library integration with current prototypes was prioritized to demonstrate technical superiority. Strategic alignment regarding stakeholder dependencies and contract flexibility was identified as a critical factor for success.
+
+### Details
+**Clarification of CMP and KMP Terms:** Zachary and Abel established the definitions for Compose Multiplatform (CMP) and Kotlin Multiplatform (KMP), clarifying that CMP includes shared UI capabilities while KMP focuses on business logic and data rules. The goal of using CMP is to maximize value by sharing UI components across the ATAC, WebTAC, and TACX platforms, thereby reducing the need for redundant UI maintenance while keeping core business logic consistent (00:00:00).
+
+**"Marker Placer" Prototype Development:** Zachary is building a "marker placer" feature, which serves as a prototype to establish scaffolding and determine how to effectively share business logic and UI between platforms (00:04:31) (00:06:32). The objective is to decouple mission-specific business logic from ATAC-specific UI, ensuring that the mission core remains modular and independent of any single platform (00:03:23).
+
+**Technical Progress on Marker Placer:** Zachary confirmed that the marker placer is currently functional on both ATAC and WebTAC using a shared codebase. The next phase of development involves expanding this functionality to TACX to achieve platform parity, which will be followed by the integration of additional features such as GRG placement or CO messages (00:08:02). Zachary considers the successful implementation of the marker placer on TACX as the minimum viable product (MVP) for the prototype (00:10:17).
+
+**Verification and MVP Deployment:** For validation, Zachary plans to push the prototype code to a repository where the team, including Thomas and Andrew, can pull and test it locally. While Abel questioned whether a local environment is sufficient, they agreed that local verification by the team is the appropriate next step before proceeding to more complex deployment strategies (00:11:19). Once the MVP is validated, the team will prioritize the next set of mission features (00:13:46).
+
+**Defining Mission Domains:** Jonathan suggested using the term "mission domains" to refer to specific objects like routes and GRGs, which the team agreed would help clarify future discussions regarding data models and schemas (00:15:18). Abel noted that the team will check in on the progress of the marker placer work the following Monday (00:16:34).
+
+**Thomas’s Spike on Data Models:** Abel summarized a spike led by Thomas, which involves investigating the data models required for mission data shared between field devices. This effort aims to produce informed suggestions for SOCOM rather than developing live software immediately (00:17:42). Zachary explained that the work involves identifying the necessary classes and determining the optimal methods for storing and presenting this data (00:18:46).
+
+**Arclight SDK and Network Mesh:** The team discussed the "Arclight" SDK, a concept for a network mesh designed to synchronize data between devices. Kevin previously proposed extracting this logic from the current monolith to ensure it operates independently of ATAC (00:20:46) (00:22:50). The team initially considered using a third-party tool called "Ditto," but Zachary noted it was prohibitively expensive, leading them to favor building an internal solution using Android native functions (00:21:57).
+
+**Operator Trust and User Perspectives:** Jonathan emphasized that the need for a robust data sync solution is driven by user feedback, noting that operators often exhibit distrust toward digital tools compared to traditional methods like paper maps or radio communication (00:23:46). Consequently, ensuring that the data displayed in ATAC is current and trustable is a critical requirement for meeting operator needs (00:24:52).
+
+**Technical Alignment for Arclight SDK:** The team clarified that the goal for the Arclight SDK is to remove business logic from individual platforms while maintaining shared UI where possible (00:26:11). Jonathan noted that this technical separation will be detailed in upcoming architectural diagrams, which will help the team align on what should move out of the ATAC-specific codebase (00:27:15).
+
+**Coordination with Mases K:** Abel took action to communicate with Mases K to align on the project spike and the plan to extract the network mesh into a standalone module (00:27:15).
+
+**Command Parser Logic:** The team discussed the necessity of moving the logic that parses typed orders into actions from the existing plugin to the "mission core" (00:29:31). This transition is intended to decouple the command flow from ATAC and allow for reuse across different platforms (00:30:37).
+
+**Red Queen Plugin Investigation** Zachary identified the "Red Queen" plugin, which handles speech-to-text and command processing, as a potential reference for their command-parsing work (00:30:37) (00:32:49). Zachary offered to investigate the documentation for Red Queen to determine if it offers useful patterns that the team can apply to their own integration (00:31:37).
+
+**Repository Management and Future Steps:** Zachary plans to coordinate with Thomas to organize the Git repository and push the prototype code, with a target completion date of early next week (00:33:51). Abel outlined remaining management tasks, including following up with Thomas and Mases K and preparing issues for future work, such as LLM adapters, voice recognition, and sensor integration (00:35:10).
+
+**Current Architecture Overview:** Jonathan presented an overview of the current architectural state, where features are built directly on the ATAC SDK without centralized design guidance. This approach provides flexibility but lacks guardrails, relying on custom source code and limited support from TAC UI or the Android base theme (00:44:34).
+
+**Future State Architecture Vision:** The team outlined a future-state architecture where the ATAC SDK is layered with the Arclight SDK, shared libraries, business logic, and a formal design system (00:49:25) (00:53:04). This design system is intended to reside within the library and logic layer, providing standardized styles, colors, and components to foster trust and consistency (00:50:37). This structure is envisioned to eventually roll up into a "Soft Tac SDK" that supports multiple plugins (00:53:04).
+
+**Architecture Benefits and Design System Role:** Jonathan highlighted that the proposed architecture offers benefits such as faster plugin creation, reduced maintenance of shared logic, and improved cross-platform consistency. The design system is intended to complement existing TAC UI capabilities rather than replace them, allowing plugins to inherit design decisions while maintaining the ability to customize further (00:52:00) (00:55:14).
+
+**Implementation Strategy:** The team discussed that while the full architectural vision requires SOCOM alignment, the design system can be implemented incrementally (00:57:38) (01:00:24). Zachary observed that the design system could be utilized either through a shared SDK or directly within individual plugins, ensuring that the work provides value regardless of the final organizational implementation (01:02:44). Jonathan noted that the skeleton of the design system could be established with minimal effort, as the primary challenge is decision-making rather than technical complexity (01:03:52).
+
+S**ystem Ownership and Dependencies:** Jonathan suggests utilizing their existing system and TAC UI to demonstrate flexibility to Nick. Abel initiates a discussion on identifying stakeholders and dependencies, noting that TAC UI is owned by SOCOM (or SoftMC) and maintained by BAH, while the ATAC core is an open-source project maintained by TPC. Abel emphasizes the importance of understanding these relationships and establishing alignment between the different players (01:05:02).
+
+**Contract Scope and Strategic Implementation:** Zachary and Abel discuss how the specific terms of the incoming contract will dictate their ability to perform exploratory work. Zachary suggests that if the contract permits flexibility, the team can demonstrate the value of their system, which they consider to be superior, thereby positioning it as an advantageous solution for the stakeholders to adopt (01:06:37).
+
+**Prototype Feasibility and Skill Development:** Jonathan and Zachary outline their plans to use the current gap period to investigate the feasibility of connecting a design system library to their prototype code. Jonathan notes that this initiative serves a dual purpose: it acts as an educational exercise for the team members involved, and it provides a proof of concept demonstrating their capability to drive a plugin from a design system, which would prepare them should they be granted the flexibility to implement this solution (01:07:42).
+
+**Library Integration and Meeting Conclusion:** Abel inquires about the integration of Arclight and Soft TAC libraries into the prototype. Jonathan confirms that these elements are part of the prototype, though they may require further layering. The participants clarify that TAC UI acts as the framework for the design system library, potentially encompassing states and other considerations that require future investigation. Abel concludes the meeting to address an insurance matter (01:09:01).
+
+### Decisions
+
+ALIGNED, according to gemini
+
+* Marker placer prototype established as MVP The team aligned on establishing the marker placer prototype as the Minimum Viable Product (MVP) to validate shared business logic and UI across all platforms.
+
+* ArcLight SDK development over buy The team decided to develop an internal "Arc Light" SDK for network mesh functionality, choosing to build an in-house solution rather than purchasing the costly "Ditto" software.
+
+* Design system development approved The team decided to proceed with developing a design system as an independent library, ensuring the work provides value regardless of whether the full future-state architecture is adopted.
+
+### Next steps
+[Zachary] Build marker placer: Develop and expand the marker placer prototype across ATAC, WebTAC, and TACX to achieve feature parity by next week.
+[Zachary-Thomas] Organize prototype repo: Create a dedicated folder in the git repository for the prototype code to facilitate team access and testing. Work with Thomas to organize these folders.
+[Abel] Contact Thomas: Message Thomas via direct message to confirm his availability and status regarding his assigned spike.
+[Abel] Coordinate mesh extraction: Discuss with Meis the plan to extract the network mesh logic into a separate module from the current prototype.
+[Abel] Document development tasks: Create and document tracking issues for the LLM adapter, voice recognition, text parser, sensor integration, and route hardening.
+[Zachary] Research Red Queen: Investigate the Red Queen plugin and its speech capabilities to inform future command and text input implementation.
+[Jonathan-Zachary] Connect Design System: Link the library containing token files and components to the prototype code. Demonstrate the ability to drive plugins from a central design system to ensure feasibility.
+[Jonathan] Brief Nick: Present the system advantages and problem outcome language to Nick. Facilitate understanding without requiring a deep technical discussion.
+[Abel] Arrange Pairing Sessions: Arrange time to pair with Missise, Thomas, and Kevin. Organize these sessions to refine the current design work.
 
 ===
 
 
+## Raw notes from Daily Stand up , Friday June 5th 
 
+[p2p-future-state]
+
+
+[taclan-manager-platform]
+
+- jared: TACLAN manager, prototyp running on his machine, then got pulleed into some Alloc8 stuff, today focus on TACLAN Manager running,
+- Thomas, wrapping spike. need to format a document for what the contract would look like.. going forward when we have hausers, want to verify it fits with them. -- Assuming this prototype is what we are moving forward..  AND second, getting the Arclight repo into gitlab as a base to get us , thats all I got for now.. 
+- Zach: get TAK X on the repo, next week pick the next feature to expand.. in and out next week. 
+
+- Andrew, TAKLAN Manager, last change he is making, a placeholder for TAK server app, TAK server "iron bank" He has a little work ShipIt with bugs.. failures occuring, He posted in channel helping a friend. off line 1 hour or so..
+
+# Mission Core Pre-IPM - June 4th, [gemini-transcript]
