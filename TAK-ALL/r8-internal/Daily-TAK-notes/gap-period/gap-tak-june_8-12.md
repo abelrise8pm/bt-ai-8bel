@@ -140,8 +140,6 @@ Seaw Wall Kickoff: Mary noted that the team has an invitation to the Seaw wall k
 
 **Operational Logistics and Meeting Strategy:** Abel established that Thomas will own the async retro process, leading Slack threads for updates on Tuesdays and Thursdays. The team discussed the upcoming Seaw wall kickoff, agreeing that they need to clarify roles and responsibilities with Dan Montgomery to avoid burnout and ensure alignment with existing work like TAC land management and SOAP orchestration. Sean Herbert noted that the acronym SEAW stands for Space Electromagnetic Warfare operating location.
 
-
-
 ### Decisions
 **ALIGNED**
 Async standup schedule established Async standup updates are established to occur on Tuesdays and Thursdays, with Thomas designated to initiate the Slack threads.
@@ -193,7 +191,6 @@ Collaboration on design system prototypes and the distribution of client documen
 **Andrew Ferguson’s Assignment and Device Access:** Andrew Ferguson has a scheduled meeting with Max at 2:00 PM to discuss potential assignment to the tag contract and the acquisition of a tag device. Abel noted that allocation is handled by leadership but confirmed there is no issue with inquiring about device access (00:18:00). Additionally, Abel will contact Lakshmi to facilitate necessary system access for Andrew Ferguson (00:23:07).
 
 **Client Documentation and Preparation:** Abel has uploaded documentation to the Cloud SAS version to assist the team in preparing for upcoming client calls. Abel encouraged the team to review these materials to generate informed questions, noting that a glossary is currently being developed using Claude to support this preparation (00:21:20).
-
 
 ### Decisions
 **ALIGNED** Client documentation presentation scope The strategy for client-facing documentation is limited to phases 4 and 5, as these sections contain the most relevant information for the client.
@@ -288,62 +285,66 @@ Significant upgrades like nested radial menus and operational section definition
 [The group] Verify Legend Capability: Review documentation to confirm whether the auto-generated information box existed previously.
 [Abel] Complete Roadmap: Consolidate all project deliverables to submit them for official production release.
 
+---
+
+# AI GRG Plugin Outcomes in Prod review, 1:30pm June 11
+
+### Summary
+Meeting reviewed production feature validity and operational usability improvements for the building detection plugin.
+
+**Feature Validation and Metrics**
+Teams established that AI building detection requires consistent output and automated performance metrics to ensure operational trust. Success is defined by mirroring natural operator workflows for labeling and renumbering.
+
+**Usability and Operational Logic**
+System enhancements like ambiguous letter filtering and swipe gesture resequencing provide critical manual control. These features effectively reduce user error and align automated output with established field conventions.
+
+**Interface Migration Outcome**
+The primary decision was made to migrate the configuration workflow from a legacy drawer interface to an ATAC-native radial menu to improve long-term maintainability and usability.
+
+### DETAILS
+
+**Project Credit and Production Context:** Abel initiated the meeting to ensure that the competition team receives proper recognition for deliverables now in production. Abel confirmed that the AI GRG plugin is currently in use by operators in the field, and the meeting's objective is to validate key assumptions about these features before submitting the final outcomes.
+
+**AI Building Detection with Sliding Window:** The team implemented a sliding window approach for AI building detection to ensure consistent results across repeated executions. The core assumption is that operators will trust the AI's output because the consistent detections eliminate the need for them to repeatedly adjust zoom levels or rerun the tool (00:02:07).
+
+**Performance Metrics and Pipelines:** Yi Liu recommended that the team utilize precision and recall metrics, potentially including an F1 score, to measure the effectiveness of the building detection. While the competition team relied on manual testing using a "golden data set" of imagery, Yi Liu suggested establishing an automated enabling outcome to measure these metrics to ensure the system meets operational requirements.
+
+**Operational Feedback Loops:** Abel noted that there are currently no formal feedback loops with operators after missions, though establishing them is a priority for the upcoming contract period (00:07:22). Yi Liu advised the team to prioritize internal risk and reward analysis to determine if the development of specific features—such as building detection—provides sufficient value to the operators, even in the absence of direct feedback (00:08:10).
+
+**Smart Default Labeling:** The team developed a "smart default labeling" feature designed to mirror the manual numbering process used by operators. The assumption is that by matching natural workflows, operators will accept the default labeling without feeling the need to renumber buildings by hand (00:09:01).
+
+**Labeling Schemes and Error Costs**: Discussion highlighted the importance of selectable labeling schemes to reduce user rework (00:12:09). Yi Liu explained the "cost function" inherent in the process, noting that false positives and false negatives carry different time and mission costs, and the team must balance these variables when fine-tuning the algorithms (00:13:10).
+
+**Automatic Renumbering for Marker Sequences:** To support scenarios involving large numbers of buildings, the team implemented automatic renumbering to maintain continuous sequences. Yi Liu recommended that the team estimate the time cost reduction provided by this feature to quantify the improvement, such as calculating the time saved by removing the need for manual resequencing (00:14:58).
+
+**Swipe Gesture Resequencing:** To address the inaccuracies of earlier automatic numbering attempts, the team introduced a swipe gesture allowing operators to manually reshape marker sequences (00:16:53). Yi Liu characterized this as a high-value outcome because it returns control to the operator, achieving 100% accuracy rather than relying on automated estimation (00:17:52).
+
+**Repurposing Sections for Building Detection:** The team repurposed existing TAC sections to provide context for building detections, automatically assigning them prefixes and sequence numbers. Yi Liu confirmed that this functionality established a necessary link between the operator's needs and the graphic output, allowing markers to align with established sectioning conventions (00:20:25).
+
+**Ambiguous Letter Filtering:** The team developed a feature to exclude ambiguous letters—such as 'I' and 'O'—from building markers to prevent communication errors during operations (00:23:20). Yi Liu noted that this was a change in system behavior that supported existing human behavior, as operators were already manually avoiding these characters to prevent confusion (00:24:19).
+
+**Legend Generation:** The team discussed the inclusion of an autogenerated legend on exported GRGs that displays the operational title, MGRS, and version (00:25:15). There was uncertainty regarding the originality of this feature, with Yi Liu noting that the code was likely copied from existing plugins during the competition due to time constraints (00:26:06).
+
+**Radial Menu Workflow Migration:** The team migrated the configuration workflow from a legacy drawer interface to an ATAC-native radial menu (00:27:59). Yi Liu and Jonathan Van Dalen confirmed that this shift, which was tested with operators, was driven by both the need to reduce usability risk and the engineering requirement to improve long-term maintainability.
+
+### DECISIONS - Aligned
+
+* Metric for building detection success The team adopted F1 scores, incorporating precision and recall metrics, to validate the effectiveness of AI building detection outcomes.
+
+* Cost function for renumbering outcomes The team adopted a cost function analysis, weighing both time cost and mission impact, to evaluate renumbering and editing performance.
+
+### Next steps
+
+- [Abel] Create hypotheses: Draft hypotheses for the discussed output features and define metrics for measurement including precision and recall.
+- [Abel] Review slides: Search through project slides and user interview files to find documentation on smart default labeling and user feedback.
+- [Jonathan Van Dalen] Locate user quotes: Identify and retrieve specific user feedback quotes regarding the section repurposing and radial menu design from project documentation.
+- [Abel] Submit outcomes: Submit the finalized deliverables to production and include the original team members as contributors.
+
+
+
+
 ===
-
-# Session Summary + Hand-off: AI GRG Output Candidates to Assumptions Drafting (Jun 9)
-
-## What we did and what it produced
-
-**Built this session**
-- A categorized outputs list in `tak-all-outputs.md`: a Detection category (high vs low confidence), then shipped capabilities and their outputs mapped to the current-state VSM process blocks (#1 imagery, #2 grid, #3 nothing, #4 sections, #5 labeling with three capabilities, #6 export; #8 proposed as nothing-delivered).
-- A leveling rule to carry into the assumptions: capability = the lever an outcome attaches to (one operator behavior change); output = the specific shipped thing a single hypothesis can point at and measure.
-- For the labeling block, adopted the team's own split (model / algorithm / UI-UX) into three peer capabilities: AI detection, Labeling algorithm, Review and correction.
-
-**Team confirmed (Jun 9, this file lines 213-289)**
-- Capability buckets hold: imagery handling, grid definition, section definition, AI detection, labeling, export. Sharing (#8) confirmed out of scope, so "nothing delivered" stands (`:272`).
-- Sections are a custom feature (formal decision), even though drawing the shapes is native TAK; the team's value was giving shapes operational meaning (`:267-268`, `:280`).
-- Auto-generated legend is a genuine advancement, text overlay was not natively supported (`:270`).
-- Legacy GRG Builder features are excluded from outcomes (`:278`).
-
-**Changed / new insights (these update the doc)**
-- Model is YOLO, not YOLT. The switch fixed false and double detections; the 670% recall figure is now unverified and pending reverification (`:235-236`). Corrected in `tak-all-outputs.md`.
-- Detection has two functions: whole-grid detection and single-section detection (`:231-233`).
-- The concrete detection output to test is "Sliding Window method at zoom 19" (consistent quality across sections and full grids, reliable repeat runs), tagged a candidate (`:238-239`).
-- Labeling needs segmenting: smart default labeling (operator-pattern numbering), selectable schemes (top-down, left-right, reading order), skip-ambiguous-letters. Open: are schemes and skip-letters two distinct outputs, each meriting an outcome? (`:244-251`)
-- Skip-ambiguous-letters reads as a labeling thing, resolving the #2-vs-#5 placement toward labeling (`:244`).
-- Review/correction has two outputs: add-marker-consistent-with-section-conventions (not in native tools) and automatic renumbering within a section after edits (`:253`).
-- Swipe gesture: open whether it belongs to Labeling algorithm, Review and correction, or both (`:257`).
-
-**Open data to chase (alongside the assumptions)**
-- Recall % after the YOLO transition (Zachary). Baseline vs the legacy GRG tool (group). Whether the auto-legend existed previously (group). Yi for PM history/timeline; Nick for operator feedback (`:284-288`).
-
-## Hand-off prompt (paste into a new context to start the assumptions drafting)
-
-```
-You are assisting Abel (Product Manager, Rise8) on the SOCOM TAK AI GRG project during the OTA gap period. Goal: build an Outcome-Oriented Roadmap, which needs small, testable hypotheses of the form "We believe [shipped output] will [change in operator behavior in prod], measured by [key result]." We are in Part 1: tak-output-assumptions, surface the unstated bet behind each shipped output as a testable assumption (David J Bland sticky format). One output at a time. Stop at the assumption; do not write the experiment card or hypothesis.
-
-Source of the outputs: TAK-ALL/r8-internal/Daily-TAK-notes/gap-period/tak-all-outputs.md, the "Main Capabilities/features and outputs delivered according to VSM" section (blocks #1 to #6). Team confirmation and corrections: gap-tak-june_8-12.md lines 213 to 289.
-
-Confirmed capabilities and their outputs to work through:
-- AI detection: Sliding Window method at zoom 19 (consistent detection across sections and full grids, stable repeat runs) is the lead candidate. Note: current model is YOLO, not YOLT; the 670% recall figure is unverified pending Zachary, do not assert it.
-- Labeling algorithm: smart default labeling (operator-pattern numbering); selectable schemes (top-down, left-right, reading order); skip-ambiguous-letters. Open: are schemes and skip-letters distinct outputs each meriting an outcome?
-- Review and correction: add-marker-consistent-with-section-conventions; automatic renumbering within a section after edits; swipe-gesture-to-resequence (open: labeling vs review-and-correction vs both).
-- Imagery handling: pre-caching before detection; operator status messaging. (256x256 tiling relevance still being verified.)
-- Section definition: custom-feature decision (sections give native shapes operational meaning).
-- Export: auto-generated legend (text overlay not natively supported, the genuinely-ours piece); KMZ interoperability.
-
-Rules: cite sourced claims; tag any inference with the orange square and call it Claude's. Real names, no coined hybrids. Never the em dash character. Some output wording came from a Gemini summary of the demo, flag those for team confirmation. Outcomes map to tak-oor.md; if an output points to a new outcome, flag it for tak-outcomes, do not invent one.
-
-Start by asking me which output to take first.
-```
-
-
-
-
-
-
-
-
+===
 ---
 
 ## Review of SEWOL prototype and demo
@@ -365,3 +366,50 @@ Thomas has some ask for me:
 
 
 andrew knife: TAK server integration, 
+
+===
+
+# WEEKLY Stand-up, WEDS June 10 - 
+
+[ENG-Others]
+
+- Alloc8, Jared
+- Sean, finished Lattice Reviews, prodev (vector and langgraph) help with TACLAN Manager and get that done.."it generates operation order" WHO WAHT WHEN WHY for a mission.. 
+
+[ENG-AI.GRG]
+
+* ZACH: Got the prototype code in the repo, NEXT work on what Jonathan made, Design system -- He is gonna buld that
+
+* andrew F: Got access to the repo (GMI team outcomes, OTHER, True Anamoly contract) He will get the TAK stuff running
+
+* Thomas: reseaching, SEWOL docs, Investing problem space, digging tinto P2P Network Meshing for ArcLight prototyping.. TODAY--> same.. he got pulled away from work in the middle of the day. 
+
+
+----
+
+* Mr. Knife: ShipIt issues in GitLab, He will help finish that up, Worked a bit on TACLAN demo (resources constraints, multiple edges locally) close to having TAK Server up and running, ARM64 MD issues
+
+CORE FUNC, for Kevan to consume.. he removed the secon edge.. all resource constraints.. 
+
+//
+
+Adndrew
+1. Kevs repo from google drive (arclight prototy)
+2. TAK install on emulator, crashes
+3. 
+
+
+
+[MARY]
+
+- SPIN SMEs
+- Process Map (OVD vs Rise8) what is the baseline?
+- Meeting with Dan
+- GET TME WITH MARY on SOAP Outcomes
+
+[JON]
+- Interivews for WEDs
+- Define research questions
+> GO BACK: Jon's interviews, maybe we can get some
+- `SEWOL` talking to Drew McF "objects" he is gonna pair with him to understand the domain
+> GO BACK: "understand the user experience", NEED TO BE ON THE SAME PAGE
