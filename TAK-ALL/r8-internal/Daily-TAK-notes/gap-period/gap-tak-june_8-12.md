@@ -305,27 +305,31 @@ The primary decision was made to migrate the configuration workflow from a legac
 
 **Project Credit and Production Context:** Abel initiated the meeting to ensure that the competition team receives proper recognition for deliverables now in production. Abel confirmed that the AI GRG plugin is currently in use by operators in the field, and the meeting's objective is to validate key assumptions about these features before submitting the final outcomes.
 
-**AI Building Detection with Sliding Window:** The team implemented a sliding window approach for AI building detection to ensure consistent results across repeated executions. The core assumption is that operators will trust the AI's output because the consistent detections eliminate the need for them to repeatedly adjust zoom levels or rerun the tool (00:02:07).
+**AI Building Detection with Sliding Window:** The team implemented a sliding window approach for AI building detection to ensure consistent results across repeated executions. The core assumption is that operators will trust the AI's output because the consistent detections eliminate the need for them to repeatedly adjust zoom levels or rerun the tool.
 
 **Performance Metrics and Pipelines:** Yi Liu recommended that the team utilize precision and recall metrics, potentially including an F1 score, to measure the effectiveness of the building detection. While the competition team relied on manual testing using a "golden data set" of imagery, Yi Liu suggested establishing an automated enabling outcome to measure these metrics to ensure the system meets operational requirements.
 
-**Operational Feedback Loops:** Abel noted that there are currently no formal feedback loops with operators after missions, though establishing them is a priority for the upcoming contract period (00:07:22). Yi Liu advised the team to prioritize internal risk and reward analysis to determine if the development of specific features—such as building detection—provides sufficient value to the operators, even in the absence of direct feedback (00:08:10).
+**Operational Feedback Loops:** Abel noted that there are currently no formal feedback loops with operators after missions, though establishing them is a priority for the upcoming contract period. Yi Liu advised the team to prioritize internal risk and reward analysis to determine if the development of specific features—such as building detection—provides sufficient value to the operators, even in the absence of direct feedback.
+> Abel's Notes: So a few notes raw notes I have about Yi's comments. He asked what motivates operators to "re-run" a detection? What is the signal? Then as noted here, he discussed Precision and Recall Metrics and F1 score, and just exanded on capturing results false-positives and false-negatives. Yi also called for us to consider the various environments, for imagery to conduct precision and recall metrics. This is worth considering for our KRs
 
-**Smart Default Labeling:** The team developed a "smart default labeling" feature designed to mirror the manual numbering process used by operators. The assumption is that by matching natural workflows, operators will accept the default labeling without feeling the need to renumber buildings by hand (00:09:01).
+**Smart Default Labeling:** The team developed a "smart default labeling" feature designed to mirror the manual numbering process used by operators. The assumption is that by matching natural workflows, operators will accept the default labeling without feeling the need to renumber buildings by hand.
 
-**Labeling Schemes and Error Costs**: Discussion highlighted the importance of selectable labeling schemes to reduce user rework (00:12:09). Yi Liu explained the "cost function" inherent in the process, noting that false positives and false negatives carry different time and mission costs, and the team must balance these variables when fine-tuning the algorithms (00:13:10).
+**Labeling Schemes and Error Costs**: Discussion highlighted the importance of selectable labeling schemes to reduce user rework. Yi Liu explained the "cost function" inherent in the process, noting that false positives and false negatives carry different time and mission costs, and the team must balance these variables when fine-tuning the algorithms.
+> Abel's Notes: We agreed that this is a smaller outcome. We should Consider that “less re-work” is the measurement, and what is the cost. Once again he called out Precission and Recall, and he used the example of "Given the operator added what elending up being a False marker it takes them "X" to remove it, having extra markers is cheaper to fix.."
 
-**Automatic Renumbering for Marker Sequences:** To support scenarios involving large numbers of buildings, the team implemented automatic renumbering to maintain continuous sequences. Yi Liu recommended that the team estimate the time cost reduction provided by this feature to quantify the improvement, such as calculating the time saved by removing the need for manual resequencing (00:14:58).
+**Automatic Renumbering for Marker Sequences:** To support scenarios involving large numbers of buildings, the team implemented automatic renumbering to maintain continuous sequences. Yi Liu recommended that the team estimate the time cost reduction provided by this feature to quantify the improvement, such as calculating the time saved by removing the need for manual resequencin.
 
-**Swipe Gesture Resequencing:** To address the inaccuracies of earlier automatic numbering attempts, the team introduced a swipe gesture allowing operators to manually reshape marker sequences (00:16:53). Yi Liu characterized this as a high-value outcome because it returns control to the operator, achieving 100% accuracy rather than relying on automated estimation (00:17:52).
+**Swipe Gesture Resequencing:** To address the inaccuracies of earlier automatic numbering attempts, the team introduced a swipe gesture allowing operators to manually reshape marker sequences. Yi Liu characterized this as a high-value outcome because it returns control to the operator, achieving 100% accuracy rather than relying on automated estimation.
 
-**Repurposing Sections for Building Detection:** The team repurposed existing TAC sections to provide context for building detections, automatically assigning them prefixes and sequence numbers. Yi Liu confirmed that this functionality established a necessary link between the operator's needs and the graphic output, allowing markers to align with established sectioning conventions (00:20:25).
+**Repurposing Sections for Building Detection:** The team repurposed existing TAK "sections" (drawing with the shape tool) to provide context for building detections, automatically assigning them prefixes and sequence numbers. Yi Liu confirmed that this functionality established a necessary link between the operator's needs and the graphic output, allowing markers to align with established sectioning conventions.
 
-**Ambiguous Letter Filtering:** The team developed a feature to exclude ambiguous letters—such as 'I' and 'O'—from building markers to prevent communication errors during operations (00:23:20). Yi Liu noted that this was a change in system behavior that supported existing human behavior, as operators were already manually avoiding these characters to prevent confusion (00:24:19).
+**Ambiguous Letter Filtering:** The team developed a feature to exclude ambiguous letters—such as 'I' and 'O'—from building markers to prevent communication errors during operations (00:23:20). Yi Liu noted that this was a change in system behavior that supported existing human behavior, as operators were already manually avoiding these characters to prevent confusion.
+> Abel's notes: Yi's take was that this is "Less of a change in behavior more of matching, and creating a “new” system behavior because this is a human behavior they do and they were trying to avoid it.."
 
 **Legend Generation:** The team discussed the inclusion of an autogenerated legend on exported GRGs that displays the operational title, MGRS, and version (00:25:15). There was uncertainty regarding the originality of this feature, with Yi Liu noting that the code was likely copied from existing plugins during the competition due to time constraints (00:26:06).
+> Abel notes: Yi claims that this functinality is not that new and that it was ripped from GRG Building. My take is that if we didnt "invent" the entire legend concept. didnt we add new value in terms of the version of the GRG? need to find out.. 
 
-**Radial Menu Workflow Migration:** The team migrated the configuration workflow from a legacy drawer interface to an ATAC-native radial menu (00:27:59). Yi Liu and Jonathan Van Dalen confirmed that this shift, which was tested with operators, was driven by both the need to reduce usability risk and the engineering requirement to improve long-term maintainability.
+**Radial Menu Workflow Migration:** The team migrated the configuration workflow from a legacy drawer interface to an ATAC-native radial menu. Yi Liu and Jonathan confirmed that this shift, which was tested with operators, was driven by both the need to reduce usability risk and the engineering requirement to improve long-term maintainability.
 
 ### DECISIONS - Aligned
 
@@ -337,15 +341,11 @@ The primary decision was made to migrate the configuration workflow from a legac
 
 - [Abel] Create hypotheses: Draft hypotheses for the discussed output features and define metrics for measurement including precision and recall.
 - [Abel] Review slides: Search through project slides and user interview files to find documentation on smart default labeling and user feedback.
-- [Jonathan Van Dalen] Locate user quotes: Identify and retrieve specific user feedback quotes regarding the section repurposing and radial menu design from project documentation.
+- [Jonathan] Locate user quotes: Identify and retrieve specific user feedback quotes regarding the section repurposing and radial menu design from project documentation.
 - [Abel] Submit outcomes: Submit the finalized deliverables to production and include the original team members as contributors.
 
-
-
-
 ===
-===
----
+
 
 ## Review of SEWOL prototype and demo
 
@@ -397,7 +397,6 @@ Adndrew
 1. Kevs repo from google drive (arclight prototy)
 2. TAK install on emulator, crashes
 3. 
-
 
 
 [MARY]

@@ -330,7 +330,7 @@ Start by asking Abel which card to take, or whether to finish #4 and #9 first.
 ### Source / reference files used
 - `tak-output-assumptions.md` (this artifact)
 - `tak-all-outputs.md` (outputs list, VSM blocks #1 to #6)
-- `gap-tak-june_8-12.md` (team confirmation, lines 213-289)
+- `gap-tak-june_8-12.md` (team confirmation, lines 213-289 and AI GRG Plugin Outcomes in Prod review Lines 290 thru 345)
 - `tak-oor.md` (named outcomes; Model Improvements)
 - `pre-sow-tak-competitions.md` (Competition outputs and labeling validation)
 - `tak-final-demo.md`, `tak-daily-april_20-24.md`, `db-wk5.md` (Bridge detection evidence)
